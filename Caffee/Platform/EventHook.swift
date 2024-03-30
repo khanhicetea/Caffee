@@ -93,7 +93,7 @@ func eventTapCallback(
   let input = eventHook.inputProcessor
 
   if type == .keyDown && eventHook.processing {
-      // Benchmark
+    // Benchmark
     //    let start = CFAbsoluteTimeGetCurrent()
     let ret = input.handleEvent(event: event)
     //    let diff = CFAbsoluteTimeGetCurrent() - start

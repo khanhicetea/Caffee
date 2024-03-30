@@ -1,8 +1,8 @@
 import AppKit
 
-// CafpheeApp is the main entry point of the application.
+// CaffeeApp is the main entry point of the application.
 @main
-struct CafpheeApp {
+struct CaffeeApp {
 
   // The main function sets up the application delegate and starts the main event loop.
   static func main() {

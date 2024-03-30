@@ -250,7 +250,7 @@ class TiengViet {
       thanhPhanTieng.conLai = Array(strKhongDau)
     }
 
-      // Xoa dau mu, dau thanh neu vi tri dat tai nguyen am da bi xoa
+    // Xoa dau mu, dau thanh neu vi tri dat tai nguyen am da bi xoa
     if thanhPhanTieng.viTriDauMu >= thanhPhanTieng.nguyenAm.count {
       thanhPhanTieng.viTriDauMu = -1
       dauMu = .khongMu
