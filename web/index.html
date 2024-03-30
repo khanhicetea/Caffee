@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Caffee - Bộ gõ tiếng Việt đơn giản nhất cho MacOS</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.1.0/dist/typed.umd.min.js"></script>
     <style>
         .app-features article {
             min-height: 200px;
@@ -56,7 +57,9 @@
         <div class="grid">
             <div class="app-hero">
                 <h1>Caffee</h1>
-                <p>Bộ gõ tiếng Việt đơn giản nhất cho MacOS</p>
+                <p>
+                    <span id="typing"></span>
+                </p>
                 <div>
                     <button class="secondary">Tải app tại đây</button>
                 </div>
@@ -238,6 +241,18 @@
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js'
         data-cf-beacon='{"token": "fc3ce7ee7a604726aa14ec631e5af80f"}'></script><!-- End Cloudflare Web Analytics -->
+
+    <script>
+        var typed = new Typed('#typing', {
+            strings: [
+                'Bộ gõ tiếng Việt đơn giản nhất cho MacOS.',
+                'Hỗ trợ macOS Intel + Apple Silicon.',
+                'Nhanh + Gọn + Chính xác !'
+            ],
+            loop: true,
+            typeSpeed: 50,
+        });
+    </script>
 </body>
 
 </html>
