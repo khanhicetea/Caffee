@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Caffee - Bộ gõ tiếng Việt đơn giản nhất cho MacOS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    <style>
+        .app-features article {
+            min-height: 200px;
+            font-weight: 400;
+            font-size: 0.9rem;
+        }
+
+        .app-features article header {
+            font-weight: 500
+        }
+
+        .app-hero {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .app-screenshot img {
+            max-width: 400px;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="container">
+        <nav>
+            <ul>
+                <li>
+                    <h4>Caffee</h4>
+                </li>
+            </ul>
+            <ul>
+                <li>
+                    <a href="#guide">Hướng Dẫn Cài Đặt</a>
+                </li>
+                <li>
+                    <a href="#faq">FAQ</a>
+                </li>
+                <li>
+                    <a href="https://github.com/khanhicetea/Caffee">Source Code</a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <header class="app-header container">
+        <div class="grid">
+            <div class="app-hero">
+                <h1>Caffee</h1>
+                <p>Bộ gõ tiếng Việt đơn giản nhất cho MacOS</p>
+                <div>
+                    <button class="secondary">Tải app tại đây</button>
+                </div>
+            </div>
+            <div class="app-screenshot">
+                <img src="./app-screenshot.png" />
+            </div>
+        </div>
+    </header>
+    <section class="app-features container">
+        <h2>Chức Năng</h2>
+        <div class="grid">
+            <div>
+                <article>
+                    <header>Gõ tiếng Việt đúng chuẩn</header> Đặt dấu theo kiểu cũ - vì tính thẩm mỹ và nhất quán - chữ
+                    viết là data vì vậy nó nên nhất quán cách viết
+                </article>
+            </div>
+            <div>
+                <article>
+                    <header>Hỗ trợ 2 kiểu gõ TELEX và VNI</header> Sửa dấu mà không cần xóa đi gõ lại, hiểu khi bạn cần
+                    gõ từ tiếng Anh
+                </article>
+            </div>
+            <div>
+                <article>
+                    <header>Nhớ chế độ gõ theo ứng dụng</header> Ví dụ : app A là Vi, switch qua app B trước đó là En,
+                    switch lại app A thì chuyển về Vi
+                </article>
+            </div>
+        </div>
+        <div class="grid">
+            <div>
+                <article>
+                    <header>Sửa lỗi thanh địa chỉ trình duyệt và Excel</header> Lỗi này khá phổ biến trên trình duyệt và
+                    Excel, gây ra lỗi gõ rất khó chịu
+                </article>
+            </div>
+            <div>
+                <article>
+                    <header>Hot key chuyển đổi nhanh chế độ gõ</header> Chuyển nhanh chế độ gõ En - Vi trong app mà
+                    không cần bấm chuột ở bất kỳ App nào
+                </article>
+            </div>
+            <div>
+                <article>
+                    <header>Khởi động cùng hệ điều hành</header> Luôn luôn sẵn sàng mọi lúc bạn cần, khởi động nhanh
+                    chóng mượt mà
+                </article>
+            </div>
+        </div>
+    </section>
+    <section class="app-installation container" id="guide">
+        <h2>Hướng Dẫn Cài Đặt</h2>
+        <ol>
+            <li> Tải file .dmg phiên bản mới nhất về, mở file lên, xuất hiện khung cửa sổ </li>
+            <li>Kéo thả app tên Caffee vào thư mục Applications</li>
+            <li> Mở app Caffee bằng LaunchPad hoặc Spotlight (lần đầu macOS sẽ hỏi có muốn mở app không, xác nhận Mở)
+            </li>
+            <li> Sau khi mở app lần đầu cần cài đặt quyền hệ thống để bộ gõ hoạt động được (theo hướng dẫn trên App)
+            </li>
+            <li> Sau khi làm theo hướng dẫn trên App, tắt App và mở lại 1 lần nữa là có thể dùng được bình thường </li>
+        </ol>
+        <h2>Nâng Cấp Phiên Bản</h2>
+        <p>
+            <i>Để App hoàn toàn bảo mật 100%, sẽ không mở bất kỳ kết nối mạng nào từ App (ngay cả việc check phiên bản
+                mới nhất mà các App thường làm), do đó bạn vui lòng tự theo dõi phiên bản mới trên trang chủ hoặc trên
+                các phương tiện Social.</i>
+        </p>
+        <p> Nếu đã từng dùng phiên bản cũ, bạn có thể tải file .dmg của bản mới nhất về làm từ bước 1-3 như trên (không
+            cần cấp lại quyền). <br /> Nhưng trước khi nâng cấp vui lòng Quit app bản cũ bằng cách click biểu tượng trên
+            Menu, chọn Quit App. </p>
+    </section>
+    <section class="app-faq container" id="faq">
+        <h2>FAQ</h2>
+        <details open>
+            <summary>
+                <strong>1. App có an toàn không ?</strong>
+            </summary>
+            <p>
+            <ul>
+                <li>App trên website chính thức sẽ an toàn, do chính tay mình Code, chính tay mình Build, chính tay mình
+                    gửi lên Apple ký số để phân phối App (1 lớp quét virus dạng nhẹ).</li>
+                <li>Nếu bạn hỏi tại sao phải tin mình ? Đúng! Bạn không cần tin. Mình tin mình làm điều đúng đắn.</li>
+                i>i>i>
+            </ul>
+            </p>
+        </details>
+        <hr />
+        <details open>
+            <summary>
+                <strong>2. Sao phải cấp quyền macOS thì mới dùng được App ?</strong>
+            </summary>
+            <p>
+            <ul>
+                <li>Đầu tiên việc bạn đặt ra câu hỏi mỗi khi cấp quyền là một tư duy bảo mật tốt!</li>
+                <li>Nếu bạn dùng macOS đã lâu sẽ thấy macOS có 2 dạng bộ gõ : <ul>
+                        <li>Chính thức nguyên tem của hệ điều hành, do Apple viết dựa trên Engine tiếng việt của Unikey,
+                            nhưng cách hoạt động là nó tạo 1 cái input giả (gọi là Buffer ảo) để bạn nhập Tiếng Việt vào
+                            đó, đó là lý do mà nó thường có gạch chân. <br />Đến khi bạn bấm 1 key kết thúc 1 từ (như
+                            Space hay chấm phẩy), hệ điều hành mới Commit cái từ tiếng Việt đó xuống cái Input thật. Nên
+                            sẽ có hiện tượng bạn chưa gõ xong từ mà bấm chuột qua khung khác là nó Move cái từ bạn vừa
+                            gõ qua khung đó. Và còn rất nhiều bug phát sinh do dùng Input giả. </li>
+                        <li>Hàng chế (Caffee, GoTiengViet, OpenKey, EVKey, ...), do lập trình viên VN mơ ước về một trải
+                            nghiệm gõ tiếng Việt tốt hơn trên macOS như trên Windows (Unikey làm rất tốt). Các hàng chế
+                            này hoạt động cơ bản trên cách "Listen" (nghe toàn bộ keyboard được bấm) của bạn trên macOS,
+                            chuyển nó qua Tiếng Việt theo kiểu gõ bạn chọn, rồi lại "Send" các ký tự Ti���ng Việt này
+                            xuống thẳng Input thật cho bạn. <br />Vì thế mà tất cả app kiểu hàng chế này phải xin 2
+                            quyền cơ bản là Listen và Send (quyền nào cũng nguy hiểm nếu tác giả không ngay thẳng) </li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Lưu ý :</strong> Một khi đã cấp quyền, bạn có thể lấy lại quyền nếu muốn (nhưng nhớ tắt App
+                    trước khi làm vì đây là cái bug to đùng ở phía macOS, nó sẽ crash cả cái máy, bạn chỉ có nước bấm
+                    giữ Power để tắt hoàn toàn máy).
+                </li>
+            </ul>
+            </p>
+        </details>
+        <hr />
+        <details open>
+            <summary>
+                <strong>3. Tại sao app miễn phí ?</strong>
+            </summary>
+            <p> Ban đầu mình cũng dự tính thương mại bán License app này, nhưng nghĩ lại market VN hơi chua :
+            <ul>
+                <li>Thị trường quá quen với hàng Free (như mình cũng vậy)</li>
+                <li>Thị trường cũng đã có các app Free (OpenKey, EVKey) với hàng tá tính năng kiểu gõ với bảng Settings
+                    to đùng</li>
+                <li>Cổng thanh toán ở VN khá chán, bán App thì lên Apple Store là ngon nhất (vừa tạo được niềm tin uy
+                    tín, vừa trải nghiệm mua nhanh gọn lẹ). <br />Nhưng khổ nổi loại app này được liệt kê vào danh mục
+                    cấm lên App (do đó bạn thấy các app trước không lên được - vì 2 cái quyền khá nhạy cảm) </li>
+            </ul>
+            </p>
+        </details>
+        <hr />
+        <details open>
+            <summary>
+                <strong>4. Tại sao Open-source ?</strong>
+            </summary>
+            <p>
+            <ul>
+                <li>Mình dự tính là Free nhưng sẽ Closed-Source, nhưng nghĩ lại tài hèn sức mọn, cái đống mã này chẳng
+                    bỏ gì với tài năng của các dev VN khác</li>
+                <li>Việc open-source cho các Dev khác chung sở thích và muốn hiểu hơn về bộ gõ có thể đóng góp</li>
+                <li>Mình thấy đa phần các App trước OpenSource viết khá khó hiểu (như OpenKey viết bằng Obj-C) và Engine
+                    nhìn rất Hard-core (mỗi khi mình muốn Contribute phải vận rất nhiều nội công học lại - nên đa phần
+                    bỏ cuộc ở bước đọc code)</li>
+            </ul>
+            </p>
+        </details>
+        <hr />
+    </section>
+    <section class="app-license container">
+        <h2>LICENSE</h2>
+        <p>GNU General Public License v3.0 (cơ bản là bạn có thể làm gì với mã nguồn cũng được, ngoại trừ dùng nó để làm
+            một phần mềm khác mã đóng - vì như thế là vi phạm tinh thần Open-Source của dự án)</p>
+    </section>
+    <footer class="app-footer container">
+        <hr />
+        <p>© 2024 KhanhIceTea. Made in Vietnam.</p>
+    </footer>
+</body>
+
+</html>
