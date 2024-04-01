@@ -17,6 +17,7 @@ class AppState: ObservableObject, FileMonitorDelegate {
 
   @Published public var enabled = false
   @Published public var typingMethod: TypingMethods
+  @Published public var allowedZWJF: Bool
 
   public var inputProcessor: InputProcessor
   public var eventHook: EventHook
@@ -29,12 +30,9 @@ class AppState: ObservableObject, FileMonitorDelegate {
 
     let defaultMethod = Defaults[.typingMethod]
     typingMethod = defaultMethod
+    allowedZWJF = Defaults[.allowedZWJF]
     inputProcessor = InputProcessor(method: defaultMethod)
     eventHook = EventHook(inputProcessor: inputProcessor)
-
-    KeyboardShortcuts.onKeyUp(for: .toggleInputMode) { [self] in
-      self.setEnabled(set: !self.enabled)
-    }
 
     $enabled.sink { newState in
       self.appModes[self.activeAppName] = newState
@@ -45,6 +43,21 @@ class AppState: ObservableObject, FileMonitorDelegate {
       self.inputProcessor.changeTypingMethod(newMethod: newState)
       Defaults[.typingMethod] = newState
     }.store(in: &cancellables)
+
+    $allowedZWJF.sink { newState in
+      if newState {
+        TiengViet.PhuAmDau = TiengViet.PhuAmGhep + TiengViet.PhuAmDon + TiengViet.PhuAmDonNuocNgoai
+      } else {
+        TiengViet.PhuAmDau = TiengViet.PhuAmGhep + TiengViet.PhuAmDon
+      }
+      print(TiengViet.PhuAmDau)
+
+      Defaults[.allowedZWJF] = newState
+    }.store(in: &cancellables)
+
+    KeyboardShortcuts.onKeyUp(for: .toggleInputMode) { [self] in
+      self.setEnabled(set: !self.enabled)
+    }
 
     // Register application change observer
     NSWorkspace.shared.notificationCenter.addObserver(

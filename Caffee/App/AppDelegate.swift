@@ -85,7 +85,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         withTitle: "Kiểu VNI",
         action: #selector(changeToVNI), keyEquivalent: "")
       menu.addItem(NSMenuItem.separator())
-      menu.addItem(withTitle: "Settings", action: #selector(openSettings), keyEquivalent: "")
+      menu.addItem(withTitle: "Cài Đặt", action: #selector(openSettings), keyEquivalent: "")
       menu.addItem(withTitle: "Quit App", action: #selector(quitApp), keyEquivalent: "q")
       statusBarItem.menu = menu
 

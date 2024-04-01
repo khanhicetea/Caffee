@@ -61,6 +61,10 @@ class TiengViet {
     "b", "c", "d", "g", "h", "k", "l", "m", "n", "p", "q", "r", "s", "t", "v", "x",
     "B", "C", "D", "G", "H", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "X",
   ]
+  static let PhuAmDonNuocNgoai: [String] = [
+    "z", "w", "j", "f",
+    "Z", "W", "J", "F",
+  ]
   static let PhuAmGhep: [String] = [
     "ngh", "ngH", "nGh", "nGH", "Ngh", "NgH", "NGh", "NGH",
     "ch", "cH", "Ch", "CH",
@@ -74,7 +78,7 @@ class TiengViet {
     "th", "tH", "Th", "TH",
     "tr", "tR", "Tr", "TR",
   ]
-  static let PhuAm: [String] = PhuAmGhep + PhuAmDon
+  static var PhuAmDau: [String] = PhuAmGhep + PhuAmDon
   static let PhuAmCuoi: [String] = [
     "nh", "nH", "Nh", "NH",
     "ng", "nG", "Ng", "NG",
@@ -222,7 +226,7 @@ class TiengViet {
     thanhPhanTieng.conLai = []
 
     if !isBlank() {
-      for phuAmDau in TiengViet.PhuAm {
+      for phuAmDau in TiengViet.PhuAmDau {
         if strKhongDau.starts(with: phuAmDau) {
           thanhPhanTieng.phuAmDau = Array(phuAmDau)
           strKhongDau = String(strKhongDau.dropFirst(phuAmDau.count))

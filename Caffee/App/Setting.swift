@@ -32,6 +32,7 @@ extension KeyboardShortcuts.Name {
 extension Defaults.Keys {
   static let currentVersion = Key<String>("current-version", default: "0.1")
   static let typingMethod = Key<TypingMethods>("typing-method", default: .Telex)
+  static let allowedZWJF = Key<Bool>("allowed-zwjf", default: true)
   static let token = Key<String>("token", default: "")
 
   //            ^            ^         ^                ^

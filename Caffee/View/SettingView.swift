@@ -7,6 +7,8 @@ import SwiftUI
 struct GeneralView: View {
   @EnvironmentObject var appState: AppState
 
+  let appVersion = Bundle.main.appVersionLong
+
   var body: some View {
     VStack {
       Image("Cficon")
@@ -39,6 +41,11 @@ struct GeneralView: View {
           }.pickerStyle(.segmented)
         }
         GridRow {
+          Text("Phụ âm z,w,j,f")
+          Toggle("", isOn: $appState.allowedZWJF)
+            .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+        }
+        GridRow {
           Text("Phím tắt")
           KeyboardShortcuts.Recorder("", name: .toggleInputMode)
         }
@@ -49,7 +56,7 @@ struct GeneralView: View {
       }
 
       Text(
-        "Không có tính năng gì ngoài gõ Tiếng Việt !\n Developed by [KhanhIceTea](https://khanhicetea.com)."
+        "Version : \(appVersion)\nKhông có tính năng gì ngoài gõ Tiếng Việt !\n Developed by [KhanhIceTea](https://khanhicetea.com)."
       )
       .multilineTextAlignment(.center)
       .italic()
