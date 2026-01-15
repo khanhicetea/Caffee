@@ -96,7 +96,9 @@ class InputProcessor {
   public func handleEvent(event: CGEvent) -> Unmanaged<CGEvent>? {
     let flags = event.flags
     let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-    let shifted = flags.contains(.maskShift) || flags.contains(.maskAlphaShift)
+    // For number keys (used by VNI), only consider actual Shift key, not Capslock
+    // For letter keys, consider both Shift and Capslock
+    let shifted = flags.contains(.maskShift) || (!keyLayout.isNumberKey(keyCode: keyCode) && flags.contains(.maskAlphaShift))
 
     if flags.contains(.maskCommand) || flags.contains(.maskControl)
       || flags.contains(.maskAlternate)

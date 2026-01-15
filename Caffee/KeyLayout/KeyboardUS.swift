@@ -99,4 +99,9 @@ class KeyboardUS {
     guard let key = taskMap[keyCode] else { return nil }
     return key
   }
+
+  func isNumberKey(keyCode: Int64) -> Bool {
+    // Number keys: 0-9
+    return [29, 18, 19, 20, 21, 23, 22, 26, 28, 25].contains(keyCode)
+  }
 }
