@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		3F2E85C92B9EDE7900A95282 /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 3F2E85C82B9EDE7900A95282 /* Defaults */; };
 		3F2E85CC2B9EDF2600A95282 /* Setting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F2E85CB2B9EDF2600A95282 /* Setting.swift */; };
+		3FCA000012C000010000001 /* TiengVietState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA000012C000010000002 /* TiengVietState.swift */; };
+		3FCA000012C000010000003 /* TiengVietParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA000012C000010000004 /* TiengVietParser.swift */; };
+		3FCA000012C000010000005 /* TiengVietTransformer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA000012C000010000006 /* TiengVietTransformer.swift */; };
 		3F2E85CF2BA0B0D400A95282 /* MacroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F2E85CE2BA0B0D400A95282 /* MacroView.swift */; };
 		3F2E85D22BA0B53F00A95282 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 3F2E85D12BA0B53F00A95282 /* KeyboardShortcuts */; };
 		3F4564E22BA5FFD800F087BA /* GuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4564E12BA5FFD800F087BA /* GuideView.swift */; };
@@ -66,6 +69,9 @@
 		3F8A65072B8E370B009E2AF1 /* VNI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VNI.swift; sourceTree = "<group>"; };
 		3F8A65092B8E3BE8009E2AF1 /* TypingMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypingMethod.swift; sourceTree = "<group>"; };
 		3F8A650B2B8F08B3009E2AF1 /* Focused.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Focused.swift; sourceTree = "<group>"; };
+		3FCA000012C000010000002 /* TiengVietState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiengVietState.swift; sourceTree = "<group>"; };
+		3FCA000012C000010000004 /* TiengVietParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiengVietParser.swift; sourceTree = "<group>"; };
+		3FCA000012C000010000006 /* TiengVietTransformer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiengVietTransformer.swift; sourceTree = "<group>"; };
 		3F94E7AE2BA736E100360F8B /* UpgradeAppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeAppView.swift; sourceTree = "<group>"; };
 		3F9FC6D42B9E14AF00659712 /* FileMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMonitor.swift; sourceTree = "<group>"; };
 		3FAFBB812B84A86C0032A55E /* Caffee.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caffee.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -196,6 +202,9 @@
 			isa = PBXGroup;
 			children = (
 				3F8A65032B89AD74009E2AF1 /* TiengViet.swift */,
+				3FCA000012C000010000002 /* TiengVietState.swift */,
+				3FCA000012C000010000004 /* TiengVietParser.swift */,
+				3FCA000012C000010000006 /* TiengVietTransformer.swift */,
 				3F8A65052B8C69C9009E2AF1 /* Telex.swift */,
 				3F8A65072B8E370B009E2AF1 /* VNI.swift */,
 				3F8A65092B8E3BE8009E2AF1 /* TypingMethod.swift */,
@@ -423,6 +432,9 @@
 				3F9FC6D52B9E14AF00659712 /* FileMonitor.swift in Sources */,
 				3F4564E22BA5FFD800F087BA /* GuideView.swift in Sources */,
 				3F8A65042B89AD74009E2AF1 /* TiengViet.swift in Sources */,
+				3FCA000012C000010000001 /* TiengVietState.swift in Sources */,
+				3FCA000012C000010000003 /* TiengVietParser.swift in Sources */,
+				3FCA000012C000010000005 /* TiengVietTransformer.swift in Sources */,
 				3F8A650C2B8F08B3009E2AF1 /* Focused.swift in Sources */,
 				3F8A650A2B8E3BE8009E2AF1 /* TypingMethod.swift in Sources */,
 				3FDB83CB2BB4682F00AD6322 /* Keys.swift in Sources */,

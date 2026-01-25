@@ -69,82 +69,74 @@ class Telex: TypingMethod {
     return false
   }
 
-  /// Xử lý ký tự nhập vào theo kiểu gõ Telex
+  /// Xử lý ký tự nhập vào theo kiểu gõ Telex (functional version)
   /// - Parameters:
   ///   - char: Ký tự vừa gõ
-  ///   - word: Đối tượng TiengViet đang xử lý
-  /// - Returns: true nếu đã áp dụng dấu, false nếu chỉ thêm ký tự thường
-  public func push(char: Character, to word: TiengViet) -> Bool {
-    var daApDungDau = false
+  ///   - state: Trạng thái TiengVietState hiện tại
+  /// - Returns: Tuple (state mới, có áp dụng dấu không)
+  public func push(char: Character, state: TiengVietState) -> (state: TiengVietState, appliedMark: Bool) {
+    let thanhPhan = state.thanhPhanTieng
 
     // Bỏ qua nếu từ có phần không hợp lệ (conLai)
-    if !word.thanhPhanTieng.conLai.isEmpty {
-      // Không xử lý, để thêm ký tự thường
+    if !thanhPhan.conLai.isEmpty {
+      return (state.push(char), false)
     }
+
     // Xử lý dd → đ (phím d gõ 2 lần)
-    else if let chuCaiDau = word.chuKhongDau.first,
-      (char == "d" || char == "D") && (chuCaiDau == "d" || chuCaiDau == "D")
+    if let chuCaiDau = state.chuKhongDau.first,
+       (char == "d" || char == "D") && (chuCaiDau == "d" || chuCaiDau == "D")
     {
-      word.datGachD()
-      daApDungDau = true
+      return (state.withGachD(), true)
     }
+
     // Xử lý các phím dấu (chỉ khi đã có nguyên âm)
-    else if !(word.thanhPhanTieng.nguyenAm.isEmpty) {
-      daApDungDau = true
+    if !thanhPhan.nguyenAm.isEmpty {
       switch char {
       // Phím dấu thanh: s=sắc, f=huyền, r=hỏi, x=ngã, j=nặng
       case "s", "S":
-        word.datDauThanh(dauThanhMoi: .sac)
+        return (state.withTone(.sac), true)
       case "f", "F":
-        word.datDauThanh(dauThanhMoi: .huyen)
+        return (state.withTone(.huyen), true)
       case "r", "R":
-        word.datDauThanh(dauThanhMoi: .hoi)
+        return (state.withTone(.hoi), true)
       case "x", "X":
-        word.datDauThanh(dauThanhMoi: .nga)
+        return (state.withTone(.nga), true)
       case "j", "J":
-        word.datDauThanh(dauThanhMoi: .nang)
+        return (state.withTone(.nang), true)
 
       // Phím dấu mũ: aa=â, ee=ê, oo=ô (gõ đúp nguyên âm)
       case "a", "o", "e", "A", "O", "E":
-        if word.thanhPhanTieng.nguyenAmChua(char: char)
-          || word.thanhPhanTieng.nguyenAmChua(char: char.uppercased().first!)
+        if thanhPhan.nguyenAmChua(char: char)
+            || thanhPhan.nguyenAmChua(char: char.uppercased().first!)
         {
-          word.datMu(dauMuMoi: .muUp)
-        } else {
-          daApDungDau = false
+          return (state.withMu(.muUp), true)
         }
 
       // Phím w: dấu móc (ơ, ư) hoặc dấu trăng (ă) tùy nguyên âm
       case "w", "W":
-        if word.thanhPhanTieng.nguyenAmChua1KyTu(mangKyTu: ["u", "U"]) {
+        if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["u", "U"]) {
           // uw → ư (horn)
-          word.datMu(dauMuMoi: .muMoc)
-        } else if word.thanhPhanTieng.nguyenAmChua1KyTu(mangKyTu: ["a", "A"]) {
+          return (state.withMu(.muMoc), true)
+        } else if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["a", "A"]) {
           // aw → ă (breve)
-          word.datMu(dauMuMoi: .muNgua)
-        } else if word.thanhPhanTieng.nguyenAmChua1KyTu(mangKyTu: ["o", "O"]) {
+          return (state.withMu(.muNgua), true)
+        } else if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["o", "O"]) {
           // ow → ơ (horn)
-          word.datMu(dauMuMoi: .muMoc)
-        } else {
-          daApDungDau = false
+          return (state.withMu(.muMoc), true)
         }
 
       default:
-        daApDungDau = false
+        break
       }
     }
 
-    // Nếu không áp dụng dấu, thêm ký tự như bình thường
-    if !daApDungDau {
-      word.push(letter: char)
-    }
-
-    return daApDungDau
+    // Không áp dụng dấu, thêm ký tự như bình thường
+    return (state.push(char), false)
   }
 
-  /// Xóa ký tự cuối cùng
-  public func pop(from word: TiengViet) -> Character? {
-    word.pop()
+  /// Xóa ký tự cuối cùng (functional version)
+  public func pop(state: TiengVietState) -> TiengVietState {
+    state.pop()
   }
 
 }

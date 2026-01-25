@@ -15,6 +15,8 @@ enum TypingMethods: String, CaseIterable, Defaults.Serializable {
 
 protocol TypingMethod {
   func shouldStopProcessing(keyStr: String) -> Bool
-  func push(char: Character, to word: TiengViet) -> Bool
-  func pop(from word: TiengViet) -> Character?
+
+  // New functional API - returns new state instead of mutating
+  func push(char: Character, state: TiengVietState) -> (state: TiengVietState, appliedMark: Bool)
+  func pop(state: TiengVietState) -> TiengVietState
 }

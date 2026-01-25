@@ -68,76 +68,65 @@ class VNI: TypingMethod {
     return false
   }
 
-  /// Xử lý ký tự nhập vào theo kiểu gõ VNI
+  /// Xử lý ký tự nhập vào theo kiểu gõ VNI (functional version)
   /// - Parameters:
   ///   - char: Ký tự vừa gõ
-  ///   - word: Đối tượng TiengViet đang xử lý
-  /// - Returns: true nếu đã áp dụng dấu, false nếu chỉ thêm ký tự thường
-  public func push(char: Character, to word: TiengViet) -> Bool {
-    var daApDungDau = false
+  ///   - state: Trạng thái TiengVietState hiện tại
+  /// - Returns: Tuple (state mới, có áp dụng dấu không)
+  public func push(char: Character, state: TiengVietState) -> (state: TiengVietState, appliedMark: Bool) {
+    let thanhPhan = state.thanhPhanTieng
 
     // Xử lý d9 → đ (phím 9 sau chữ d)
-    if let chuCaiDau = word.chuKhongDau.first,
-      (char == "9") && (chuCaiDau == "d" || chuCaiDau == "D")
+    if let chuCaiDau = state.chuKhongDau.first,
+       (char == "9") && (chuCaiDau == "d" || chuCaiDau == "D")
     {
-      word.datGachD()
-      daApDungDau = true
+      return (state.withGachD(), true)
     }
+
     // Xử lý các phím số dấu (chỉ khi đã có nguyên âm)
-    else if !(word.thanhPhanTieng.nguyenAm.isEmpty) {
-      daApDungDau = true
+    if !thanhPhan.nguyenAm.isEmpty {
       switch char {
       // Phím dấu thanh: 1=sắc, 2=huyền, 3=hỏi, 4=ngã, 5=nặng
       case "1":
-        word.datDauThanh(dauThanhMoi: .sac)
+        return (state.withTone(.sac), true)
       case "2":
-        word.datDauThanh(dauThanhMoi: .huyen)
+        return (state.withTone(.huyen), true)
       case "3":
-        word.datDauThanh(dauThanhMoi: .hoi)
+        return (state.withTone(.hoi), true)
       case "4":
-        word.datDauThanh(dauThanhMoi: .nga)
+        return (state.withTone(.nga), true)
       case "5":
-        word.datDauThanh(dauThanhMoi: .nang)
+        return (state.withTone(.nang), true)
 
       // Phím 6: dấu mũ (^) cho a, e, o → â, ê, ô
       case "6":
-        if word.thanhPhanTieng.nguyenAmChua1KyTu(mangKyTu: ["a", "A", "o", "O", "e", "E"]) {
-          word.datMu(dauMuMoi: .muUp)
-        } else {
-          daApDungDau = false
+        if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["a", "A", "o", "O", "e", "E"]) {
+          return (state.withMu(.muUp), true)
         }
 
       // Phím 7: dấu móc (horn) cho u, o → ư, ơ
       case "7":
-        if word.thanhPhanTieng.nguyenAmChua1KyTu(mangKyTu: ["u", "o", "U", "O"]) {
-          word.datMu(dauMuMoi: .muMoc)
-        } else {
-          daApDungDau = false
+        if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["u", "o", "U", "O"]) {
+          return (state.withMu(.muMoc), true)
         }
 
       // Phím 8: dấu trăng (breve) cho a → ă
       case "8":
-        if word.thanhPhanTieng.nguyenAmChua1KyTu(mangKyTu: ["a", "A"]) {
-          word.datMu(dauMuMoi: .muNgua)
-        } else {
-          daApDungDau = false
+        if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["a", "A"]) {
+          return (state.withMu(.muNgua), true)
         }
 
       default:
-        daApDungDau = false
+        break
       }
     }
 
-    // Nếu không áp dụng dấu, thêm ký tự như bình thường
-    if !daApDungDau {
-      word.push(letter: char)
-    }
-
-    return daApDungDau
+    // Không áp dụng dấu, thêm ký tự như bình thường
+    return (state.push(char), false)
   }
 
-  /// Xóa ký tự cuối cùng
-  public func pop(from word: TiengViet) -> Character? {
-    return word.pop()
+  /// Xóa ký tự cuối cùng (functional version)
+  public func pop(state: TiengVietState) -> TiengVietState {
+    return state.pop()
   }
 }

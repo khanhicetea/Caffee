@@ -83,4 +83,99 @@ final class CaffeeTests: XCTestCase {
     //    }
   }
 
+  // MARK: - "gi" Special Case Tests
+
+  /// Test "gi" alone: "gif" -> "gi" (g is consonant, i is vowel with tone)
+  func testGiAlone() throws {
+    let state = TiengVietState.empty
+      .push("g").push("i").withTone(.huyen)
+    XCTAssertEqual(state.transformed, "gì")
+  }
+
+  /// Test "gi" with following vowel: "gieets" -> "giet" (gi is consonant, e is vowel)
+  func testGiWithVowel() throws {
+    let state = TiengVietState.empty
+      .push("g").push("i").push("e").push("t")
+      .withMu(.muUp).withTone(.sac)
+    XCTAssertEqual(state.transformed, "giết")
+  }
+
+  /// Test "gi" with "a": "gia" -> "gia" (gi is consonant, a is vowel)
+  func testGiWithA() throws {
+    let state = TiengVietState.empty
+      .push("g").push("i").push("a")
+    XCTAssertEqual(state.transformed, "gia")
+  }
+
+  // MARK: - Functional State Immutability Tests
+
+  /// Test that state mutations return new state without affecting original
+  func testImmutability() throws {
+    let state1 = TiengVietState.empty.push("a")
+    let state2 = state1.withTone(.sac)
+
+    XCTAssertEqual(state1.transformed, "a")   // Original unchanged
+    XCTAssertEqual(state2.transformed, "á")   // New state has tone
+  }
+
+  /// Test that push returns new state
+  func testPushImmutability() throws {
+    let state1 = TiengVietState.empty.push("h").push("o")
+    let state2 = state1.push("m")
+
+    XCTAssertEqual(state1.transformed, "ho")
+    XCTAssertEqual(state2.transformed, "hom")
+  }
+
+  /// Test that pop returns new state
+  func testPopImmutability() throws {
+    let state1 = TiengVietState.empty.push("h").push("o").push("m")
+    let state2 = state1.pop()
+
+    XCTAssertEqual(state1.transformed, "hom")
+    XCTAssertEqual(state2.transformed, "ho")
+  }
+
+  /// Test toggle behavior for tone marks
+  func testToneToggle() throws {
+    let state1 = TiengVietState.empty.push("a")
+    let state2 = state1.withTone(.sac)
+    let state3 = state2.withTone(.sac)  // Toggle off
+
+    XCTAssertEqual(state1.transformed, "a")
+    XCTAssertEqual(state2.transformed, "á")
+    XCTAssertEqual(state3.transformed, "a")  // Tone removed
+  }
+
+  /// Test toggle behavior for diacritical marks
+  func testMuToggle() throws {
+    let state1 = TiengVietState.empty.push("a")
+    let state2 = state1.withMu(.muUp)
+    let state3 = state2.withMu(.muUp)  // Toggle off
+
+    XCTAssertEqual(state1.transformed, "a")
+    XCTAssertEqual(state2.transformed, "â")
+    XCTAssertEqual(state3.transformed, "a")  // Mark removed
+  }
+
+  // MARK: - Vietnamese Text Transformation Tests
+
+  /// Test basic Telex input
+  func testBasicTelex() throws {
+    let result = transform_text_telex(for: "xin chaof")
+    XCTAssertEqual(result, "xin chào")
+  }
+
+  /// Test VNI input
+  func testBasicVNI() throws {
+    let result = transform_text_vni(for: "xin cha2o")
+    XCTAssertEqual(result, "xin chào")
+  }
+
+  /// Test "khong" with Telex
+  func testKhongTelex() throws {
+    let result = transform_text_telex(for: "khoong")
+    XCTAssertEqual(result, "không")
+  }
+
 }

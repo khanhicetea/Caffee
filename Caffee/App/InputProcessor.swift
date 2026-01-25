@@ -17,7 +17,7 @@ class InputProcessor {
   ]
   static let NewWordKeys = "`!@#$%^&*()-=[]\\;',./~_+{}|:\"<>?"
   static let NewWordTaskKeys: [TaskKey] = [.Enter, .Space, .Tab]
-  static let JumpTaskKeys: [TaskKey] = [.Home, .End, .ArrowUp, .ArrowDown]
+  static let JumpTaskKeys: [TaskKey] = [.Home, .End, .ArrowUp, .ArrowDown, .ArrowLeft, .ArrowRight]
 
   public var engine: TypingMethod
   public var typingMethod: TypingMethods
@@ -29,8 +29,8 @@ class InputProcessor {
   public var transformed = ""
 
   public var activeApp = ""
-  public var previousWord: TiengViet?
-  public var word = TiengViet()
+  public var previousWordState: TiengVietState?
+  public var wordState = TiengVietState.empty
 
   init(method: TypingMethods) {
     typingMethod = method
@@ -48,12 +48,12 @@ class InputProcessor {
   }
 
   public func newWord(storePrevious: Bool = false) {
-    previousWord = nil
-    if !word.isBlank() {
+    previousWordState = nil
+    if !wordState.isBlank {
       if storePrevious {
-        previousWord = word
+        previousWordState = wordState
       }
-      word = TiengViet()
+      wordState = .empty
     }
 
     keys = []
@@ -63,26 +63,26 @@ class InputProcessor {
   }
 
   public func pop() {
-    if word.isBlank(), let prev = previousWord {
-      word = prev
-      previousWord = nil
-      keys = word.chuKhongDau
-      transformed = word.transform()
+    if wordState.isBlank, let prev = previousWordState {
+      wordState = prev
+      previousWordState = nil
+      keys = Array(wordState.chuKhongDau)
+      transformed = wordState.transformed
       lastTransformed = transformed
     } else {
-      _ = engine.pop(from: word)
-      keys = word.chuKhongDau
+      wordState = engine.pop(state: wordState)
+      keys = Array(wordState.chuKhongDau)
       transformed = String(transformed.dropLast(1))
     }
-
   }
 
   public func push(char: Character) {
     keys.append(char)
 
     lastTransformed = transformed
-    _ = engine.push(char: char, to: word)
-    transformed = word.transform()
+    let result = engine.push(char: char, state: wordState)
+    wordState = result.state
+    transformed = wordState.transformed
 
     if engine.shouldStopProcessing(keyStr: String(keys)) {
       stopProcessing = true
