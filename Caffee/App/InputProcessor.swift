@@ -82,7 +82,15 @@ class InputProcessor {
     lastTransformed = transformed
     let result = engine.push(char: char, state: wordState)
     wordState = result.state
-    transformed = wordState.transformed
+
+    // Check if we need to recover original input (invalid Vietnamese syllable)
+    if wordState.needsRecovery {
+      stopProcessing = true
+      // Use keys array which contains ALL typed characters (including tone marks like 's', 'f' etc.)
+      transformed = String(keys)
+    } else {
+      transformed = wordState.transformed
+    }
 
     if engine.shouldStopProcessing(keyStr: String(keys)) {
       stopProcessing = true

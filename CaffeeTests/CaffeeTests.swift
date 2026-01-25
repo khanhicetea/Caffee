@@ -178,4 +178,47 @@ final class CaffeeTests: XCTestCase {
     XCTAssertEqual(result, "không")
   }
 
+  // MARK: - Vietnamese Input Recovery Tests
+
+  /// Test that invalid vowel combination triggers recovery
+  func testInvalidVowelRecovery() throws {
+    // "ae" is not a valid Vietnamese vowel combination
+    let result = transform_text_telex(for: "aes")
+    // Should recover to original input since "ae" + tone doesn't make sense
+    XCTAssertEqual(result, "aes")
+  }
+
+  /// Test that invalid final consonant triggers recovery
+  func testInvalidFinalConsonantRecovery() throws {
+    // "ai" cannot take final consonant "m" - "aim" is invalid
+    let result = transform_text_telex(for: "aimf")
+    // Should recover to original input
+    XCTAssertEqual(result, "aimf")
+  }
+
+  /// Test valid Vietnamese still works correctly
+  func testValidVietnameseNoRecovery() throws {
+    // "tiếng" is valid Vietnamese
+    let result = transform_text_telex(for: "tieengs")
+    XCTAssertEqual(result, "tiếng")
+  }
+
+  /// Test needsRecovery property directly
+  func testNeedsRecoveryProperty() throws {
+    // Invalid: "ae" vowel combination
+    let invalidState = TiengVietState.empty.push("a").push("e")
+    XCTAssertTrue(invalidState.needsRecovery)
+
+    // Valid: "a" simple vowel
+    let validState = TiengVietState.empty.push("a")
+    XCTAssertFalse(validState.needsRecovery)
+  }
+
+  /// Test originalInput property
+  func testOriginalInputProperty() throws {
+    let state = TiengVietState.empty.push("t").push("h").push("a").push("e")
+    XCTAssertEqual(state.originalInput, "thae")
+  }
+
 }
+

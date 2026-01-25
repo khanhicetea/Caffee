@@ -45,6 +45,17 @@ struct TiengVietState {
 
   /// Check if state is empty
   var isBlank: Bool { chuKhongDau.isEmpty }
+
+  /// Check if state needs recovery (invalid Vietnamese syllable)
+  /// When true, the original input should be used instead of transformed text
+  var needsRecovery: Bool {
+    TiengVietValidator.needsRecovery(thanhPhanTieng)
+  }
+
+  /// The original input string (for recovery when Vietnamese is invalid)
+  var originalInput: String {
+    String(chuKhongDau)
+  }
 }
 
 // MARK: - State Mutations (return new state)
