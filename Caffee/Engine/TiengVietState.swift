@@ -49,7 +49,7 @@ struct TiengVietState {
   /// Check if state needs recovery (invalid Vietnamese syllable)
   /// When true, the original input should be used instead of transformed text
   var needsRecovery: Bool {
-    TiengVietValidator.needsRecovery(thanhPhanTieng)
+    TiengVietValidator.needsRecovery(thanhPhanTieng, dauMu: dauMu)
   }
 
   /// The original input string (for recovery when Vietnamese is invalid)

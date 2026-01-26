@@ -123,13 +123,17 @@ class InputProcessor {
     } else if stopProcessing {
       return Unmanaged.passRetained(event)
     } else if let newChar = keyLayout.mapText(keyCode: keyCode, withShift: shifted) {
+      // Check if this is a word-ending character (punctuation, etc.) BEFORE processing
+      // This prevents punctuation from triggering recovery on valid Vietnamese words
+      // e.g., "xuất." should remain "xuất." not become "xuaats."
+      if let _ = InputProcessor.NewWordKeys.firstIndex(of: newChar) {
+        newWord(storePrevious: true)
+        return Unmanaged.passRetained(event)  // Let punctuation pass through as-is
+      }
+
       push(char: newChar)
       var (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
         from: lastTransformed, to: transformed)
-
-      if let _ = InputProcessor.NewWordKeys.firstIndex(of: newChar) {
-        newWord()
-      }
 
       if let firstDiffChar = diffChars.first, diffChars.count == 1 && firstDiffChar == newChar {
         return Unmanaged.passRetained(event)

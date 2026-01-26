@@ -104,9 +104,11 @@ enum TiengVietValidator {
   // MARK: - Validation Methods
 
   /// Check if the parsed syllable needs recovery (is invalid Vietnamese)
-  /// - Parameter thanhPhan: The parsed syllable components
+  /// - Parameters:
+  ///   - thanhPhan: The parsed syllable components
+  ///   - dauMu: The current diacritical mark (circumflex, horn, breve)
   /// - Returns: true if the syllable is invalid and needs recovery
-  static func needsRecovery(_ thanhPhan: ThanhPhanTieng) -> Bool {
+  static func needsRecovery(_ thanhPhan: ThanhPhanTieng, dauMu: DauMu = .khongMu) -> Bool {
     // Case 1: Has leftover characters (conLai) that don't fit Vietnamese pattern
     if !thanhPhan.conLai.isEmpty {
       return true
@@ -128,7 +130,9 @@ enum TiengVietValidator {
       }
 
       // Then check if this vowel can have this final consonant
-      if !isValidVowelEnding(nguyenAm: nguyenAm, phuAmCuoi: phuAmCuoi) {
+      // We need to consider the transformed vowel with diacritics, not just the base vowel
+      // For example: "ua" cannot take final consonant, but "uâ" can take "n" or "t"
+      if !isValidVowelEnding(nguyenAm: nguyenAm, phuAmCuoi: phuAmCuoi, dauMu: dauMu) {
         return true
       }
     }
@@ -138,11 +142,22 @@ enum TiengVietValidator {
 
   /// Validate if a vowel can have a specific final consonant
   /// - Parameters:
-  ///   - nguyenAm: The vowel (lowercase)
+  ///   - nguyenAm: The vowel (lowercase, base form without diacritics)
   ///   - phuAmCuoi: The final consonant (lowercase)
+  ///   - dauMu: The diacritical mark being applied
   /// - Returns: true if the combination is valid
-  private static func isValidVowelEnding(nguyenAm: String, phuAmCuoi: String) -> Bool {
-    // If we have specific rules for this vowel, use them
+  private static func isValidVowelEnding(nguyenAm: String, phuAmCuoi: String, dauMu: DauMu) -> Bool {
+    // First, transform the vowel with the diacritical mark to check the actual vowel
+    // This is crucial because some base vowels (like "ua") can't take final consonants,
+    // but their transformed versions (like "uâ") can.
+    let transformedVowel = transformVowelWithMu(nguyenAm: nguyenAm, dauMu: dauMu)
+    
+    // Check the transformed vowel first
+    if let validEndings = ValidVowelEndings[transformedVowel] {
+      return validEndings.contains(phuAmCuoi)
+    }
+    
+    // If no specific rules for transformed vowel, check base vowel
     if let validEndings = ValidVowelEndings[nguyenAm] {
       return validEndings.contains(phuAmCuoi)
     }
@@ -150,5 +165,30 @@ enum TiengVietValidator {
     // For vowels not in our dictionary, allow all standard final consonants
     // This is a conservative approach - better to allow than to incorrectly reject
     return ValidPhuAmCuoi.contains(phuAmCuoi)
+  }
+  
+  /// Transform a base vowel to its form with diacritical mark applied
+  /// - Parameters:
+  ///   - nguyenAm: The base vowel (lowercase)
+  ///   - dauMu: The diacritical mark to apply
+  /// - Returns: The transformed vowel string
+  private static func transformVowelWithMu(nguyenAm: String, dauMu: DauMu) -> String {
+    switch dauMu {
+    case .khongMu:
+      return nguyenAm
+    case .muUp:  // Circumflex: a→â, e→ê, o→ô
+      var result = nguyenAm
+      result = result.replacingOccurrences(of: "a", with: "â")
+      result = result.replacingOccurrences(of: "e", with: "ê")
+      result = result.replacingOccurrences(of: "o", with: "ô")
+      return result
+    case .muMoc:  // Horn: o→ơ, u→ư
+      var result = nguyenAm
+      result = result.replacingOccurrences(of: "o", with: "ơ")
+      result = result.replacingOccurrences(of: "u", with: "ư")
+      return result
+    case .muNgua:  // Breve: a→ă
+      return nguyenAm.replacingOccurrences(of: "a", with: "ă")
+    }
   }
 }

@@ -220,5 +220,64 @@ final class CaffeeTests: XCTestCase {
     XCTAssertEqual(state.originalInput, "thae")
   }
 
-}
+  // MARK: - Transformed Vowel Validation Tests
 
+  /// Test "xuất" - the vowel "ua" with circumflex becomes "uâ" which CAN take "t"
+  func testXuatWithCircumflex() throws {
+    let result = transform_text_telex(for: "xuaats")
+    XCTAssertEqual(result, "xuất")
+  }
+
+  /// Test "xuân" - the vowel "ua" with circumflex becomes "uâ" which CAN take "n"
+  func testXuanWithCircumflex() throws {
+    let result = transform_text_telex(for: "xuaan")
+    XCTAssertEqual(result, "xuân")
+  }
+
+  /// Test "luật" - similar case with "uâ" + "t"
+  func testLuatWithCircumflex() throws {
+    let result = transform_text_telex(for: "luaats")
+    XCTAssertEqual(result, "luật")
+  }
+
+  /// Test "được" - the vowel "uo" with horn becomes "ươ" which CAN take "c"
+  func testDuocWithHorn() throws {
+    let result = transform_text_telex(for: "dduowwc")
+    XCTAssertEqual(result, "được")
+  }
+
+  /// Test "mượn" - the vowel "uo" with horn becomes "ươ" which CAN take "n"
+  func testMuonWithHorn() throws {
+    let result = transform_text_telex(for: "muowwn")
+    XCTAssertEqual(result, "mượn")
+  }
+
+  /// Test that base "ua" without diacritics still cannot take final consonants
+  func testUaWithoutDiacriticRecovery() throws {
+    // "uat" with no circumflex should trigger recovery since "ua" can't take "t"
+    // (This tests the correct behavior - ua alone cannot have final consonant)
+    let state = TiengVietState.empty.push("u").push("a").push("t")
+    XCTAssertTrue(state.needsRecovery)
+  }
+
+  /// Test that "uâ" with circumflex CAN take final consonants
+  func testUaWithCircumflexValid() throws {
+    // "uât" with circumflex should be valid since "uâ" can take "t"
+    let state = TiengVietState.empty.push("u").push("a").push("t").withMu(.muUp)
+    XCTAssertFalse(state.needsRecovery)
+    XCTAssertEqual(state.transformed, "uất")
+  }
+
+  // MARK: - Punctuation Edge Case Note
+  // 
+  // The following edge case is handled in InputProcessor.handleEvent():
+  // When punctuation follows a valid Vietnamese word (e.g., "xuất."),
+  // the punctuation should NOT trigger recovery.
+  // 
+  // Fix: NewWordKeys (punctuation) are checked BEFORE push() is called,
+  // so they pass through naturally without affecting the Vietnamese state.
+  // 
+  // Example: "sản xuất." should remain "sản xuất." not become "sản xuaats."
+  // This cannot be easily unit tested here as it requires event simulation.
+
+}
