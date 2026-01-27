@@ -2,24 +2,34 @@
 //  TiengVietState.swift
 //  Caffee
 //
-//  Immutable Vietnamese syllable state
+//  Trạng thái bất biến của âm tiết tiếng Việt (Immutable state)
 //
 
 import Foundation
 
-/// TiengVietState - Immutable Vietnamese syllable state
-/// All mutations return a new state instance, ensuring consistency
+/// TiengVietState - Container trạng thái bất biến
+///
+/// Mọi thay đổi trạng thái đều trả về instance mới, đảm bảo tính nhất quán
+/// và dễ debug (có thể so sánh state trước/sau).
+///
+/// Sử dụng:
+/// ```swift
+/// let state = TiengVietState.empty
+///   .push("t").push("o").push("i")  // "toi"
+///   .withTone(.sac)                  // "tói"
+///   .withMu(.muUp)                   // "tôi" → "tối"
+/// ```
 struct TiengVietState {
-  /// Raw characters without diacritics (input from keyboard)
+  /// Chuỗi ký tự gốc chưa có dấu (đầu vào từ bàn phím)
   let chuKhongDau: [Character]
-  /// Current tone mark
+  /// Dấu thanh hiện tại (sắc, huyền, hỏi, ngã, nặng)
   let dauThanh: DauThanh
-  /// Current diacritical mark (circumflex, horn, breve)
+  /// Dấu mũ hiện tại (mũ, móc, trăng)
   let dauMu: DauMu
-  /// Whether to apply stroke to 'd'
+  /// Có gạch ngang chữ D không (d → đ)
   let gachD: Bool
 
-  /// Empty state singleton
+  /// State rỗng - điểm khởi đầu
   static let empty = TiengVietState(
     chuKhongDau: [],
     dauThanh: .bang,
@@ -27,12 +37,14 @@ struct TiengVietState {
     gachD: false
   )
 
-  /// Computed - always consistent, no manual parse() needed
+  // MARK: - Computed Properties
+
+  /// Các thành phần âm tiết đã phân tích - luôn nhất quán, không cần gọi parse() thủ công
   var thanhPhanTieng: ThanhPhanTieng {
     TiengVietParser.parse(chuKhongDau)
   }
 
-  /// Computed - transformed string with diacritics
+  /// Chuỗi đã biến đổi với dấu tiếng Việt
   var transformed: String {
     if isBlank { return "" }
     return TiengVietTransformer.transform(
@@ -43,26 +55,26 @@ struct TiengVietState {
     )
   }
 
-  /// Check if state is empty
+  /// Kiểm tra state có rỗng không
   var isBlank: Bool { chuKhongDau.isEmpty }
 
-  /// Check if state needs recovery (invalid Vietnamese syllable)
-  /// When true, the original input should be used instead of transformed text
+  /// Kiểm tra âm tiết có cần recovery không (không hợp lệ tiếng Việt)
+  /// Khi true, nên dùng chuỗi gốc thay vì chuỗi đã biến đổi
   var needsRecovery: Bool {
     TiengVietValidator.needsRecovery(thanhPhanTieng, dauMu: dauMu)
   }
 
-  /// The original input string (for recovery when Vietnamese is invalid)
+  /// Chuỗi gốc (dùng khi cần recovery)
   var originalInput: String {
     String(chuKhongDau)
   }
 }
 
-// MARK: - State Mutations (return new state)
+// MARK: - State Mutations (trả về state mới)
 
 extension TiengVietState {
 
-  /// Add a character to the input
+  /// Thêm ký tự vào chuỗi đầu vào
   func push(_ letter: Character) -> TiengVietState {
     TiengVietState(
       chuKhongDau: chuKhongDau + [letter],
@@ -72,14 +84,14 @@ extension TiengVietState {
     )
   }
 
-  /// Remove the last character
+  /// Xóa ký tự cuối cùng
   func pop() -> TiengVietState {
     guard !chuKhongDau.isEmpty else { return self }
 
     let newChuKhongDau = Array(chuKhongDau.dropLast())
     let newThanhPhan = TiengVietParser.parse(newChuKhongDau)
 
-    // Reset diacritics if vowel position is now invalid
+    // Reset dấu nếu không còn nguyên âm
     var newDauMu = dauMu
     var newDauThanh = dauThanh
 
@@ -96,7 +108,7 @@ extension TiengVietState {
     )
   }
 
-  /// Set/toggle tone mark (toggle: applying same tone twice removes it)
+  /// Đặt/xóa dấu thanh (toggle: gõ cùng dấu 2 lần sẽ xóa)
   func withTone(_ tone: DauThanh) -> TiengVietState {
     TiengVietState(
       chuKhongDau: chuKhongDau,
@@ -106,7 +118,7 @@ extension TiengVietState {
     )
   }
 
-  /// Set/toggle diacritical mark (toggle: applying same mark twice removes it)
+  /// Đặt/xóa dấu mũ (toggle: gõ cùng dấu 2 lần sẽ xóa)
   func withMu(_ mu: DauMu) -> TiengVietState {
     TiengVietState(
       chuKhongDau: chuKhongDau,
@@ -116,7 +128,7 @@ extension TiengVietState {
     )
   }
 
-  /// Toggle stroke on 'd' (d <-> d)
+  /// Toggle gạch ngang D (d ↔ đ)
   func withGachD() -> TiengVietState {
     TiengVietState(
       chuKhongDau: chuKhongDau,

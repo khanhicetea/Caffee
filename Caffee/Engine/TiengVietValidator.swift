@@ -2,32 +2,36 @@
 //  TiengVietValidator.swift
 //  Caffee
 //
-//  Validates Vietnamese syllable structure and detects invalid combinations
+//  Kiểm tra tính hợp lệ của âm tiết tiếng Việt
 //
 
 import Foundation
 
-/// TiengVietValidator - Validates Vietnamese syllable structure
-/// Detects when user input cannot form a valid Vietnamese syllable,
-/// triggering recovery to original input
+/// TiengVietValidator - Kiểm tra cấu trúc âm tiết tiếng Việt
+///
+/// Phát hiện khi đầu vào không thể tạo thành âm tiết tiếng Việt hợp lệ,
+/// kích hoạt recovery về chuỗi gốc.
 enum TiengVietValidator {
 
-  // MARK: - Valid Vietnamese Phonotactics
+  // MARK: - Bảng phụ âm cuối hợp lệ
 
-  /// Valid final consonants (phụ âm cuối) in Vietnamese
-  /// Only these consonants can appear at the end of a Vietnamese syllable
+  /// Phụ âm cuối hợp lệ trong tiếng Việt
+  /// Chỉ có các phụ âm này mới có thể xuất hiện ở cuối âm tiết
   static let ValidPhuAmCuoi: Set<String> = [
     "c", "ch", "m", "n", "ng", "nh", "p", "t",
   ]
 
-  /// Valid vowel + final consonant combinations
-  /// Key: vowel (lowercase), Value: set of valid final consonants
-  /// Based on Vietnamese phonotactics rules
+  // MARK: - Bảng kết hợp nguyên âm + phụ âm cuối hợp lệ
+
+  /// Quy tắc kết hợp nguyên âm với phụ âm cuối theo ngữ âm học tiếng Việt
   ///
-  /// Note: Most compound vowels (ai, ao, au, ay, âu, ây, eo, êu, oi, ôi, ơi, ui, ưi, ưu, etc.)
-  /// do NOT take final consonants - they are complete syllable nuclei on their own.
+  /// Key: nguyên âm (chữ thường)
+  /// Value: tập hợp phụ âm cuối hợp lệ
+  ///
+  /// Ghi chú: Hầu hết nguyên âm ghép (ai, ao, au, ay, âu, ây, eo, êu, oi, ôi, ơi, ui, ưi, ưu...)
+  /// KHÔNG có phụ âm cuối - chúng là nhân âm tiết hoàn chỉnh.
   static let ValidVowelEndings: [String: Set<String>] = [
-    // Simple vowels - can take various final consonants
+    // Nguyên âm đơn - có thể kết hợp với nhiều phụ âm cuối
     "a": ["c", "ch", "m", "n", "ng", "nh", "p", "t"],
     "ă": ["c", "m", "n", "ng", "p", "t"],
     "â": ["c", "m", "n", "ng", "p", "t"],
@@ -41,39 +45,39 @@ enum TiengVietValidator {
     "ư": ["c", "m", "n", "ng", "p", "t"],
     "y": ["ch", "m", "n", "nh", "p", "t"],
 
-    // Compound vowels that CAN take final consonants
-    // iê/ie - tiếng, biết, kiếm, điện, etc.
+    // Nguyên âm ghép CÓ THỂ có phụ âm cuối
+    // iê/ie - tiếng, biết, kiếm, điện...
     "iê": ["c", "m", "n", "ng", "p", "t"],
     "ie": ["c", "m", "n", "ng", "p", "t"],
 
-    // uô - cuốc, muốn, buồng, etc.
+    // uô - cuốc, muốn, buồng...
     "uô": ["c", "m", "n", "ng", "p", "t"],
     "uo": ["c", "m", "n", "ng", "p", "t"],
 
-    // ươ - lướt, mượn, hương, etc.
+    // ươ - lướt, mượn, hương...
     "ươ": ["c", "m", "n", "ng", "p", "t"],
 
-    // oa - hoạch, toàn, khoang, loan, etc.
+    // oa - hoạch, toàn, khoang, loan...
     "oa": ["c", "ch", "m", "n", "ng", "nh", "p", "t"],
 
-    // oă - xoắn, loắt, etc.
+    // oă - xoắn, loắt...
     "oă": ["c", "m", "n", "ng", "p", "t"],
 
-    // uâ - luật, xuân, etc.
+    // uâ - luật, xuân...
     "uâ": ["n", "t"],
 
-    // uê - huệch, tuềnh, etc. (rare)
+    // uê - huệch, tuềnh... (hiếm)
     "uê": ["ch", "nh"],
 
-    // uy - huynh, quýt, etc.
+    // uy - huynh, quýt...
     "uy": ["ch", "n", "nh", "p", "t"],
 
-    // yê - yến, yêm, etc.
+    // yê - yến, yêm...
     "yê": ["m", "n", "p", "t"],
     "ye": ["m", "n", "p", "t"],
 
-    // Compound vowels that do NOT take final consonants (empty set)
-    // These are complete on their own: ai, ao, au, ay, âu, ây, eo, êu, ia, iu, oi, ôi, ơi, ua, ui, ưa, ưi, ươi, ưu
+    // Nguyên âm ghép KHÔNG có phụ âm cuối (tập rỗng)
+    // Đây là các nhân âm tiết hoàn chỉnh
     "ai": [],
     "ao": [],
     "au": [],
@@ -95,43 +99,43 @@ enum TiengVietValidator {
     "ưu": [],
   ]
 
-  /// Invalid vowel combinations that cannot exist in Vietnamese
-  /// These are sequences that should trigger immediate recovery
+  /// Tổ hợp nguyên âm không tồn tại trong tiếng Việt
+  /// Các chuỗi này cần recovery ngay lập tức
   static let InvalidVowelCombinations: Set<String> = [
     "ae", "ea", "ey", "iy", "oe", "uu", "yi", "yo", "yu",
   ]
 
-  // MARK: - Validation Methods
+  // MARK: - Phương thức kiểm tra
 
-  /// Check if the parsed syllable needs recovery (is invalid Vietnamese)
+  /// Kiểm tra âm tiết có cần recovery không (không hợp lệ tiếng Việt)
   /// - Parameters:
-  ///   - thanhPhan: The parsed syllable components
-  ///   - dauMu: The current diacritical mark (circumflex, horn, breve)
-  /// - Returns: true if the syllable is invalid and needs recovery
+  ///   - thanhPhan: Các thành phần âm tiết đã phân tích
+  ///   - dauMu: Dấu mũ hiện tại (mũ, móc, trăng)
+  /// - Returns: true nếu âm tiết không hợp lệ và cần recovery
   static func needsRecovery(_ thanhPhan: ThanhPhanTieng, dauMu: DauMu = .khongMu) -> Bool {
-    // Case 1: Has leftover characters (conLai) that don't fit Vietnamese pattern
+    // Trường hợp 1: Có ký tự thừa (conLai) không khớp mẫu tiếng Việt
     if !thanhPhan.conLai.isEmpty {
       return true
     }
 
-    // Case 2: Check for invalid vowel combinations
+    // Trường hợp 2: Tổ hợp nguyên âm không hợp lệ
     let nguyenAm = String(thanhPhan.nguyenAm).lowercased()
     if InvalidVowelCombinations.contains(nguyenAm) {
       return true
     }
 
-    // Case 3: Validate vowel + final consonant combination
+    // Trường hợp 3: Kiểm tra kết hợp nguyên âm + phụ âm cuối
     if !thanhPhan.phuAmCuoi.isEmpty {
       let phuAmCuoi = String(thanhPhan.phuAmCuoi).lowercased()
 
-      // First check if it's a valid final consonant at all
+      // Kiểm tra phụ âm cuối có hợp lệ không
       if !ValidPhuAmCuoi.contains(phuAmCuoi) {
         return true
       }
 
-      // Then check if this vowel can have this final consonant
-      // We need to consider the transformed vowel with diacritics, not just the base vowel
-      // For example: "ua" cannot take final consonant, but "uâ" can take "n" or "t"
+      // Kiểm tra kết hợp nguyên âm + phụ âm cuối
+      // Cần xét cả nguyên âm đã biến đổi với dấu mũ
+      // Ví dụ: "ua" không có phụ âm cuối, nhưng "uâ" có thể kết hợp với "n", "t"
       if !isValidVowelEnding(nguyenAm: nguyenAm, phuAmCuoi: phuAmCuoi, dauMu: dauMu) {
         return true
       }
@@ -140,54 +144,60 @@ enum TiengVietValidator {
     return false
   }
 
-  /// Validate if a vowel can have a specific final consonant
+  // MARK: - Phương thức nội bộ
+
+  /// Kiểm tra kết hợp nguyên âm + phụ âm cuối có hợp lệ không
   /// - Parameters:
-  ///   - nguyenAm: The vowel (lowercase, base form without diacritics)
-  ///   - phuAmCuoi: The final consonant (lowercase)
-  ///   - dauMu: The diacritical mark being applied
-  /// - Returns: true if the combination is valid
-  private static func isValidVowelEnding(nguyenAm: String, phuAmCuoi: String, dauMu: DauMu) -> Bool {
-    // First, transform the vowel with the diacritical mark to check the actual vowel
-    // This is crucial because some base vowels (like "ua") can't take final consonants,
-    // but their transformed versions (like "uâ") can.
+  ///   - nguyenAm: Nguyên âm (chữ thường, dạng gốc chưa có dấu)
+  ///   - phuAmCuoi: Phụ âm cuối (chữ thường)
+  ///   - dauMu: Dấu mũ đang áp dụng
+  /// - Returns: true nếu kết hợp hợp lệ
+  private static func isValidVowelEnding(
+    nguyenAm: String,
+    phuAmCuoi: String,
+    dauMu: DauMu
+  ) -> Bool {
+    // Biến đổi nguyên âm với dấu mũ để kiểm tra nguyên âm thực tế
+    // Quan trọng vì một số nguyên âm gốc (như "ua") không có phụ âm cuối,
+    // nhưng dạng biến đổi (như "uâ") lại có thể kết hợp.
     let transformedVowel = transformVowelWithMu(nguyenAm: nguyenAm, dauMu: dauMu)
-    
-    // Check the transformed vowel first
+
+    // Kiểm tra nguyên âm đã biến đổi trước
     if let validEndings = ValidVowelEndings[transformedVowel] {
       return validEndings.contains(phuAmCuoi)
     }
-    
-    // If no specific rules for transformed vowel, check base vowel
+
+    // Nếu không có quy tắc cho nguyên âm đã biến đổi, kiểm tra nguyên âm gốc
     if let validEndings = ValidVowelEndings[nguyenAm] {
       return validEndings.contains(phuAmCuoi)
     }
 
-    // For vowels not in our dictionary, allow all standard final consonants
-    // This is a conservative approach - better to allow than to incorrectly reject
+    // Với nguyên âm không có trong bảng, cho phép tất cả phụ âm cuối chuẩn
+    // Đây là cách tiếp cận an toàn - tốt hơn là cho phép thay vì từ chối sai
     return ValidPhuAmCuoi.contains(phuAmCuoi)
   }
-  
-  /// Transform a base vowel to its form with diacritical mark applied
+
+  /// Biến đổi nguyên âm gốc thành dạng có dấu mũ
   /// - Parameters:
-  ///   - nguyenAm: The base vowel (lowercase)
-  ///   - dauMu: The diacritical mark to apply
-  /// - Returns: The transformed vowel string
+  ///   - nguyenAm: Nguyên âm gốc (chữ thường)
+  ///   - dauMu: Dấu mũ cần áp dụng
+  /// - Returns: Nguyên âm đã biến đổi
   private static func transformVowelWithMu(nguyenAm: String, dauMu: DauMu) -> String {
     switch dauMu {
     case .khongMu:
       return nguyenAm
-    case .muUp:  // Circumflex: a→â, e→ê, o→ô
+    case .muUp:  // Mũ: a→â, e→ê, o→ô
       var result = nguyenAm
       result = result.replacingOccurrences(of: "a", with: "â")
       result = result.replacingOccurrences(of: "e", with: "ê")
       result = result.replacingOccurrences(of: "o", with: "ô")
       return result
-    case .muMoc:  // Horn: o→ơ, u→ư
+    case .muMoc:  // Móc: o→ơ, u→ư
       var result = nguyenAm
       result = result.replacingOccurrences(of: "o", with: "ơ")
       result = result.replacingOccurrences(of: "u", with: "ư")
       return result
-    case .muNgua:  // Breve: a→ă
+    case .muNgua:  // Trăng: a→ă
       return nguyenAm.replacingOccurrences(of: "a", with: "ă")
     }
   }

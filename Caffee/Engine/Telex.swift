@@ -1,6 +1,6 @@
 //
 //  Telex.swift
-//
+//  Caffee
 //
 //  Created by KhanhIceTea on 17/02/2024.
 //
@@ -17,16 +17,16 @@
 /// │   j = nặng (.) - mạ                                     │
 /// ├─────────────────────────────────────────────────────────┤
 /// │ Phím dấu mũ (Diacritical marks):                        │
-/// │   aa = â (circumflex)   - cân                           │
-/// │   ee = ê (circumflex)   - bên                           │
-/// │   oo = ô (circumflex)   - tôi                           │
-/// │   aw = ă (breve)        - ăn                            │
-/// │   ow = ơ (horn)         - ơi                            │
-/// │   uw = ư (horn)         - ưa                            │
+/// │   aa = â (mũ)         - cân                             │
+/// │   ee = ê (mũ)         - bên                             │
+/// │   oo = ô (mũ)         - tôi                             │
+/// │   aw = ă (trăng)      - ăn                              │
+/// │   ow = ơ (móc)        - ơi                              │
+/// │   uw = ư (móc)        - ưa                              │
 /// │   w  = ơ/ư tùy ngữ cảnh - tươi = tuowi                  │
 /// ├─────────────────────────────────────────────────────────┤
 /// │ Phím đặc biệt:                                          │
-/// │   dd = đ (stroke)       - đi                            │
+/// │   dd = đ (gạch ngang) - đi                              │
 /// └─────────────────────────────────────────────────────────┘
 ///
 /// Quy tắc hủy dấu (gõ đúp):
@@ -38,11 +38,10 @@ import Foundation
 
 class Telex: TypingMethod {
 
-  // MARK: - Stopping Patterns
+  // MARK: - Regex phát hiện dừng xử lý
 
-  /// Regex phát hiện khi nào DỪNG xử lý Telex và in ký tự gốc
+  /// Các pattern regex phát hiện khi nào DỪNG xử lý Telex và in ký tự gốc
   ///
-  /// Các pattern:
   /// - `ss$`, `ff$`, `rr$`, `xx$`, `jj$`, `ww$`: Gõ đúp phím dấu → hủy dấu
   /// - `[0-9]$`: Gõ số → dừng xử lý tiếng Việt
   /// - `a+[a-zA-Z]*aa$`: Gõ 'a' thứ 3 sau khi đã có 'â' → in 'a' thường
@@ -69,7 +68,7 @@ class Telex: TypingMethod {
     return false
   }
 
-  /// Xử lý ký tự nhập vào theo kiểu gõ Telex (functional version)
+  /// Xử lý ký tự nhập vào theo kiểu gõ Telex
   /// - Parameters:
   ///   - char: Ký tự vừa gõ
   ///   - state: Trạng thái TiengVietState hiện tại
@@ -84,7 +83,7 @@ class Telex: TypingMethod {
 
     // Xử lý dd → đ (phím d gõ 2 lần)
     if let chuCaiDau = state.chuKhongDau.first,
-       (char == "d" || char == "D") && (chuCaiDau == "d" || chuCaiDau == "D")
+      (char == "d" || char == "D") && (chuCaiDau == "d" || chuCaiDau == "D")
     {
       return (state.withGachD(), true)
     }
@@ -107,7 +106,7 @@ class Telex: TypingMethod {
       // Phím dấu mũ: aa=â, ee=ê, oo=ô (gõ đúp nguyên âm)
       case "a", "o", "e", "A", "O", "E":
         if thanhPhan.nguyenAmChua(char: char)
-            || thanhPhan.nguyenAmChua(char: char.uppercased().first!)
+          || thanhPhan.nguyenAmChua(char: char.uppercased().first!)
         {
           return (state.withMu(.muUp), true)
         }
@@ -115,13 +114,13 @@ class Telex: TypingMethod {
       // Phím w: dấu móc (ơ, ư) hoặc dấu trăng (ă) tùy nguyên âm
       case "w", "W":
         if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["u", "U"]) {
-          // uw → ư (horn)
+          // uw → ư (móc)
           return (state.withMu(.muMoc), true)
         } else if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["a", "A"]) {
-          // aw → ă (breve)
+          // aw → ă (trăng)
           return (state.withMu(.muNgua), true)
         } else if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["o", "O"]) {
-          // ow → ơ (horn)
+          // ow → ơ (móc)
           return (state.withMu(.muMoc), true)
         }
 
@@ -134,9 +133,8 @@ class Telex: TypingMethod {
     return (state.push(char), false)
   }
 
-  /// Xóa ký tự cuối cùng (functional version)
+  /// Xóa ký tự cuối cùng
   public func pop(state: TiengVietState) -> TiengVietState {
     state.pop()
   }
-
 }

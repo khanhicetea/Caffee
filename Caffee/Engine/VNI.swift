@@ -1,6 +1,6 @@
 //
 //  VNI.swift
-//
+//  Caffee
 //
 //  Created by KhanhIceTea on 17/02/2024.
 //
@@ -38,11 +38,10 @@ import Foundation
 
 class VNI: TypingMethod {
 
-  // MARK: - Stopping Patterns
+  // MARK: - Regex phát hiện dừng xử lý
 
-  /// Regex phát hiện khi nào DỪNG xử lý VNI và in ký tự gốc
+  /// Các pattern regex phát hiện khi nào DỪNG xử lý VNI và in ký tự gốc
   ///
-  /// Các pattern:
   /// - `11$`, `22$`, `33$`, `44$`, `55$`, `88$`: Gõ đúp phím số → hủy dấu
   /// - `a+[a-zA-Z]*66$`: Gõ 6 lần 2 sau 'a' → hủy dấu mũ
   /// - `o+[a-zA-Z]*66$`: Tương tự cho 'o'
@@ -68,7 +67,7 @@ class VNI: TypingMethod {
     return false
   }
 
-  /// Xử lý ký tự nhập vào theo kiểu gõ VNI (functional version)
+  /// Xử lý ký tự nhập vào theo kiểu gõ VNI
   /// - Parameters:
   ///   - char: Ký tự vừa gõ
   ///   - state: Trạng thái TiengVietState hiện tại
@@ -78,7 +77,7 @@ class VNI: TypingMethod {
 
     // Xử lý d9 → đ (phím 9 sau chữ d)
     if let chuCaiDau = state.chuKhongDau.first,
-       (char == "9") && (chuCaiDau == "d" || chuCaiDau == "D")
+      (char == "9") && (chuCaiDau == "d" || chuCaiDau == "D")
     {
       return (state.withGachD(), true)
     }
@@ -125,7 +124,7 @@ class VNI: TypingMethod {
     return (state.push(char), false)
   }
 
-  /// Xóa ký tự cuối cùng (functional version)
+  /// Xóa ký tự cuối cùng
   public func pop(state: TiengVietState) -> TiengVietState {
     return state.pop()
   }
