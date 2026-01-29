@@ -5,6 +5,7 @@
 //  Created by KhanhIceTea on 24/02/2024.
 //
 
+import AppKit
 import CoreGraphics
 import Foundation
 
@@ -31,6 +32,9 @@ class InputProcessor {
   public var activeApp = ""
   public var previousWordState: TiengVietState?
   public var wordState = TiengVietState.empty
+
+  /// Track pasteboard change count to detect external paste operations
+  private var lastPasteboardChangeCount: Int = NSPasteboard.general.changeCount
 
   init(method: TypingMethods) {
     typingMethod = method
@@ -108,11 +112,24 @@ class InputProcessor {
     // For letter keys, consider both Shift and Capslock
     let shifted = flags.contains(.maskShift) || (!keyLayout.isNumberKey(keyCode: keyCode) && flags.contains(.maskAlphaShift))
 
+    // Handle modifier keys (Cmd, Ctrl, Alt) - clear word buffer
+    // This also handles Cmd+V (paste) by clearing BEFORE paste content arrives
     if flags.contains(.maskCommand) || flags.contains(.maskControl)
       || flags.contains(.maskAlternate)
     {
       newWord()
-    } else if let taskKey = keyLayout.mapTask(keyCode: keyCode) {
+      return Unmanaged.passRetained(event)
+    }
+
+    // Detect if a paste operation occurred (pasteboard changed externally)
+    // This catches paste via menu, right-click, or other non-keyboard methods
+    let currentPasteboardCount = NSPasteboard.general.changeCount
+    if currentPasteboardCount != lastPasteboardChangeCount {
+      lastPasteboardChangeCount = currentPasteboardCount
+      newWord()
+    }
+
+    if let taskKey = keyLayout.mapTask(keyCode: keyCode) {
       if InputProcessor.NewWordTaskKeys.contains(taskKey) {
         newWord(storePrevious: true)
       } else if taskKey == .Delete {

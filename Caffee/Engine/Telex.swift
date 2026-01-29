@@ -48,24 +48,25 @@ class Telex: TypingMethod {
   /// - `o+[a-zA-Z]*oo$`: Tương tự cho 'o'
   /// - `e+[a-zA-Z]*ee$`: Tương tự cho 'e'
   /// - `d+[a-zA-Z]*dd$`: Gõ 'd' thứ 3 → hủy 'đ', in 'd' thường
-  static let StoppingRegex: [String] = [
-    "ss$", "ff$", "rr$", "xx$", "jj$", "ww$", "[0-9]$",
-    "a+[a-zA-Z]*aa$", "o+[a-zA-Z]*oo$", "e+[a-zA-Z]*ee$", "d+[a-zA-Z]*dd$",
-  ]
+  ///
+  /// Pre-compiled for performance (avoid creating regex on every keystroke)
+  private static let compiledStoppingRegex: [NSRegularExpression] = {
+    let patterns = [
+      "ss$", "ff$", "rr$", "xx$", "jj$", "ww$", "[0-9]$",
+      "a+[a-zA-Z]*aa$", "o+[a-zA-Z]*oo$", "e+[a-zA-Z]*ee$", "d+[a-zA-Z]*dd$",
+    ]
+    return patterns.compactMap { try? NSRegularExpression(pattern: $0) }
+  }()
 
   // MARK: - TypingMethod Protocol
 
   /// Kiểm tra có nên dừng xử lý Telex không (dựa trên StoppingRegex)
   public func shouldStopProcessing(keyStr: String) -> Bool {
     let lowerKeyStr = keyStr.lowercased()
-    if let _ = Telex.StoppingRegex.firstIndex(where: { str in
-      let regex = try? NSRegularExpression(pattern: str)
-      let range = NSRange(location: 0, length: lowerKeyStr.utf16.count)
-      return regex?.firstMatch(in: lowerKeyStr, options: [], range: range) != nil
-    }) {
-      return true
+    let range = NSRange(location: 0, length: lowerKeyStr.utf16.count)
+    return Telex.compiledStoppingRegex.contains { regex in
+      regex.firstMatch(in: lowerKeyStr, options: [], range: range) != nil
     }
-    return false
   }
 
   /// Xử lý ký tự nhập vào theo kiểu gõ Telex

@@ -28,20 +28,38 @@ struct TiengVietState {
   let dauMu: DauMu
   /// Có gạch ngang chữ D không (d → đ)
   let gachD: Bool
+  /// Cached parsed syllable components (computed once per state)
+  private let _cachedThanhPhan: ThanhPhanTieng?
 
   /// State rỗng - điểm khởi đầu
   static let empty = TiengVietState(
     chuKhongDau: [],
     dauThanh: .bang,
     dauMu: .khongMu,
-    gachD: false
+    gachD: false,
+    cachedThanhPhan: ThanhPhanTieng(phuAmDau: [], nguyenAm: [], phuAmCuoi: [], conLai: [])
   )
+
+  /// Internal initializer with cached thanhPhan
+  private init(
+    chuKhongDau: [Character],
+    dauThanh: DauThanh,
+    dauMu: DauMu,
+    gachD: Bool,
+    cachedThanhPhan: ThanhPhanTieng?
+  ) {
+    self.chuKhongDau = chuKhongDau
+    self.dauThanh = dauThanh
+    self.dauMu = dauMu
+    self.gachD = gachD
+    self._cachedThanhPhan = cachedThanhPhan
+  }
 
   // MARK: - Computed Properties
 
-  /// Các thành phần âm tiết đã phân tích - luôn nhất quán, không cần gọi parse() thủ công
+  /// Các thành phần âm tiết đã phân tích - cached để tránh parse lại nhiều lần
   var thanhPhanTieng: ThanhPhanTieng {
-    TiengVietParser.parse(chuKhongDau)
+    _cachedThanhPhan ?? TiengVietParser.parse(chuKhongDau)
   }
 
   /// Chuỗi đã biến đổi với dấu tiếng Việt
@@ -76,11 +94,13 @@ extension TiengVietState {
 
   /// Thêm ký tự vào chuỗi đầu vào
   func push(_ letter: Character) -> TiengVietState {
-    TiengVietState(
-      chuKhongDau: chuKhongDau + [letter],
+    let newChuKhongDau = chuKhongDau + [letter]
+    return TiengVietState(
+      chuKhongDau: newChuKhongDau,
       dauThanh: dauThanh,
       dauMu: dauMu,
-      gachD: gachD
+      gachD: gachD,
+      cachedThanhPhan: TiengVietParser.parse(newChuKhongDau)
     )
   }
 
@@ -104,7 +124,8 @@ extension TiengVietState {
       chuKhongDau: newChuKhongDau,
       dauThanh: newDauThanh,
       dauMu: newDauMu,
-      gachD: gachD
+      gachD: gachD,
+      cachedThanhPhan: newThanhPhan
     )
   }
 
@@ -114,7 +135,8 @@ extension TiengVietState {
       chuKhongDau: chuKhongDau,
       dauThanh: dauThanh == tone ? .bang : tone,
       dauMu: dauMu,
-      gachD: gachD
+      gachD: gachD,
+      cachedThanhPhan: _cachedThanhPhan
     )
   }
 
@@ -124,7 +146,8 @@ extension TiengVietState {
       chuKhongDau: chuKhongDau,
       dauThanh: dauThanh,
       dauMu: dauMu == mu ? .khongMu : mu,
-      gachD: gachD
+      gachD: gachD,
+      cachedThanhPhan: _cachedThanhPhan
     )
   }
 
@@ -134,7 +157,8 @@ extension TiengVietState {
       chuKhongDau: chuKhongDau,
       dauThanh: dauThanh,
       dauMu: dauMu,
-      gachD: !gachD
+      gachD: !gachD,
+      cachedThanhPhan: _cachedThanhPhan
     )
   }
 }

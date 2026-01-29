@@ -47,24 +47,25 @@ class VNI: TypingMethod {
   /// - `o+[a-zA-Z]*66$`: Tương tự cho 'o'
   /// - `e+[a-zA-Z]*66$`: Tương tự cho 'e'
   /// - `d+[a-zA-Z]*99$`: Gõ 9 lần 2 sau 'd' → hủy gạch ngang
-  static let StoppingRegex: [String] = [
-    "11$", "22$", "33$", "44$", "55$", "88$",
-    "a+[a-zA-Z]*66$", "o+[a-zA-Z]*66$", "e+[a-zA-Z]*66$", "d+[a-zA-Z]*99$",
-  ]
+  ///
+  /// Pre-compiled for performance (avoid creating regex on every keystroke)
+  private static let compiledStoppingRegex: [NSRegularExpression] = {
+    let patterns = [
+      "11$", "22$", "33$", "44$", "55$", "88$",
+      "a+[a-zA-Z]*66$", "o+[a-zA-Z]*66$", "e+[a-zA-Z]*66$", "d+[a-zA-Z]*99$",
+    ]
+    return patterns.compactMap { try? NSRegularExpression(pattern: $0) }
+  }()
 
   // MARK: - TypingMethod Protocol
 
   /// Kiểm tra có nên dừng xử lý VNI không (dựa trên StoppingRegex)
   public func shouldStopProcessing(keyStr: String) -> Bool {
     let lowerKeyStr = keyStr.lowercased()
-    if let _ = VNI.StoppingRegex.firstIndex(where: { str in
-      let regex = try? NSRegularExpression(pattern: str)
-      let range = NSRange(location: 0, length: lowerKeyStr.utf16.count)
-      return regex?.firstMatch(in: lowerKeyStr, options: [], range: range) != nil
-    }) {
-      return true
+    let range = NSRange(location: 0, length: lowerKeyStr.utf16.count)
+    return VNI.compiledStoppingRegex.contains { regex in
+      regex.firstMatch(in: lowerKeyStr, options: [], range: range) != nil
     }
-    return false
   }
 
   /// Xử lý ký tự nhập vào theo kiểu gõ VNI

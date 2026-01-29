@@ -9,19 +9,22 @@ import CoreGraphics
 import Foundation
 
 class EventSimulator {
-  // Compares two character arrays and determines the number of backspaces and differing characters needed.
+  /// Compares two strings and determines the number of backspaces and differing characters needed.
+  /// Uses zip() for cleaner iteration with early termination at first difference.
   static func calcKeyStrokes(from prevStr: String, to currentStr: String) -> (Int, [Character]) {
     let prev = Array(prevStr)
     let current = Array(currentStr)
-    var idx = 0
-    var diffChars: [Character] = []
-    while idx < prev.count && idx < current.count && current[idx] == prev[idx] {
-      idx += 1
-    }
-    if idx < current.count {
-      diffChars.append(contentsOf: current[idx...])
-    }
-    return (prev.count - idx, diffChars)
+
+    // Find first differing index using zip (stops at shorter array)
+    let commonPrefixLength = zip(prev, current).prefix(while: { $0 == $1 }).count
+
+    // Characters to type after backspacing
+    let diffChars = commonPrefixLength < current.count
+      ? Array(current[commonPrefixLength...])
+      : []
+
+    // Number of backspaces = characters to delete from prev after common prefix
+    return (prev.count - commonPrefixLength, diffChars)
   }
 
   // Sends a specified number of backspace key events.
