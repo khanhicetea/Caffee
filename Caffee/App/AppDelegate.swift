@@ -73,8 +73,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       // Create and set up the menu for the status bar item
       let menu = NSMenu()
       menu.addItem(
-        withTitle: "Hướng dẫn cài đặt lần đầu", action: #selector(openGuide), keyEquivalent: "")
-      menu.addItem(withTitle: "Quit App", action: #selector(quitApp), keyEquivalent: "q")
+        withTitle: "Hướng dẫn cài đặt", action: #selector(openGuide), keyEquivalent: "")
+      menu.addItem(withTitle: "Thoát", action: #selector(quitApp), keyEquivalent: "q")
       statusBarItem.menu = menu
     }
 
@@ -112,7 +112,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         action: #selector(checkForUpdates),
         keyEquivalent: "")
       menu.addItem(withTitle: "Cài Đặt", action: #selector(openSettings), keyEquivalent: "")
-      menu.addItem(withTitle: "Quit App", action: #selector(quitApp), keyEquivalent: "q")
+      menu.addItem(withTitle: "Thoát", action: #selector(quitApp), keyEquivalent: "q")
       statusBarItem.menu = menu
 
       appState.$typingMethod.sink { newState in
@@ -164,19 +164,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     NSApp.activate(ignoringOtherApps: true)
   }
 
-  // Opens guide
+  // Opens onboarding guide
   @objc func openGuide() {
-    let contentView = GuideView().environmentObject(appState)
-    let windowController = WindowController()
+    let contentView = OnboardingView().environmentObject(appState)
+    let windowController = OnboardingWindowController()
     windowController.contentViewController = NSHostingController(rootView: contentView)
     windowController.showWindow(nil)
     NSApp.activate(ignoringOtherApps: true)
   }
 
-  // Opens guide
+  // Opens upgrade guide
   @objc func openUpgradeNewVersion() {
     let contentView = UpgradeAppView().environmentObject(appState)
-    let windowController = WindowController()
+    let windowController = OnboardingWindowController()
     windowController.contentViewController = NSHostingController(rootView: contentView)
     windowController.showWindow(nil)
     NSApp.activate(ignoringOtherApps: true)

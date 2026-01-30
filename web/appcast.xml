@@ -6,6 +6,27 @@
     <description>Caffee app updates</description>
     <language>vi</language>
     <item>
+      <title>Version 1.19.0</title>
+      <sparkle:version>1</sparkle:version>
+      <sparkle:shortVersionString>1.19.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <pubDate>Thu, 30 Jan 2026 11:40:00 +0700</pubDate>
+      <enclosure
+        url="https://github.com/khanhicetea/Caffee/releases/download/v1.19.0/Caffee-v1.19.0.dmg"
+        sparkle:edSignature="U1GK5VCaHTj8nRJbJEinSjAmQ6WW+GqS9degAMpN9U7eHigWuSETJ+S05J/S5N/1tkS9T6044IZsn71QbSyjDQ=="
+        length="4720669"
+        type="application/octet-stream"
+      />
+      <description><![CDATA[
+        <h2>What's New</h2>
+        <ul>
+          <li>Onboarding flow for first-time users</li>
+          <li>Permission guides and configuration help</li>
+          <li>Enhanced user experience</li>
+        </ul>
+      ]]></description>
+    </item>
+    <item>
       <title>Version 1.18.0</title>
       <sparkle:version>1</sparkle:version>
       <sparkle:shortVersionString>1.18.0</sparkle:shortVersionString>

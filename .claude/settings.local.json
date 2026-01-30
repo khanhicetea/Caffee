@@ -9,7 +9,8 @@
       "Bash(find:*)",
       "Bash(create-dmg:*)",
       "Bash(sign_update:*)",
-      "Bash(shasum:*)"
+      "Bash(shasum:*)",
+      "Bash(xargs:*)"
     ]
   }
 }

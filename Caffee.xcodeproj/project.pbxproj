@@ -14,6 +14,7 @@
 		3F2E85D22BA0B53F00A95282 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 3F2E85D12BA0B53F00A95282 /* KeyboardShortcuts */; };
 		3F2FE98B2F267B9700A4A07D /* TiengVietValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F2FE98A2F267B9700A4A07D /* TiengVietValidator.swift */; };
 		3F4564E22BA5FFD800F087BA /* GuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4564E12BA5FFD800F087BA /* GuideView.swift */; };
+		3F4564E42BA5FFD800F087BB /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4564E32BA5FFD800F087BB /* OnboardingView.swift */; };
 		3F8A64FF2B89A078009E2AF1 /* InputProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A64FE2B89A078009E2AF1 /* InputProcessor.swift */; };
 		3F8A65042B89AD74009E2AF1 /* TiengViet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A65032B89AD74009E2AF1 /* TiengViet.swift */; };
 		3F8A65062B8C69C9009E2AF1 /* Telex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A65052B8C69C9009E2AF1 /* Telex.swift */; };
@@ -65,6 +66,7 @@
 		3F2E85CE2BA0B0D400A95282 /* MacroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroView.swift; sourceTree = "<group>"; };
 		3F2FE98A2F267B9700A4A07D /* TiengVietValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiengVietValidator.swift; sourceTree = "<group>"; };
 		3F4564E12BA5FFD800F087BA /* GuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuideView.swift; sourceTree = "<group>"; };
+		3F4564E32BA5FFD800F087BB /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		3F8A64FE2B89A078009E2AF1 /* InputProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputProcessor.swift; sourceTree = "<group>"; };
 		3F8A65002B89AAE0009E2AF1 /* Caffee.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = Caffee.xctestplan; sourceTree = "<group>"; };
 		3F8A65032B89AD74009E2AF1 /* TiengViet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiengViet.swift; sourceTree = "<group>"; };
@@ -245,6 +247,7 @@
 				3FAFBBC32B84E7890032A55E /* SettingView.swift */,
 				3F2E85CE2BA0B0D400A95282 /* MacroView.swift */,
 				3F4564E12BA5FFD800F087BA /* GuideView.swift */,
+				3F4564E32BA5FFD800F087BB /* OnboardingView.swift */,
 				3F94E7AE2BA736E100360F8B /* UpgradeAppView.swift */,
 			);
 			path = View;
@@ -440,6 +443,7 @@
 				3FAFBBBC2B84AB390032A55E /* EventHook.swift in Sources */,
 				3F9FC6D52B9E14AF00659712 /* FileMonitor.swift in Sources */,
 				3F4564E22BA5FFD800F087BA /* GuideView.swift in Sources */,
+				3F4564E42BA5FFD800F087BB /* OnboardingView.swift in Sources */,
 				3F8A65042B89AD74009E2AF1 /* TiengViet.swift in Sources */,
 				3F2FE98B2F267B9700A4A07D /* TiengVietValidator.swift in Sources */,
 				3FCA000012C000010000001 /* TiengVietState.swift in Sources */,
@@ -638,7 +642,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.18;
+				MARKETING_VERSION = 1.19;
 				PRODUCT_BUNDLE_IDENTIFIER = com.khanhicetea.Caffee.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -671,7 +675,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.18;
+				MARKETING_VERSION = 1.19;
 				"MTL_ENABLE_DEBUG_INFO[sdk=macosx*]" = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.khanhicetea.Caffee;
 				PRODUCT_NAME = "$(TARGET_NAME)";
