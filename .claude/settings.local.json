@@ -6,7 +6,10 @@
       "Bash(xcodebuild test:*)",
       "Bash(xcrun xcresulttool:*)",
       "Bash(python3:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(create-dmg:*)",
+      "Bash(sign_update:*)",
+      "Bash(shasum:*)"
     ]
   }
 }

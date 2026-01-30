@@ -27,39 +27,45 @@ When the user invokes this skill with an app path:
    - Check if the provided app path exists
    - If not, report error and stop
 
-3. **Create DMG**
-   - Run: `create-dmg <app-path> .`
+3. **Rename app to Caffee.app**
+   - Copy/rename the app to `Caffee.app` in the same directory
+   - This ensures consistent naming when users install the app
+   - Example: `cp -R ~/Documents/Caffee-v1.18.0 ~/Documents/Caffee.app`
+
+4. **Create DMG**
+   - Run: `create-dmg Caffee.app .` (use the renamed Caffee.app)
    - This creates a DMG in the current directory
    - Rename the output to `Caffee-{VERSION}.dmg` (e.g., `Caffee-v1.18.0.dmg`)
+   - Clean up: remove the temporary Caffee.app copy
 
-4. **Sign the DMG**
+5. **Sign the DMG**
    - Run: `sign_update Caffee-{VERSION}.dmg`
    - Capture the output which contains:
      - `sparkle:edSignature="..."`
      - `length="..."`
    - Parse and extract the signature and file size
 
-5. **Get file size and checksum**
+6. **Get file size and checksum**
    - Get file size: `stat -f%z Caffee-{VERSION}.dmg`
    - Get SHA256 checksum: `shasum -a 256 Caffee-{VERSION}.dmg`
 
-6. **Update web/appcast.xml**
+7. **Update web/appcast.xml**
    - Add a new `<item>` element at the top of the channel (before existing items)
    - Use current date in RFC 2822 format for pubDate
    - The download URL format: `https://github.com/khanhicetea/Caffee/releases/download/{VERSION}/Caffee-{VERSION}.dmg`
    - Include the signature and length from sign_update output
-   - If release notes provided, use them; otherwise use generic "Bug fixes and improvements"
+   - If release notes provided, use them; otherwise generate from git log since previous version
 
-7. **Update web/index.html**
+8. **Update web/index.html**
    - Update the download button version text and link
    - Add new release notes entry in the Release Notes section with checksum
 
-8. **Update web/download.html**
+9. **Update web/download.html**
    - Update the meta refresh URL to point to the new DMG release
    - Update the direct download link in the body
    - URL format: `https://github.com/khanhicetea/Caffee/releases/download/{VERSION}/Caffee-{VERSION}.dmg`
 
-9. **Summary**
+10. **Summary**
    - Show summary of what was done
    - Show the DMG path for upload to GitHub
    - Remind user to:
