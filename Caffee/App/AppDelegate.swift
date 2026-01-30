@@ -1,7 +1,9 @@
 import Cocoa
 import Combine
+import Defaults
 import Foundation
 import Settings
+import Sparkle
 import SwiftUI
 
 // AppDelegate manages the application lifecycle and UI components like status bar and windows
@@ -13,9 +15,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   var statusBarItem: NSStatusItem!
   var settingsWindowController: SettingsWindowController?
 
+  // Sparkle updater controller for auto-updates
+  let updaterController = SPUStandardUpdaterController(
+    startingUpdater: true,
+    updaterDelegate: nil,
+    userDriverDelegate: nil
+  )
+
   private var cancellables = Set<AnyCancellable>()
 
   func applicationDidFinishLaunching(_ notification: Notification) {
+    // Sync Sparkle auto-update setting with user preference
+    updaterController.updater.automaticallyChecksForUpdates =
+      Defaults[.checkForUpdatesAutomatically]
+
+    // Observe changes to the setting
+    Defaults.publisher(.checkForUpdatesAutomatically)
+      .sink { [weak self] change in
+        self?.updaterController.updater.automaticallyChecksForUpdates = change.newValue
+      }
+      .store(in: &cancellables)
+
     //    let permissionStatus = appState.checkPermissionStatus()
     let isTrusted = appState.eventHook.isTrusted(prompt: false)
 
@@ -87,6 +107,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         withTitle: "Kiểu VNI",
         action: #selector(changeToVNI), keyEquivalent: "")
       menu.addItem(NSMenuItem.separator())
+      menu.addItem(
+        withTitle: "Check for Updates...",
+        action: #selector(checkForUpdates),
+        keyEquivalent: "")
       menu.addItem(withTitle: "Cài Đặt", action: #selector(openSettings), keyEquivalent: "")
       menu.addItem(withTitle: "Quit App", action: #selector(quitApp), keyEquivalent: "q")
       statusBarItem.menu = menu
@@ -127,6 +151,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       ],
       style: .toolbarItems
     )
+  }
+
+  // Check for updates using Sparkle
+  @objc func checkForUpdates() {
+    updaterController.checkForUpdates(nil)
   }
 
   // Opens settings in a new window

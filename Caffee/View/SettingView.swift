@@ -6,6 +6,7 @@ import SwiftUI
 
 struct GeneralView: View {
   @EnvironmentObject var appState: AppState
+  @Default(.checkForUpdatesAutomatically) var checkForUpdatesAutomatically
 
   let appVersion = Bundle.main.appVersionLong
 
@@ -49,6 +50,11 @@ struct GeneralView: View {
           Text("Phím tắt")
           KeyboardShortcuts.Recorder("", name: .toggleInputMode)
         }
+        GridRow {
+          Text("Tự động cập nhật")
+          Toggle("", isOn: $checkForUpdatesAutomatically)
+            .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+        }
         //          GridRow {
         //            Text("OpenAI Token \(Defaults[.token])")
         //            SecureField("Token", text: $token)
@@ -63,7 +69,7 @@ struct GeneralView: View {
       .padding([.vertical], 10)
 
     }
-    .frame(width: 270, height: 350)
+    .frame(width: 270, height: 390)
     .padding(10)
   }
 }

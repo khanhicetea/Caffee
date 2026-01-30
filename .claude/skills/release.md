@@ -1,0 +1,109 @@
+# /release
+
+Automate the release process for Caffee app.
+
+## Usage
+
+```
+/release <path-to-app> [release-notes]
+```
+
+Example:
+```
+/release ~/Desktop/Caffee-v1.18.0.app "Fixed input lag issue"
+/release ./Caffee-v1.19.0.app "New feature: better autocorrect"
+```
+
+## Instructions
+
+When the user invokes this skill with an app path:
+
+1. **Extract version from filename**
+   - The app filename format is `Caffee-v{VERSION}.app` (e.g., `Caffee-v1.18.0.app`)
+   - Extract the version string including the 'v' prefix (e.g., `v1.18.0`)
+   - Also extract just the number part for display (e.g., `1.18.0`)
+
+2. **Verify the app exists**
+   - Check if the provided app path exists
+   - If not, report error and stop
+
+3. **Create DMG**
+   - Run: `create-dmg <app-path> .`
+   - This creates a DMG in the current directory
+   - Rename the output to `Caffee-{VERSION}.dmg` (e.g., `Caffee-v1.18.0.dmg`)
+
+4. **Sign the DMG**
+   - Run: `sign_update Caffee-{VERSION}.dmg`
+   - Capture the output which contains:
+     - `sparkle:edSignature="..."`
+     - `length="..."`
+   - Parse and extract the signature and file size
+
+5. **Get file size and checksum**
+   - Get file size: `stat -f%z Caffee-{VERSION}.dmg`
+   - Get SHA256 checksum: `shasum -a 256 Caffee-{VERSION}.dmg`
+
+6. **Update web/appcast.xml**
+   - Add a new `<item>` element at the top of the channel (before existing items)
+   - Use current date in RFC 2822 format for pubDate
+   - The download URL format: `https://github.com/khanhicetea/Caffee/releases/download/{VERSION}/Caffee-{VERSION}.dmg`
+   - Include the signature and length from sign_update output
+   - If release notes provided, use them; otherwise use generic "Bug fixes and improvements"
+
+7. **Update web/index.html**
+   - Update the download button version text and link
+   - Add new release notes entry in the Release Notes section with checksum
+
+8. **Summary**
+   - Show summary of what was done
+   - Show the DMG path for upload to GitHub
+   - Remind user to:
+     - Upload DMG to GitHub releases at the tag `{VERSION}`
+     - Deploy updated web files
+
+## Example appcast.xml item format
+
+```xml
+<item>
+  <title>Version 1.18.0</title>
+  <sparkle:version>1</sparkle:version>
+  <sparkle:shortVersionString>1.18.0</sparkle:shortVersionString>
+  <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+  <pubDate>Thu, 30 Jan 2026 12:00:00 +0700</pubDate>
+  <enclosure
+    url="https://github.com/khanhicetea/Caffee/releases/download/v1.18.0/Caffee-v1.18.0.dmg"
+    sparkle:edSignature="SIGNATURE_HERE"
+    length="12345678"
+    type="application/octet-stream"
+  />
+  <description><![CDATA[
+    <h2>What's New</h2>
+    <ul>
+      <li>Release notes here</li>
+    </ul>
+  ]]></description>
+</item>
+```
+
+## Example index.html updates
+
+Download button (around line 64):
+```html
+<button class="secondary" onclick="location.href='/download.html?v=1.18.0'">
+    Tải app tại đây (v1.18.0)
+</button>
+```
+
+Release notes section (after line 240):
+```html
+<div>
+    <h5>v1.18.0</h5>
+    <ul>
+        <li>Checksum sha256 (Caffee-v1.18.0.dmg) :
+            <code>CHECKSUM_HERE</code>
+        </li>
+        <li>Release notes here</li>
+    </ul>
+    <hr />
+</div>
+```

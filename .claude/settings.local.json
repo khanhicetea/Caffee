@@ -5,7 +5,8 @@
       "Bash(xcodebuild build:*)",
       "Bash(xcodebuild test:*)",
       "Bash(xcrun xcresulttool:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(find:*)"
     ]
   }
 }

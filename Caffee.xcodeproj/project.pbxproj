@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3F2E85C92B9EDE7900A95282 /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 3F2E85C82B9EDE7900A95282 /* Defaults */; };
+		3F2E85C92B9EDE7900A95283 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 3F2E85C82B9EDE7900A95283 /* Sparkle */; };
 		3F2E85CC2B9EDF2600A95282 /* Setting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F2E85CB2B9EDF2600A95282 /* Setting.swift */; };
 		3F2E85CF2BA0B0D400A95282 /* MacroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F2E85CE2BA0B0D400A95282 /* MacroView.swift */; };
 		3F2E85D22BA0B53F00A95282 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 3F2E85D12BA0B53F00A95282 /* KeyboardShortcuts */; };
@@ -94,6 +95,7 @@
 		3FD874E02BB7164F007479CC /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		3FDB83CA2BB4682F00AD6322 /* Keys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keys.swift; sourceTree = "<group>"; };
 		3FDB83CC2BB468BA00AD6322 /* EventSimulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventSimulator.swift; sourceTree = "<group>"; };
+		3FDB83CE2BB468BA00AD6323 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +107,7 @@
 				3F2E85D22BA0B53F00A95282 /* KeyboardShortcuts in Frameworks */,
 				3F9FC6D82B9EB6A200659712 /* LaunchAtLogin in Frameworks */,
 				3F8A650F2B91CA9A009E2AF1 /* Settings in Frameworks */,
+				3F2E85C92B9EDE7900A95283 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -170,6 +173,7 @@
 				3FAFBB842B84A86C0032A55E /* CaffeeApp.swift */,
 				3FAFBB8A2B84A86D0032A55E /* Assets.xcassets */,
 				3FAFBB8F2B84A86D0032A55E /* Caffee.entitlements */,
+				3FDB83CE2BB468BA00AD6323 /* Info.plist */,
 				3FAFBB8C2B84A86D0032A55E /* Preview Content */,
 			);
 			path = Caffee;
@@ -269,6 +273,7 @@
 				3F9FC6D72B9EB6A200659712 /* LaunchAtLogin */,
 				3F2E85C82B9EDE7900A95282 /* Defaults */,
 				3F2E85D12BA0B53F00A95282 /* KeyboardShortcuts */,
+				3F2E85C82B9EDE7900A95283 /* Sparkle */,
 			);
 			productName = Caffee;
 			productReference = 3FAFBB812B84A86C0032A55E /* Caffee.app */;
@@ -347,6 +352,7 @@
 				3F9FC6D62B9EB6A200659712 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */,
 				3F2E85C72B9EDE7900A95282 /* XCRemoteSwiftPackageReference "Defaults" */,
 				3F2E85D02BA0B53F00A95282 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+				3F2E85C72B9EDE7900A95283 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			productRefGroup = 3FAFBB822B84A86C0032A55E /* Products */;
 			projectDirPath = "";
@@ -623,6 +629,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Caffee/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -631,7 +638,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.17;
+				MARKETING_VERSION = 1.18;
 				PRODUCT_BUNDLE_IDENTIFIER = com.khanhicetea.Caffee.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -655,6 +662,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Caffee/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -663,7 +671,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.17;
+				MARKETING_VERSION = 1.18;
 				"MTL_ENABLE_DEBUG_INFO[sdk=macosx*]" = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.khanhicetea.Caffee;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -795,6 +803,14 @@
 				kind = branch;
 			};
 		};
+		3F2E85C72B9EDE7900A95283 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 		3F2E85D02BA0B53F00A95282 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
@@ -826,6 +842,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3F2E85C72B9EDE7900A95282 /* XCRemoteSwiftPackageReference "Defaults" */;
 			productName = Defaults;
+		};
+		3F2E85C82B9EDE7900A95283 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3F2E85C72B9EDE7900A95283 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 		3F2E85D12BA0B53F00A95282 /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;

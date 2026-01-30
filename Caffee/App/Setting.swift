@@ -34,6 +34,7 @@ extension Defaults.Keys {
   static let typingMethod = Key<TypingMethods>("typing-method", default: .Telex)
   static let allowedZWJF = Key<Bool>("allowed-zwjf", default: true)
   static let token = Key<String>("token", default: "")
+  static let checkForUpdatesAutomatically = Key<Bool>("check-updates-automatically", default: true)
 
   //            ^            ^         ^                ^
   //           Key          Type   UserDefaults name   Default value
