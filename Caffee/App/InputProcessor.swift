@@ -20,6 +20,35 @@ class InputProcessor {
   static let NewWordTaskKeys: [TaskKey] = [.Enter, .Space, .Tab]
   static let JumpTaskKeys: [TaskKey] = [.Home, .End, .ArrowUp, .ArrowDown, .ArrowLeft, .ArrowRight]
 
+  /// Apps that need delay between backspace events due to event coalescing issues.
+  /// Format: (bundleIdPrefix, delayMicroseconds)
+  /// Higher delay = more reliable but slightly slower typing feel.
+  static let SlowEventApps: [(prefix: String, delay: UInt32)] = [
+    // Electron-based apps (highest delay needed)
+    ("com.microsoft.VSCode", 1500),
+    ("com.electron", 1500),
+    ("com.hnc.Discord", 1500),
+    ("com.tinyspeck.slackmacgap", 1500),
+    ("com.spotify.client", 1200),
+    // Browsers (moderate delay)
+    ("com.google.Chrome", 800),
+    ("org.chromium.Chromium", 800),
+    ("com.brave.Browser", 800),
+    ("com.microsoft.Edge", 800),
+    ("com.microsoft.edge", 800),
+    ("company.thebrowser.Browser", 800),
+    ("com.vivaldi.Vivaldi", 800),
+    ("com.operasoftware.Opera", 800),
+    ("org.mozilla.firefox", 600),
+    ("org.mozilla.nightly", 600),
+    // Microsoft Office apps
+    ("com.microsoft.Word", 1000),
+    ("com.microsoft.Excel", 1000),
+    ("com.microsoft.Powerpoint", 1000),
+    ("com.microsoft.Outlook", 1000),
+    ("com.microsoft.onenote.mac", 1000),
+  ]
+
   public var engine: TypingMethod
   public var typingMethod: TypingMethods
 
@@ -158,7 +187,7 @@ class InputProcessor {
         if needToFixAutocomplete() {
           numBackspaces += 1
         }
-        EventSimulator.sendBackspace(numBackspaces)
+        EventSimulator.sendBackspace(numBackspaces, delayMicroseconds: getBackspaceDelay())
         EventSimulator.sendString(String(diffChars))
         return nil
       }
@@ -172,6 +201,17 @@ class InputProcessor {
       return activeApp.hasPrefix(app)
     }
     return idx != nil && Focused.hasHighlightedText()
+  }
+
+  /// Returns the appropriate backspace delay for the current active app.
+  /// Apps with known event coalescing issues need delays between backspaces.
+  func getBackspaceDelay() -> UInt32 {
+    for (prefix, delay) in InputProcessor.SlowEventApps {
+      if activeApp.hasPrefix(prefix) {
+        return delay
+      }
+    }
+    return 0  // Native apps: no delay needed
   }
 
 }

@@ -27,8 +27,17 @@ class EventSimulator {
     return (prev.count - commonPrefixLength, diffChars)
   }
 
-  // Sends a specified number of backspace key events.
-  static func sendBackspace(_ count: Int) {
+  /// Sends a specified number of backspace key events.
+  ///
+  /// - Parameters:
+  ///   - count: Number of backspaces to send
+  ///   - delayMicroseconds: Delay between each backspace pair (0 = no delay).
+  ///     Some apps (Electron, browsers) may drop rapid events due to coalescing.
+  ///     Recommended values:
+  ///     - Native macOS apps: 0
+  ///     - Browsers: 500-1000 μs
+  ///     - Electron apps: 1000-2000 μs
+  static func sendBackspace(_ count: Int, delayMicroseconds: UInt32 = 0) {
     if count < 1 {
       return
     }
@@ -39,9 +48,16 @@ class EventSimulator {
     {
       backspaceKeyDown.flags = .maskNonCoalesced
       backspaceKeyUp.flags = .maskNonCoalesced
-      for _ in 1...count {
+
+      for i in 1...count {
         backspaceKeyDown.post(tap: .cgSessionEventTap)
         backspaceKeyUp.post(tap: .cgSessionEventTap)
+
+        // Add delay between backspaces for apps that coalesce rapid events
+        // Skip delay after last backspace (no need to wait)
+        if delayMicroseconds > 0 && i < count {
+          usleep(delayMicroseconds)
+        }
       }
     }
   }
