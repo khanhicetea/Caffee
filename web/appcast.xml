@@ -1,5 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+<?xml version="1.0" encoding="utf-8" ?>
+<rss
+    version="2.0"
+    xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+>
   <channel>
     <title>Caffee Updates</title>
     <link>https://caffee.khanhicetea.com/appcast.xml</link>
@@ -7,17 +10,18 @@
     <language>vi</language>
     <item>
       <title>Version 1.19.0</title>
-      <sparkle:version>1</sparkle:version>
+      <sparkle:version>11900</sparkle:version>
       <sparkle:shortVersionString>1.19.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
       <pubDate>Thu, 30 Jan 2026 11:40:00 +0700</pubDate>
       <enclosure
-        url="https://github.com/khanhicetea/Caffee/releases/download/v1.19.0/Caffee-v1.19.0.dmg"
-        sparkle:edSignature="U1GK5VCaHTj8nRJbJEinSjAmQ6WW+GqS9degAMpN9U7eHigWuSETJ+S05J/S5N/1tkS9T6044IZsn71QbSyjDQ=="
-        length="4720669"
-        type="application/octet-stream"
-      />
-      <description><![CDATA[
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.19.0/Caffee-v1.19.0.dmg"
+                sparkle:edSignature="U1GK5VCaHTj8nRJbJEinSjAmQ6WW+GqS9degAMpN9U7eHigWuSETJ+S05J/S5N/1tkS9T6044IZsn71QbSyjDQ=="
+                length="4720669"
+                type="application/octet-stream"
+            />
+      <description
+            ><![CDATA[
         <h2>What's New</h2>
         <ul>
           <li>Onboarding flow for first-time users</li>
@@ -28,17 +32,18 @@
     </item>
     <item>
       <title>Version 1.18.0</title>
-      <sparkle:version>1</sparkle:version>
+      <sparkle:version>11800</sparkle:version>
       <sparkle:shortVersionString>1.18.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
       <pubDate>Fri, 30 Jan 2026 10:28:28 +0700</pubDate>
       <enclosure
-        url="https://github.com/khanhicetea/Caffee/releases/download/v1.18.0/Caffee-v1.18.0.dmg"
-        sparkle:edSignature="Xfum3o93CB6ZCXUxVoVKef4u1ZrXiJ2KP9qPwXRdG7u9Ohw+24NVvVrrjmFhr5uDSyA10LJZjFRLECRkEUBPBw=="
-        length="4683901"
-        type="application/octet-stream"
-      />
-      <description><![CDATA[
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.18.0/Caffee-v1.18.0.dmg"
+                sparkle:edSignature="Xfum3o93CB6ZCXUxVoVKef4u1ZrXiJ2KP9qPwXRdG7u9Ohw+24NVvVrrjmFhr5uDSyA10LJZjFRLECRkEUBPBw=="
+                length="4683901"
+                type="application/octet-stream"
+            />
+      <description
+            ><![CDATA[
         <h2>What's New</h2>
         <ul>
           <li>Show lock icon on secured input</li>
@@ -51,17 +56,18 @@
     </item>
     <item>
       <title>Version 1.17.0</title>
-      <sparkle:version>1</sparkle:version>
+      <sparkle:version>11700</sparkle:version>
       <sparkle:shortVersionString>1.17.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
       <pubDate>Thu, 30 Jan 2026 12:00:00 +0700</pubDate>
       <enclosure
-        url="https://github.com/khanhicetea/Caffee/releases/download/v1.17.0/Caffee-v1.17.0.dmg"
-        sparkle:edSignature="SIGNATURE_HERE"
-        length="FILE_SIZE_BYTES"
-        type="application/octet-stream"
-      />
-      <description><![CDATA[
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.17.0/Caffee-v1.17.0.dmg"
+                sparkle:edSignature="SIGNATURE_HERE"
+                length="FILE_SIZE_BYTES"
+                type="application/octet-stream"
+            />
+      <description
+            ><![CDATA[
         <h2>What's New</h2>
         <ul>
           <li>Auto-update feature</li>

@@ -55,6 +55,7 @@ When the user invokes this skill with an app path:
    - The download URL format: `https://github.com/khanhicetea/Caffee/releases/download/{VERSION}/Caffee-{VERSION}.dmg`
    - Include the signature and length from sign_update output
    - If release notes provided, use them; otherwise generate from git log since previous version
+   - the <sparkle:version> should be integer, e.g., 11901 (1.19.1 => 1*10000 + 19*100 + 1)
 
 8. **Update web/index.html**
    - Update the download button version text and link
