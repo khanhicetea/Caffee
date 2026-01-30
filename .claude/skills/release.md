@@ -54,7 +54,12 @@ When the user invokes this skill with an app path:
    - Update the download button version text and link
    - Add new release notes entry in the Release Notes section with checksum
 
-8. **Summary**
+8. **Update web/download.html**
+   - Update the meta refresh URL to point to the new DMG release
+   - Update the direct download link in the body
+   - URL format: `https://github.com/khanhicetea/Caffee/releases/download/{VERSION}/Caffee-{VERSION}.dmg`
+
+9. **Summary**
    - Show summary of what was done
    - Show the DMG path for upload to GitHub
    - Remind user to:
@@ -106,4 +111,22 @@ Release notes section (after line 240):
     </ul>
     <hr />
 </div>
+```
+
+## Example download.html updates
+
+Meta refresh tag (line 9):
+```html
+<meta
+    http-equiv="refresh"
+    content="2; URL=https://github.com/khanhicetea/Caffee/releases/download/v1.18.0/Caffee-v1.18.0.dmg"
+/>
+```
+
+Direct download link (line 24):
+```html
+<a
+    href="https://github.com/khanhicetea/Caffee/releases/download/v1.18.0/Caffee-v1.18.0.dmg"
+    >bấm vào đây để tải ngay</a
+>
 ```
