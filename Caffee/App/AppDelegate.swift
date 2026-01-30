@@ -72,6 +72,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         .withSymbolConfiguration(NSImage.SymbolConfiguration(scale: .large))
       let eIcon = NSImage(systemSymbolName: "e.square", accessibilityDescription: nil)?
         .withSymbolConfiguration(NSImage.SymbolConfiguration(scale: .large))
+      let lockIcon = NSImage(systemSymbolName: "lock.square", accessibilityDescription: "Secure Input")?
+        .withSymbolConfiguration(NSImage.SymbolConfiguration(scale: .large))
 
       button.image = vIcon
 
@@ -94,10 +96,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         telexMenuItem.title = newState == .Telex ? "[✔] Kiểu Telex" : "Kiểu Telex"
       }.store(in: &cancellables)
 
-      // Subcriber
-      appState.$enabled.sink { newState in
-        button.image = newState ? vIcon : eIcon
-      }.store(in: &cancellables)
+      // Update icon based on enabled state and secure input
+      Publishers.CombineLatest(appState.$enabled, appState.$secureInputActive)
+        .sink { (enabled, secureInput) in
+          if secureInput {
+            button.image = lockIcon
+          } else {
+            button.image = enabled ? vIcon : eIcon
+          }
+        }.store(in: &cancellables)
 
     }
 

@@ -2,6 +2,10 @@ import ApplicationServices
 import Cocoa
 import Foundation
 
+// Private macOS API to detect secure input mode (password fields)
+@_silgen_name("CGSIsSecureEventInputSet")
+func CGSIsSecureEventInputSet() -> Bool
+
 // EventHook manages keyboard events and interacts with the Telex engine.
 class EventHook {
 
@@ -92,7 +96,20 @@ func eventTapCallback(
 
   let input = eventHook.inputProcessor
 
+  // Check for secure input mode (password fields)
+  let isSecureInput = CGSIsSecureEventInputSet()
+  if let appState = eventHook.appState, appState.secureInputActive != isSecureInput {
+    DispatchQueue.main.async {
+      appState.secureInputActive = isSecureInput
+    }
+  }
+
   if type == .keyDown && eventHook.processing {
+    // Skip IME processing when secure input is active (password fields)
+    if isSecureInput {
+      return Unmanaged.passRetained(event)
+    }
+
     // Benchmark
     //    let start = CFAbsoluteTimeGetCurrent()
     let ret = input.handleEvent(event: event)

@@ -18,6 +18,7 @@ class AppState: ObservableObject, FileMonitorDelegate {
   @Published public var enabled = false
   @Published public var typingMethod: TypingMethods
   @Published public var allowedZWJF: Bool
+  @Published public var secureInputActive = false
 
   public var inputProcessor: InputProcessor
   public var eventHook: EventHook
