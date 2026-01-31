@@ -643,7 +643,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.20.1;
+				MARKETING_VERSION = 1.21.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.khanhicetea.Caffee.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -677,7 +677,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.20.1;
+				MARKETING_VERSION = 1.21.0;
 				"MTL_ENABLE_DEBUG_INFO[sdk=macosx*]" = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.khanhicetea.Caffee;
 				PRODUCT_NAME = "$(TARGET_NAME)";

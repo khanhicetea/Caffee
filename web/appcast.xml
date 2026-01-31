@@ -6,6 +6,27 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.21.0</title>
+      <sparkle:version>12100</sparkle:version>
+      <sparkle:shortVersionString>1.21.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <pubDate>Sat, 31 Jan 2026 14:30:00 +0700</pubDate>
+      <enclosure
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.21.0/Caffee-v1.21.0.dmg"
+                sparkle:edSignature="kjCUf628yldb6O26HPuN6nc5oOnyygCBVUn288XhchkQh65njYTrE3lpGey+BkitbvTT7WtF4n00MyPDGH1TBg=="
+                length="4491348"
+                type="application/octet-stream"
+            />
+      <description
+            ><![CDATA[
+        <h2>What's New</h2>
+        <ul>
+          <li>New onboarding screen</li>
+          <li>Fix new icon in settings</li>
+        </ul>
+      ]]></description>
+    </item>
+    <item>
       <title>Version 1.20.1</title>
       <sparkle:version>12001</sparkle:version>
       <sparkle:shortVersionString>1.20.1</sparkle:shortVersionString>
