@@ -166,6 +166,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
   // Opens onboarding guide
   @objc func openGuide() {
+    // Check if permissions already granted - if so, show proper menu bar
+    let isTrusted = appState.eventHook.isTrusted(prompt: false)
+    if isTrusted {
+      // If permissions granted, show normal menu bar icon
+      initMenuBar()
+    }
+
     let contentView = OnboardingView().environmentObject(appState)
     let windowController = OnboardingWindowController()
     windowController.contentViewController = NSHostingController(rootView: contentView)
