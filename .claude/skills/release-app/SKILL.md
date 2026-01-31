@@ -1,18 +1,7 @@
-# /release
-
-Automate the release process for Caffee app.
-
-## Usage
-
-```
-/release <path-to-app> [release-notes]
-```
-
-Example:
-```
-/release ~/Desktop/Caffee-v1.18.0.app "Fixed input lag issue"
-/release ./Caffee-v1.19.0.app "New feature: better autocorrect"
-```
+---
+name: release-app
+description: Automate the release process for Caffee app.
+---
 
 ## Instructions
 
