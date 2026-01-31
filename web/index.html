@@ -1,336 +1,961 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Caffee — Bộ gõ tiếng Việt đơn giản nhất cho macOS</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Caffee - Bộ gõ tiếng Việt đơn giản nhất cho MacOS</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.1.0/dist/typed.umd.min.js"></script>
-    <style>
-        .app-features article {
-            min-height: 200px;
-            font-weight: 400;
-            font-size: 0.9rem;
-        }
+            :root {
+                --bg-primary: #ffffff;
+                --bg-secondary: #fafafa;
+                --text-primary: #1a1a1a;
+                --text-secondary: #666666;
+                --text-muted: #999999;
+                --accent: #007aff;
+                --accent-hover: #0056cc;
+                --border: #e5e5e5;
+                --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+                --radius: 16px;
+            }
 
-        .app-features article header {
-            font-weight: 500
-        }
+            html {
+                scroll-behavior: smooth;
+            }
 
-        .app-hero {
-            display: flex;
-            justify-content: center;
-            flex-direction: column;
-        }
+            body {
+                font-family:
+                    "Inter",
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    sans-serif;
+                background: var(--bg-primary);
+                color: var(--text-primary);
+                line-height: 1.6;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
 
-        .app-screenshot img {
-            margin: 0 auto;
-            max-width: 400px;
-            height: auto;
-        }
-    </style>
-</head>
+            .nav {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 100;
+                background: rgba(255, 255, 255, 0.8);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-bottom: 1px solid var(--border);
+            }
 
-<body>
-    <header class="container">
-        <nav>
-            <ul>
-                <li>
-                    <h4>Caffee</h4>
-                </li>
-            </ul>
-            <ul>
-                <li>
-                    <a href="#guide">Hướng Dẫn Cài Đặt</a>
-                </li>
-                <li>
-                    <a href="#faq">FAQ</a>
-                </li>
-                <li>
-                    <a href="https://github.com/khanhicetea/Caffee">Source Code</a>
-                </li>
-            </ul>
+            .nav-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 1rem 2rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .logo {
+                font-weight: 700;
+                font-size: 1.25rem;
+                color: var(--text-primary);
+                text-decoration: none;
+            }
+
+            .nav-links {
+                display: flex;
+                gap: 2rem;
+                list-style: none;
+            }
+
+            .nav-links a {
+                color: var(--text-secondary);
+                text-decoration: none;
+                font-size: 0.9rem;
+                font-weight: 500;
+                transition: color 0.2s ease;
+            }
+
+            .nav-links a:hover {
+                color: var(--accent);
+            }
+
+            .hero {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                padding: 6rem 2rem 4rem;
+                background: linear-gradient(
+                    180deg,
+                    var(--bg-primary) 0%,
+                    var(--bg-secondary) 100%
+                );
+            }
+
+            .hero-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+            }
+
+            .hero-content {
+                max-width: 520px;
+            }
+
+            .hero-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem 1rem;
+                background: rgba(0, 122, 255, 0.1);
+                color: var(--accent);
+                border-radius: 50px;
+                font-size: 0.875rem;
+                font-weight: 600;
+                margin-bottom: 1.5rem;
+            }
+
+            .hero-badge span {
+                width: 8px;
+                height: 8px;
+                background: #34c759;
+                border-radius: 50%;
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.5;
+                }
+            }
+
+            .hero h1 {
+                font-size: 3.5rem;
+                font-weight: 700;
+                line-height: 1.1;
+                margin-bottom: 1.5rem;
+                letter-spacing: -0.02em;
+            }
+
+            .hero p {
+                font-size: 1.25rem;
+                color: var(--text-secondary);
+                margin-bottom: 2rem;
+                line-height: 1.6;
+            }
+
+            .hero-actions {
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem 2rem;
+                border-radius: 12px;
+                font-size: 1rem;
+                font-weight: 600;
+                text-decoration: none;
+                transition: all 0.2s ease;
+                border: none;
+                cursor: pointer;
+            }
+
+            .btn-primary {
+                background: var(--accent);
+                color: white;
+                box-shadow: 0 4px 14px rgba(0, 122, 255, 0.4);
+            }
+
+            .btn-primary:hover {
+                background: var(--accent-hover);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0, 122, 255, 0.5);
+            }
+
+            .btn-secondary {
+                background: transparent;
+                color: var(--text-primary);
+                border: 1px solid var(--border);
+            }
+
+            .btn-secondary:hover {
+                background: var(--bg-secondary);
+                border-color: var(--text-secondary);
+            }
+
+            .hero-video {
+                position: relative;
+            }
+
+            .video-container {
+                position: relative;
+                border-radius: var(--radius);
+                overflow: hidden;
+                box-shadow: var(--shadow);
+                background: #1a1a1a;
+            }
+
+            .video-container video {
+                width: 100%;
+                display: block;
+                aspect-ratio: 16/9;
+                object-fit: cover;
+            }
+
+            .video-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(0, 0, 0, 0.3);
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                pointer-events: none;
+            }
+
+            .video-container:hover .video-overlay {
+                opacity: 1;
+            }
+
+            .features {
+                padding: 6rem 2rem;
+                background: var(--bg-primary);
+            }
+
+            .section-container {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+
+            .section-header {
+                text-align: center;
+                margin-bottom: 4rem;
+            }
+
+            .section-header h2 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 1rem;
+                letter-spacing: -0.02em;
+            }
+
+            .section-header p {
+                font-size: 1.125rem;
+                color: var(--text-secondary);
+                max-width: 600px;
+                margin: 0 auto;
+            }
+
+            .features-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 2rem;
+            }
+
+            .feature-card {
+                padding: 2rem;
+                background: var(--bg-secondary);
+                border-radius: var(--radius);
+                transition: all 0.3s ease;
+            }
+
+            .feature-card:hover {
+                transform: translateY(-4px);
+                box-shadow: var(--shadow);
+            }
+
+            .feature-icon {
+                width: 48px;
+                height: 48px;
+                background: rgba(0, 122, 255, 0.1);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 1.25rem;
+                font-size: 1.5rem;
+            }
+
+            .feature-card h3 {
+                font-size: 1.125rem;
+                font-weight: 600;
+                margin-bottom: 0.75rem;
+            }
+
+            .feature-card p {
+                font-size: 0.95rem;
+                color: var(--text-secondary);
+                line-height: 1.6;
+            }
+
+            .installation {
+                padding: 6rem 2rem;
+                background: var(--bg-secondary);
+            }
+
+            .install-steps {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
+            .step {
+                display: flex;
+                gap: 1.5rem;
+                padding: 1.5rem 0;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .step:last-child {
+                border-bottom: none;
+            }
+
+            .step-number {
+                flex-shrink: 0;
+                width: 40px;
+                height: 40px;
+                background: var(--accent);
+                color: white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                font-size: 1rem;
+            }
+
+            .step-content h3 {
+                font-size: 1.125rem;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+            }
+
+            .step-content p {
+                color: var(--text-secondary);
+                font-size: 0.95rem;
+            }
+
+            .faq {
+                padding: 6rem 2rem;
+                background: var(--bg-primary);
+            }
+
+            .faq-list {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
+            details {
+                border-bottom: 1px solid var(--border);
+                padding: 1.5rem 0;
+            }
+
+            summary {
+                list-style: none;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 1.1rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            summary::-webkit-details-marker {
+                display: none;
+            }
+
+            summary::after {
+                content: "+";
+                font-size: 1.5rem;
+                color: var(--text-muted);
+                transition: transform 0.2s ease;
+            }
+
+            details[open] summary::after {
+                content: "−";
+                color: var(--accent);
+            }
+
+            details > div {
+                padding-top: 1rem;
+                color: var(--text-secondary);
+                line-height: 1.7;
+            }
+
+            details ul {
+                margin: 0.5rem 0;
+                padding-left: 1.5rem;
+            }
+
+            details li {
+                margin: 0.5rem 0;
+            }
+
+            details a {
+                color: var(--accent);
+                text-decoration: none;
+            }
+
+            details a:hover {
+                text-decoration: underline;
+            }
+
+            .releases {
+                padding: 6rem 2rem;
+                background: var(--bg-secondary);
+            }
+
+            .releases-list {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
+            .release {
+                padding: 2rem;
+                background: var(--bg-primary);
+                border-radius: var(--radius);
+                margin-bottom: 1.5rem;
+            }
+
+            .release h3 {
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+                color: var(--accent);
+            }
+
+            .checksum {
+                font-family: "SF Mono", Monaco, monospace;
+                font-size: 0.75rem;
+                background: #f0f0f0;
+                padding: 0.75rem 1rem;
+                border-radius: 8px;
+                color: var(--text-secondary);
+                word-break: break-all;
+                margin-bottom: 1rem;
+            }
+
+            .release ul {
+                padding-left: 1.25rem;
+            }
+
+            .release li {
+                margin: 0.5rem 0;
+                color: var(--text-secondary);
+            }
+
+            footer {
+                padding: 3rem 2rem;
+                background: var(--bg-primary);
+                border-top: 1px solid var(--border);
+                text-align: center;
+            }
+
+            footer p {
+                color: var(--text-muted);
+                font-size: 0.9rem;
+            }
+
+            @media (max-width: 968px) {
+                .hero-container {
+                    grid-template-columns: 1fr;
+                    text-align: center;
+                    gap: 3rem;
+                }
+
+                .hero-content {
+                    max-width: 100%;
+                }
+
+                .hero h1 {
+                    font-size: 2.5rem;
+                }
+
+                .hero-actions {
+                    justify-content: center;
+                }
+
+                .features-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            @media (max-width: 640px) {
+                .nav-container {
+                    padding: 1rem;
+                }
+
+                .nav-links {
+                    display: none;
+                }
+
+                .hero {
+                    padding: 5rem 1rem 3rem;
+                }
+
+                .hero h1 {
+                    font-size: 2rem;
+                }
+
+                .hero p {
+                    font-size: 1rem;
+                }
+
+                .features {
+                    padding: 4rem 1rem;
+                }
+
+                .features-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .section-header h2 {
+                    font-size: 1.75rem;
+                }
+
+                .step {
+                    flex-direction: column;
+                    gap: 1rem;
+                }
+
+                .btn {
+                    width: 100%;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <nav class="nav">
+            <div class="nav-container">
+                <a href="#" class="logo">Caffee</a>
+                <ul class="nav-links">
+                    <li><a href="#features">Chức năng</a></li>
+                    <li><a href="#guide">Hướng dẫn</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                    <li>
+                        <a href="https://github.com/khanhicetea/Caffee"
+                            >GitHub</a
+                        >
+                    </li>
+                </ul>
+            </div>
         </nav>
-    </header>
-    <header class="app-header container">
-        <div class="grid">
-            <div class="app-hero">
-                <h1>Caffee</h1>
-                <p>
-                    <span id="typing"></span>
-                </p>
-                <div>
-                    <button class="secondary" onclick="location.href='/download.html?v=1.19.0'">
-                        Tải app tại đây (v1.19.0)
-                    </button>
+
+        <section class="hero">
+            <div class="hero-container">
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <span></span> Miễn phí & Mã nguồn mở
+                    </div>
+                    <h1>Bộ gõ tiếng Việt đơn giản nhất cho macOS</h1>
+                    <p>
+                        Trải nghiệm gõ tiếng Việt native trên Mac. Hỗ trợ kiểu
+                        gõ Telex và VNI, nhớ chế độ gõ theo từng ứng dụng. Không
+                        còn lỗi thanh địa chỉ trình duyệt.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="/download.html" class="btn btn-primary"
+                            >Tải về v1.19.0</a
+                        >
+                        <a
+                            href="https://github.com/khanhicetea/Caffee"
+                            class="btn btn-secondary"
+                            >Xem trên GitHub</a
+                        >
+                    </div>
+                </div>
+                <div class="hero-video">
+                    <div class="video-container">
+                        <video
+                            autoplay
+                            muted
+                            loop
+                            playsinline
+                            poster="./app-screenshot.png"
+                        >
+                            <source
+                                src="./caffee-demo-web.mp4"
+                                type="video/mp4"
+                            />
+                        </video>
+                        <div class="video-overlay">
+                            <span
+                                style="
+                                    color: white;
+                                    font-size: 1rem;
+                                    font-weight: 500;
+                                "
+                                >Video Demo</span
+                            >
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="app-screenshot">
-                <img src="./app-screenshot.png" />
-            </div>
-        </div>
-    </header>
-    <section class="app-features container">
-        <h2>Chức Năng</h2>
-        <div class="grid">
-            <div>
-                <article>
-                    <header>Gõ tiếng Việt đúng chuẩn</header> Đặt dấu theo kiểu cũ - vì tính thẩm mỹ và nhất quán - chữ
-                    viết là data vì vậy nó nên nhất quán cách viết
-                </article>
-            </div>
-            <div>
-                <article>
-                    <header>Hỗ trợ 2 kiểu gõ TELEX và VNI</header> Sửa dấu mà không cần xóa đi gõ lại, hiểu khi bạn cần
-                    gõ từ tiếng Anh
-                </article>
-            </div>
-            <div>
-                <article>
-                    <header>Nhớ chế độ gõ theo ứng dụng</header> Ví dụ : app A là Vi, switch qua app B trước đó là En,
-                    switch lại app A thì chuyển về Vi
-                </article>
-            </div>
-        </div>
-        <div class="grid">
-            <div>
-                <article>
-                    <header>Sửa lỗi thanh địa chỉ trình duyệt và Excel</header> Lỗi này khá phổ biến trên trình duyệt và
-                    Excel, gây ra lỗi gõ rất khó chịu
-                </article>
-            </div>
-            <div>
-                <article>
-                    <header>Hot key chuyển đổi nhanh chế độ gõ</header> Chuyển nhanh chế độ gõ En - Vi trong app mà
-                    không cần bấm chuột ở bất kỳ App nào
-                </article>
-            </div>
-            <div>
-                <article>
-                    <header>Khởi động cùng hệ điều hành</header> Luôn luôn sẵn sàng mọi lúc bạn cần, khởi động nhanh
-                    chóng mượt mà
-                </article>
-            </div>
-        </div>
-    </section>
-    <section class="app-installation container" id="guide">
-        <h2>Hướng Dẫn Cài Đặt</h2>
-        <ol>
-            <li> Tải file .dmg phiên bản mới nhất về, mở file lên, xuất hiện khung cửa sổ </li>
-            <li>Kéo thả app tên Caffee vào thư mục Applications</li>
-            <li> Mở app Caffee bằng LaunchPad hoặc Spotlight (lần đầu macOS sẽ hỏi có muốn mở app không, xác nhận Mở)
-            </li>
-            <li> Sau khi mở app lần đầu cần cài đặt quyền hệ thống để bộ gõ hoạt động được (theo hướng dẫn trên App)
-            </li>
-            <li> Sau khi làm theo hướng dẫn trên App, tắt App và mở lại 1 lần nữa là có thể dùng được bình thường </li>
-        </ol>
-        <h2>Nâng Cấp Phiên Bản</h2>
-        <p>
-            <i>Từ phiên bản 1.17.0, App đã tích hợp tính năng tự động kiểm tra cập nhật (sử dụng Sparkle framework).
-                App sẽ kết nối mạng để kiểm tra phiên bản mới khi khởi động và khi bạn chọn "Check for Updates..." trong menu.
-                Bạn có thể tắt tính năng này trong phần Cài Đặt nếu muốn.</i>
-        </p>
-        <p> Nếu đã từng dùng phiên bản cũ, bạn có thể tải file .dmg của bản mới nhất về làm từ bước 1-3 như trên (không
-            cần cấp lại quyền). <br /> Nhưng trước khi nâng cấp vui lòng Quit app bản cũ bằng cách click biểu tượng trên
-            Menu, chọn Quit App. </p>
-    </section>
-    <section class="app-faq container" id="faq">
-        <h2>FAQ</h2>
-        <details open>
-            <summary>
-                <strong>1. App có an toàn không ?</strong>
-            </summary>
-            <p>
-            <ul>
-                <li>App trên website chính thức sẽ an toàn, do chính tay mình Code, chính tay mình Build, chính tay mình
-                    gửi lên Apple ký số để phân phối App (1 lớp quét virus dạng nhẹ).</li>
-                <li>Nếu bạn hỏi tại sao phải tin mình ? Đúng! Bạn không cần tin. Mình tin mình làm điều đúng đắn.</li>
-                <li><strong>Lưu ý : vui lòng tải bản chính thức tại web này, các bản phân phối ở nơi khác mình không đảm
-                        bảo (do mã nguồn đã mở). Bạn có thể <a
-                            href="https://emn178.github.io/online-tools/sha256_checksum.html" target="_blank">kiểm tra
-                            checksum sha256</a> trong mục <a href="#release-notes">Release notes</a> bên
-                        dưới.</strong></li>
-            </ul>
-            </p>
-        </details>
-        <hr />
-        <details open>
-            <summary>
-                <strong>2. Sao phải cấp quyền macOS thì mới dùng được App ?</strong>
-            </summary>
-            <p>
-            <ul>
-                <li>Đầu tiên việc bạn đặt ra câu hỏi mỗi khi cấp quyền là một tư duy bảo mật tốt!</li>
-                <li>Nếu bạn dùng macOS đã lâu sẽ thấy macOS có 2 dạng bộ gõ :
-                    <ul>
-                        <li>Chính thức nguyên tem của hệ điều hành, do Apple viết dựa trên Engine tiếng việt của Unikey,
-                            nhưng cách hoạt động là nó tạo 1 cái input giả (gọi là Buffer ảo) để bạn nhập Tiếng Việt vào
-                            đó, đó là lý do mà nó thường có gạch chân. <br />Đến khi bạn bấm 1 key kết thúc 1 từ (như
-                            Space hay chấm phẩy), hệ điều hành mới Commit cái từ tiếng Việt đó xuống cái Input thật. Nên
-                            sẽ có hiện tượng bạn chưa gõ xong từ mà bấm chuột qua khung khác là nó Move cái từ bạn vừa
-                            gõ qua khung đó. Và còn rất nhiều bug phát sinh do dùng Input giả. </li>
-                        <li>Hàng chế (Caffee, GoTiengViet, OpenKey, EVKey, ...), do lập trình viên VN mơ ước về một trải
-                            nghiệm gõ tiếng Việt tốt hơn trên macOS như trên Windows (Unikey làm rất tốt). Các hàng chế
-                            này hoạt động cơ bản trên cách "Listen" (nghe toàn bộ keyboard được bấm) của bạn trên macOS,
-                            chuyển nó qua Tiếng Việt theo kiểu gõ bạn chọn, rồi lại "Send" các ký tự Tiếng Việt này
-                            xuống thẳng Input thật cho bạn. <br />Vì thế mà tất cả app kiểu hàng chế này phải xin 2
-                            quyền cơ bản là Listen và Send (quyền nào cũng nguy hiểm nếu tác giả không ngay thẳng) </li>
-                    </ul>
-                </li>
-                <li>
-                    <strong>Lưu ý :</strong> Một khi đã cấp quyền, bạn có thể lấy lại quyền nếu muốn (nhưng nhớ tắt App
-                    trước khi làm vì đây là cái bug to đùng ở phía macOS, nó sẽ crash cả cái máy, bạn chỉ có nước bấm
-                    giữ Power để tắt hoàn toàn máy).
-                </li>
-            </ul>
-            </p>
-        </details>
-        <hr />
-        <details open>
-            <summary>
-                <strong>3. Tại sao app miễn phí ?</strong>
-            </summary>
-            <p> Ban đầu mình cũng dự tính thương mại bán License app này, nhưng nghĩ lại market VN hơi chua :
-            <ul>
-                <li>Thị trường quá quen với hàng Free (như mình cũng vậy)</li>
-                <li>Thị trường cũng đã có các app Free (OpenKey, EVKey) với hàng tá tính năng kiểu gõ với bảng Settings
-                    to đùng</li>
-                <li>Cổng thanh toán ở VN khá chán, bán App thì lên Apple Store là ngon nhất (vừa tạo được niềm tin uy
-                    tín, vừa trải nghiệm mua nhanh gọn lẹ). <br />Nhưng khổ nổi loại app này được liệt kê vào danh mục
-                    cấm lên App (do đó bạn thấy các app trước không lên được - vì 2 cái quyền khá nhạy cảm) </li>
-            </ul>
-            </p>
-        </details>
-        <hr />
-        <details open>
-            <summary>
-                <strong>4. Tại sao Open-source ?</strong>
-            </summary>
-            <p>
-            <ul>
-                <li>Việc open-source cho các Developer khác chung sở thích và muốn hiểu hơn về bộ gõ có thể đóng góp
-                </li>
-                <li>Mình thấy đa phần các App trước OpenSource viết khá khó đọc (như OpenKey viết bằng Obj-C) và Engine
-                    nhìn rất Hard-core (mỗi khi mình muốn đóng góp phải vận rất nhiều nội công học lại - nên đa phần
-                    bỏ cuộc ở bước đọc code)</li>
-            </ul>
-            </p>
-        </details>
-        <hr />
-        <details open>
-            <summary>
-                <strong>5. Tại sao lại viết lại App này trong khi đã có quá nhiều App trước</strong>
-            </summary>
-            <p>
-            <ul>
-                <li>Mình background là Web Dev nên app này là thành quả của 1 tháng học Swift, đây cũng là cách vừa làm
-                    vừa học</li>
-                <li>Các App trước khá nặng với quá nhiều tính năng mình thấy 95% người dùng không dùng, và phải hỗ trợ
-                    quá nhiều thứ nên dần Source-Code quá tải khó maintaince, các tác giả cũng phải làm công việc hàng
-                    ngày kiếm cơm nên ít thời gian sửa. Và code quá nặng quá nhiều Logic khiến các Dev khác không mặn mà
-                    đóng góp.</li>
-            </ul>
-            </p>
-        </details>
-        <hr />
-    </section>
-    <section class="release-notes container" id="release-notes">
-        <h2>Release Notes</h2>
-        <div>
-            <h5>v1.19.0</h5>
-            <ul>
-                <li>Checksum sha256 (Caffee-v1.19.0.dmg) :
-                    <code>7840b6f107c9ef2a50bd11b5ea3b891bedfa6d542cb78b5be2fdbdb2f2b541b3</code>
-                </li>
-                <li>Onboarding flow for first-time users</li>
-                <li>Permission guides and configuration help</li>
-                <li>Enhanced user experience</li>
-            </ul>
-            <hr />
-        </div>
-        <div>
-            <h5>v1.18.0</h5>
-            <ul>
-                <li>Checksum sha256 (Caffee-v1.18.0.dmg) :
-                    <code>56782fde4c2ba529c5c167b3a548ad00d6d83a1e2245e8008d3f7bf44c6bed2e</code>
-                </li>
-                <li>Show lock icon on secured input</li>
-                <li>Performance enhancements</li>
-                <li>Fixed validator</li>
-                <li>Recover on invalid Vietnamese</li>
-                <li>Code refactoring</li>
-            </ul>
-            <hr />
-        </div>
-        <div>
-            <h5>v1.16.0</h5>
-            <ul>
-                <li>Checksum sha256 (Caffee-1.16.0.dmg) :
-                    <code>d576b7504bde8d4d389a0919c0bfb3eac8f24578c76ae226a96cf0d63acf29c7</code>
-                </li>
-                <li>Fixed : Không thể gõ dấu khi viết hoa Capslock (kiểu gõ VNI)</li>
-            </ul>
-            <hr />
-        </div>
-        <div>
-            <h5>v1.15.0</h5>
-            <ul>
-                <li>Checksum sha256 (Caffee-1.15.0.dmg) :
-                    <code>f796eef12a5d555f6818327710feb813740b453c0166d3d77ab918a3a5bb6881</code>
-                </li>
-                <li>Tút lại App Icon (Clean background) by @dvbthien</li>
-            </ul>
-            <hr />
-        </div>
-        <div>
-            <h5>v1.14.0</h5>
-            <ul>
-                <li>Checksum sha256 (Caffee-1.14.0.dmg) :
-                    <code>709e8dd65fc08e3835c5874822461d220a1797ec84663e11d8cf0b2c7a306624</code>
-                </li>
-                <li>Cho phép các ký tự "z,w,j,f" làm phụ âm đầu (ví dụ : fải zậy wá jàu), chỉnh trong Cài đặt (mặc định
-                    cho phép)</li>
-                <li>Hiển thị phiên bản hiện hành tại bảng Cài đặt</li>
-            </ul>
-            <hr />
-        </div>
-        <div>
-            <h5>v1.13.0</h5>
-            <ul>
-                <li>Checksum sha256 (Caffee-1.13.0.dmg) :
-                    <code>a87014441dd3e9e287534522ee3d69b2542f115e11acc00aee670068480f1f79</code>
-                </li>
-                <li>Bản release public đầu tiên khi Open-source</li>
-            </ul>
-            <hr />
-        </div>
-    </section>
-    <section class="app-license container">
-        <h2>LICENSE</h2>
-        <p>GNU General Public License v3.0 (cơ bản là bạn có thể làm gì với mã nguồn cũng được, ngoại trừ dùng nó để làm
-            một phần mềm khác mã đóng - vì như thế là vi phạm tinh thần Open-Source của dự án)</p>
-    </section>
-    <footer class="app-footer container">
-        <hr />
-        <p>© 2024 KhanhIceTea. Made in Vietnam.</p>
-    </footer>
+        </section>
 
-    <!-- Cloudflare Web Analytics -->
-    <script defer src='https://static.cloudflareinsights.com/beacon.min.js'
-        data-cf-beacon='{"token": "fc3ce7ee7a604726aa14ec631e5af80f"}'></script><!-- End Cloudflare Web Analytics -->
+        <section class="features" id="features">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2>Tại sao chọn Caffee?</h2>
+                    <p>
+                        Một bộ gõ được chăm chút để hoạt động mượt mà. Dành cho
+                        người dùng tiếng Việt coi trọng sự đơn giản và chính
+                        xác.
+                    </p>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">◌̛</div>
+                        <h3>Gõ đúng chuẩn</h3>
+                        <p>
+                            Đặt dấu theo kiểu cũ — vì tính thẩm mỹ và nhất quán.
+                            Chữ viết là data, vì vậy nó nên nhất quán cách viết.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⌨</div>
+                        <h3>Telex & VNI</h3>
+                        <p>
+                            Hỗ trợ đầy đủ cả hai kiểu gõ phổ biến. Sửa dấu không
+                            cần xóa đi gõ lại, tự động nhận biết từ tiếng Anh.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🧠</div>
+                        <h3>Nhớ theo ứng dụng</h3>
+                        <p>
+                            Ghi nhớ chế độ gõ cho từng ứng dụng. Chuyển sang
+                            tiếng Anh trong Safari, quay lại Notes thì tự động
+                            về tiếng Việt.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">✓</div>
+                        <h3>Sửa lỗi trình duyệt</h3>
+                        <p>
+                            Khắc phục lỗi thanh địa chỉ và Excel khó chịu mà các
+                            bộ gõ tiếng Việt khác thường gặp trên Mac.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3>Chuyển đổi nhanh</h3>
+                        <p>
+                            Phím tắt toàn cục để chuyển đổi En-Vi ngay lập tức,
+                            trong bất kỳ app nào, không cần dùng chuột.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⏻</div>
+                        <h3>Khởi động cùng macOS</h3>
+                        <p>
+                            Luôn sẵn sàng khi bạn cần. Khởi động nhanh, hoạt
+                            động mượt mà. Cài đặt một lần, quên đi lo âu.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    <script>
-        var typed = new Typed('#typing', {
-            strings: [
-                'Bộ gõ tiếng Việt đơn giản nhất cho MacOS.',
-                'Hỗ trợ macOS Intel + Apple Silicon.',
-                'Nhanh + Gọn + Chính xác !'
-            ],
-            loop: true,
-            typeSpeed: 50,
-        });
-    </script>
-</body>
+        <section class="installation" id="guide">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2>Hướng Dẫn Cài Đặt</h2>
+                    <p>
+                        Chỉ cần 2 phút để cài đặt. Kéo thả, cấp quyền và dùng
+                        thôi.
+                    </p>
+                </div>
+                <div class="install-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Tải về & Mount</h3>
+                            <p>
+                                Tải file .dmg phiên bản mới nhất và double-click
+                                để mount. Cửa sổ sẽ hiện ra với app Caffee bên
+                                trong.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Kéo vào Applications</h3>
+                            <p>
+                                Kéo thả app Caffee vào thư mục Applications. Vậy
+                                là xong phần cài đặt.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Mở app lần đầu</h3>
+                            <p>
+                                Mở Caffee từ LaunchPad hoặc Spotlight. macOS sẽ
+                                hỏi có muốn mở app không — chọn "Mở".
+                            </p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Cấp quyền hệ thống</h3>
+                            <p>
+                                Làm theo hướng dẫn trên màn hình để cấp quyền hệ
+                                thống. Caffee cần quyền này để nghe và gửi sự
+                                kiện bàn phím.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h3>Khởi động lại & Dùng thôi</h3>
+                            <p>
+                                Tắt và mở lại Caffee sau khi cấp quyền. Giờ bạn
+                                đã sẵn sàng gõ tiếng Việt!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    style="
+                        max-width: 800px;
+                        margin: 3rem auto 0;
+                        padding: 1.5rem;
+                        background: rgba(0, 122, 255, 0.05);
+                        border-radius: 12px;
+                        border-left: 4px solid var(--accent);
+                    "
+                >
+                    <p
+                        style="
+                            margin: 0;
+                            font-size: 0.95rem;
+                            color: var(--text-secondary);
+                        "
+                    >
+                        <strong style="color: var(--text-primary)"
+                            >Tự động cập nhật:</strong
+                        >
+                        Từ v1.17.0, Caffee tự động kiểm tra cập nhật bằng
+                        Sparkle. Bạn có thể tắt trong Cài đặt nếu muốn.
+                    </p>
+                </div>
+            </div>
+        </section>
 
+        <section class="faq" id="faq">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2>Câu Hỏi Thường Gặp</h2>
+                </div>
+                <div class="faq-list">
+                    <details>
+                        <summary>App có an toàn không?</summary>
+                        <div>
+                            <p>Có. App trên website chính thức:</p>
+                            <ul>
+                                <li>
+                                    Được chính tay tác giả code, build và ký số
+                                </li>
+                                <li>
+                                    Được gửi lên Apple để notarization (quét
+                                    virus nhẹ)
+                                </li>
+                                <li>Mã nguồn mở để kiểm chứng</li>
+                            </ul>
+                            <p>
+                                <strong>Lưu ý:</strong> Chỉ tải từ website chính
+                                thức này. Bạn có thể
+                                <a
+                                    href="https://emn178.github.io/online-tools/sha256_checksum.html"
+                                    target="_blank"
+                                    >kiểm tra checksum SHA256</a
+                                >
+                                trong mục Release Notes bên dưới.
+                            </p>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>
+                            Sao phải cấp quyền macOS thì mới dùng được?
+                        </summary>
+                        <div>
+                            <p>
+                                Đặt câu hỏi này là tư duy bảo mật tốt! Caffee
+                                cần 2 quyền để hoạt động:
+                            </p>
+                            <ul>
+                                <li>
+                                    <strong>Listen:</strong> Để nghe toàn bộ sự
+                                    kiện bàn phím
+                                </li>
+                                <li>
+                                    <strong>Send:</strong> Để gửi ký tự tiếng
+                                    Việt trực tiếp vào input field
+                                </li>
+                            </ul>
+                            <p>
+                                Đây là cách tất cả bộ gõ thứ 3 hoạt động trên
+                                macOS (khác với bộ gõ Apple dùng buffer ảo). Các
+                                quyền này rất mạnh, vì vậy chúng tôi duy trì mã
+                                nguồn mở để minh bạch.
+                            </p>
+                            <p>
+                                <strong>Lưu ý:</strong> Nếu cần thu hồi quyền,
+                                hãy tắt Caffee trước để tránh bug macOS có thể
+                                crash máy.
+                            </p>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>Tại sao app miễn phí?</summary>
+                        <div>
+                            <p>
+                                Ban đầu định bán license, nhưng thị trường VN
+                                quen với hàng free. Thêm nữa, app cần quyền hệ
+                                thống bị cấm trên Mac App Store, khiến việc phân
+                                phối trả phí khó khăn khi không có cổng thanh
+                                toán tin cậy.
+                            </p>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>Tại sao open-source?</summary>
+                        <div>
+                            <ul>
+                                <li>
+                                    Để các developer khác đóng góp và học hỏi về
+                                    bộ gõ
+                                </li>
+                                <li>
+                                    Các app open-source trước dùng Objective-C
+                                    khó đọc với engine phức tạp
+                                </li>
+                                <li>
+                                    Caffee hướng đến code Swift sạch, dễ
+                                    maintain và chào đón đóng góp
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>Tại sao viết thêm bộ gõ nữa?</summary>
+                        <div>
+                            <ul>
+                                <li>
+                                    Đây là app Swift đầu tiên của tác giả sau 1
+                                    tháng học — vừa làm vừa học
+                                </li>
+                                <li>
+                                    Các app trước nặng với 95% tính năng người
+                                    dùng không dùng đến
+                                </li>
+                                <li>
+                                    Codebase phức tạp khiến bảo trì và đóng góp
+                                    khó khăn
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <section class="releases" id="releases">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2>Lịch Sử Phiên Bản</h2>
+                </div>
+                <div class="releases-list">
+                    <div class="release">
+                        <h3>v1.19.0</h3>
+                        <div class="checksum">
+                            sha256:
+                            7840b6f107c9ef2a50bd11b5ea3b891bedfa6d542cb78b5be2fdbdb2f2b541b3
+                        </div>
+                        <ul>
+                            <li>Onboarding flow cho người dùng mới</li>
+                            <li>Hướng dẫn cấp quyền và cấu hình</li>
+                            <li>Cải thiện trải nghiệm người dùng</li>
+                        </ul>
+                    </div>
+                    <div class="release">
+                        <h3>v1.18.0</h3>
+                        <div class="checksum">
+                            sha256:
+                            56782fde4c2ba529c5c167b3a548ad00d6d83a1e2245e8008d3f7bf44c6bed2e
+                        </div>
+                        <ul>
+                            <li>Hiển thị icon khóa trên input bảo mật</li>
+                            <li>Tối ưu hiệu năng</li>
+                            <li>Sửa validator</li>
+                            <li>Phục hồi khi gõ không phải tiếng Việt</li>
+                            <li>Refactor code</li>
+                        </ul>
+                    </div>
+                    <div class="release">
+                        <h3>v1.16.0</h3>
+                        <div class="checksum">
+                            sha256:
+                            d576b7504bde8d4d389a0919c0bfb3eac8f24578c76ae226a96cf0d63acf29c7
+                        </div>
+                        <ul>
+                            <li>
+                                Sửa: Không thể gõ dấu khi Caps Lock trong chế độ
+                                VNI
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>
+                &copy; 2024 KhanhIceTea. Made with care in Vietnam. Giấy phép
+                GPLv3.
+            </p>
+        </footer>
+
+        <!-- Cloudflare Web Analytics -->
+        <script
+            defer
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon='{"token": "fc3ce7ee7a604726aa14ec631e5af80f"}'
+        ></script>
+    </body>
 </html>

@@ -1,0 +1,23 @@
+{
+  "name": "caffee-video",
+  "version": "1.0.0",
+  "description": "Promotional video for Caffee - Vietnamese IME for macOS",
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion render src/index.ts CaffeePromo out/video.mp4",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.414",
+    "@remotion/transitions": "^4.0.414",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "remotion": "^4.0.414"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.30",
+    "@types/react": "^18.3.27",
+    "typescript": "^5.9.3"
+  }
+}
