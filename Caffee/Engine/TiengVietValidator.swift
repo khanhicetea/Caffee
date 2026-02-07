@@ -36,14 +36,14 @@ enum TiengVietValidator {
     "ă": ["c", "m", "n", "ng", "p", "t"],
     "â": ["c", "m", "n", "ng", "p", "t"],
     "e": ["c", "m", "n", "p", "t"],
-    "ê": ["ch", "m", "n", "nh", "p", "t"],
-    "i": ["ch", "m", "n", "nh", "p", "t"],
+    "ê": ["c", "ch", "m", "n", "nh", "p", "t"],
+    "i": ["c", "ch", "m", "n", "nh", "p", "t"],
     "o": ["c", "m", "n", "ng", "p", "t"],
     "ô": ["c", "m", "n", "ng", "p", "t"],
     "ơ": ["m", "n", "p", "t"],
     "u": ["c", "m", "n", "ng", "p", "t"],
     "ư": ["c", "m", "n", "ng", "p", "t"],
-    "y": ["ch", "m", "n", "nh", "p", "t"],
+    "y": ["c", "ch", "m", "n", "nh", "p", "t"],
 
     // Nguyên âm ghép CÓ THỂ có phụ âm cuối
     // iê/ie - tiếng, biết, kiếm, điện...
@@ -67,10 +67,10 @@ enum TiengVietValidator {
     "uâ": ["n", "t"],
 
     // uê - huệch, tuềnh... (hiếm)
-    "uê": ["ch", "nh"],
+    "uê": ["c", "ch", "n", "nh"],
 
     // uy - huynh, quýt...
-    "uy": ["ch", "n", "nh", "p", "t"],
+    "uy": ["c", "ch", "n", "nh", "p", "t"],
 
     // yê - yến, yêm...
     "yê": ["m", "n", "p", "t"],
