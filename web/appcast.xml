@@ -6,6 +6,28 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.22.0</title>
+      <sparkle:version>12200</sparkle:version>
+      <sparkle:shortVersionString>1.22.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <pubDate>Sat, 07 Feb 2026 16:00:00 +0700</pubDate>
+      <enclosure
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.22.0/Caffee-v1.22.0.dmg"
+                sparkle:edSignature="kzXwIrM78ZDE1tP1JJWdAYtJtQE4DuSwXwGTQPdIyO7xKDruT9IorX/nIg3PaTMIQSeYqsIobhZr9/kJWLMlCg=="
+                length="5869350"
+                type="application/octet-stream"
+            />
+      <description>
+        <![CDATA[
+        <h2>Có gì mới</h2>
+        <ul>
+          <li>Icon ứng dụng mới</li>
+          <li>Sửa lỗi xử lý âm tiết 'ch'</li>
+        </ul>
+      ]]>
+      </description>
+    </item>
+    <item>
       <title>Version 1.21.0</title>
       <sparkle:version>12100</sparkle:version>
       <sparkle:shortVersionString>1.21.0</sparkle:shortVersionString>
