@@ -101,7 +101,7 @@ class InputProcessor {
 
     // Don't auto-switch if already using specialized strategies
     switch currentStrategy {
-    case .stepByStep, .arrowsMoving:
+    case .stepByStep:
       return  // Already using a specialized strategy
     default:
       break

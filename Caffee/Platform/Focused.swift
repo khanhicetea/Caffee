@@ -8,43 +8,32 @@ import Foundation
 
 public struct Focused {
   public static func element() -> AXUIElement? {
-    let systemWideElement: AXUIElement = AXUIElementCreateSystemWide()
-    let result: AXUIElement? = systemWideElement.getAttribute(
-      property: kAXFocusedUIElementAttribute)
-    return result
+    let systemWideElement = AXUIElementCreateSystemWide()
+    return systemWideElement.getAttribute(property: kAXFocusedUIElementAttribute)
   }
 
   public static func elementText() -> String? {
-    if let focusedElement: AXUIElement = Focused.element() {
-      if let selectedText: AXValue = focusedElement.getAttribute(property: kAXValueAttribute) {
-        return "\(selectedText)"
-      }
-    }
-    return nil
+    guard let focusedElement = Focused.element() else { return nil }
+    guard let selectedText: AXValue = focusedElement.getAttribute(property: kAXValueAttribute)
+    else { return nil }
+    return "\(selectedText)"
   }
 
   public static func hasHighlightedText() -> Bool {
-    if let focusedElement: AXUIElement = Focused.element() {
-      if let highlightedText: AXValue = focusedElement.getAttribute(
-        property: kAXSelectedTextAttribute)
-      {
-        return !"\(highlightedText)".isEmpty
-      }
-    }
-    return false
+    guard let focusedElement = Focused.element() else { return false }
+    guard let highlightedText: AXValue = focusedElement.getAttribute(
+      property: kAXSelectedTextAttribute)
+    else { return false }
+    return !"\(highlightedText)".isEmpty
   }
 
   public static func highlightedText() -> String? {
-    if let focusedElement: AXUIElement = Focused.element() {
-      if let highlightedText: AXValue = focusedElement.getAttribute(
-        property: kAXSelectedTextAttribute)
-      {
-        if !"\(highlightedText)".isEmpty {
-          return "\(highlightedText)"
-        }
-      }
-    }
-    return nil
+    guard let focusedElement = Focused.element() else { return nil }
+    guard let highlightedText: AXValue = focusedElement.getAttribute(
+      property: kAXSelectedTextAttribute)
+    else { return nil }
+    guard !"\(highlightedText)".isEmpty else { return nil }
+    return "\(highlightedText)"
   }
 }
 

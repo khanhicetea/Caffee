@@ -35,7 +35,7 @@ class EventHook {
   func destroy() {
     if let eventTap = eventTap {
       CFMachPortInvalidate(eventTap)
-      UnregisterEventTap(eventTap)
+      unregisterEventTap(eventTap)
     }
   }
 
@@ -67,7 +67,7 @@ class EventHook {
   }
 
   // Unregisters the event tap from the run loop.
-  func UnregisterEventTap(_ eventTap: CFMachPort) {
+  func unregisterEventTap(_ eventTap: CFMachPort) {
     if let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0) {
       CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
     }
@@ -78,7 +78,7 @@ class EventHook {
 func eventTapCallback(
   proxy: CGEventTapProxy, type: CGEventType, event: CGEvent, refcon: UnsafeMutableRawPointer?
 ) -> Unmanaged<CGEvent>? {
-  guard let refcon = refcon else { return Unmanaged.passRetained(event) }
+  guard let refcon else { return Unmanaged.passRetained(event) }
   let eventHook = Unmanaged<EventHook>.fromOpaque(refcon).takeUnretainedValue()
 
   // Ignore keystrokes not from hardware (HID system state).
