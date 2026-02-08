@@ -7,6 +7,7 @@
 
 import AppKit
 import CoreGraphics
+import Defaults
 import Foundation
 
 class InputProcessor {
@@ -20,34 +21,7 @@ class InputProcessor {
   static let NewWordTaskKeys: [TaskKey] = [.Enter, .Space, .Tab]
   static let JumpTaskKeys: [TaskKey] = [.Home, .End, .ArrowUp, .ArrowDown, .ArrowLeft, .ArrowRight]
 
-  /// Apps that need delay between backspace events due to event coalescing issues.
-  /// Format: (bundleIdPrefix, delayMicroseconds)
-  /// Higher delay = more reliable but slightly slower typing feel.
-  static let SlowEventApps: [(prefix: String, delay: UInt32)] = [
-    // Electron-based apps (highest delay needed)
-    ("com.microsoft.VSCode", 1500),
-    ("com.electron", 1500),
-    ("com.hnc.Discord", 1500),
-    ("com.tinyspeck.slackmacgap", 1500),
-    ("com.spotify.client", 1200),
-    // Browsers (moderate delay)
-    ("com.google.Chrome", 800),
-    ("org.chromium.Chromium", 800),
-    ("com.brave.Browser", 800),
-    ("com.microsoft.Edge", 800),
-    ("com.microsoft.edge", 800),
-    ("company.thebrowser.Browser", 800),
-    ("com.vivaldi.Vivaldi", 800),
-    ("com.operasoftware.Opera", 800),
-    ("org.mozilla.firefox", 600),
-    ("org.mozilla.nightly", 600),
-    // Microsoft Office apps
-    ("com.microsoft.Word", 1000),
-    ("com.microsoft.Excel", 1000),
-    ("com.microsoft.Powerpoint", 1000),
-    ("com.microsoft.Outlook", 1000),
-    ("com.microsoft.onenote.mac", 1000),
-  ]
+
 
   public var engine: TypingMethod
   public var typingMethod: TypingMethods
@@ -65,6 +39,19 @@ class InputProcessor {
   /// Track pasteboard change count to detect external paste operations
   private var lastPasteboardChangeCount: Int = NSPasteboard.general.changeCount
 
+  /// Current sending strategy for the active app
+  private var currentStrategy: SendingStrategy = .batch
+
+  /// Track consecutive transformation failures for auto-switching
+  private var consecutiveFailures = 0
+
+  /// Maximum failures before auto-switching to step-by-step mode
+  private let maxFailuresBeforeSwitch = 3
+
+  /// Track last transformation for failure detection
+  private var lastInputChar: Character?
+  private var expectedOutput: String?
+
   init(method: TypingMethods) {
     typingMethod = method
     engine = typingMethod == .Telex ? Telex() : VNI()
@@ -78,6 +65,62 @@ class InputProcessor {
 
   public func changeActiveApp(_ app: String) {
     activeApp = app
+    // Reset strategy to default for the new app
+    currentStrategy = EventSimulator.getStrategy(for: app)
+    consecutiveFailures = 0
+    lastInputChar = nil
+    expectedOutput = nil
+  }
+
+  /// Detects if a transformation likely failed based on input/output tracking.
+  /// Returns true if the transformation appears to have failed.
+  func detectTransformationFailure(input: Character, expectedOutput: String, actualContext: String?) -> Bool {
+    // Basic heuristic: if we've been seeing the same input multiple times
+    // or the output doesn't match what we expect, it might be failing
+    if let last = lastInputChar, last == input {
+      consecutiveFailures += 1
+    } else {
+      consecutiveFailures = 1
+    }
+    lastInputChar = input
+
+    // If we have too many consecutive similar failures, switch strategy
+    if consecutiveFailures >= maxFailuresBeforeSwitch {
+      return true
+    }
+
+    return false
+  }
+
+  /// Auto-switches to step-by-step mode if failures are detected.
+  func autoSwitchStrategyIfNeeded() {
+    // Check if auto-switch is enabled in settings
+    guard Defaults[.autoSwitchStrategy] else {
+      return
+    }
+
+    // Don't auto-switch if already using specialized strategies
+    switch currentStrategy {
+    case .stepByStep, .arrowsMoving:
+      return  // Already using a specialized strategy
+    default:
+      break
+    }
+
+    // Switch to step-by-step for this session
+    let oldStrategy = currentStrategy
+    currentStrategy = .stepByStep
+    consecutiveFailures = 0
+
+    #if DEBUG
+    let appName = EventSimulator.getAppName(for: activeApp)
+    print("[Caffee] Auto-switched from \(oldStrategy) to step-by-step mode for \(appName) due to failures")
+    #endif
+  }
+
+  /// Gets the current sending strategy, considering auto-switching for failures.
+  func getCurrentStrategy() -> SendingStrategy {
+    return currentStrategy
   }
 
   public func newWord(storePrevious: Bool = false) {
@@ -187,8 +230,19 @@ class InputProcessor {
         if needToFixAutocomplete() {
           numBackspaces += 1
         }
-        EventSimulator.sendBackspace(numBackspaces, delayMicroseconds: getBackspaceDelay())
-        EventSimulator.sendString(String(diffChars))
+
+        // Check for transformation failures and auto-switch if needed
+        if detectTransformationFailure(input: newChar, expectedOutput: transformed, actualContext: nil) {
+          autoSwitchStrategyIfNeeded()
+        }
+
+        // Use strategy-based sending
+        let strategy = getCurrentStrategy()
+        EventSimulator.sendReplacement(
+          backspaceCount: numBackspaces,
+          diffChars: diffChars,
+          strategy: strategy
+        )
         return nil
       }
     }
@@ -201,17 +255,6 @@ class InputProcessor {
       return activeApp.hasPrefix(app)
     }
     return idx != nil && Focused.hasHighlightedText()
-  }
-
-  /// Returns the appropriate backspace delay for the current active app.
-  /// Apps with known event coalescing issues need delays between backspaces.
-  func getBackspaceDelay() -> UInt32 {
-    for (prefix, delay) in InputProcessor.SlowEventApps {
-      if activeApp.hasPrefix(prefix) {
-        return delay
-      }
-    }
-    return 0  // Native apps: no delay needed
   }
 
 }

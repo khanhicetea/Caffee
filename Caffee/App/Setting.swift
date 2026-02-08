@@ -35,6 +35,7 @@ extension Defaults.Keys {
   static let allowedZWJF = Key<Bool>("allowed-zwjf", default: true)
   static let token = Key<String>("token", default: "")
   static let checkForUpdatesAutomatically = Key<Bool>("check-updates-automatically", default: true)
+  static let autoSwitchStrategy = Key<Bool>("auto-switch-strategy", default: true)
 
   //            ^            ^         ^                ^
   //           Key          Type   UserDefaults name   Default value
