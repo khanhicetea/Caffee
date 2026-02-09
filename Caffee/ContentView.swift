@@ -1,6 +1,5 @@
 import SwiftUI
 
-@available(macOS 12.0, *)
 struct ContentView: View {
   var telex = Telex()
 

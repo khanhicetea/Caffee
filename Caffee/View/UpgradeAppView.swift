@@ -9,7 +9,7 @@ import Cocoa
 import SwiftUI
 
 struct UpgradeAppView: View {
-  @EnvironmentObject var appState: AppState
+  @Environment(AppState.self) var appState
 
   @State private var hasRequestedPermission = false
   @State private var permissionGranted = false
@@ -174,7 +174,7 @@ struct UpgradeInstructionStep: View {
 struct UpgradeAppView_Previews: PreviewProvider {
   static var previews: some View {
     UpgradeAppView()
-      .environmentObject(AppState())
+      .environment(AppState())
       .previewLayout(PreviewLayout.sizeThatFits)
       .padding()
       .previewDisplayName("UpgradeAppView preview")

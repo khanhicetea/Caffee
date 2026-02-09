@@ -6,19 +6,39 @@
 //
 
 import Cocoa
-import Combine
+import Observation
 import Defaults
 import Foundation
 import KeyboardShortcuts
 
-class AppState: ObservableObject, FileMonitorDelegate {
+@Observable
+class AppState: FileMonitorDelegate {
 
-    private var cancellables = Set<AnyCancellable>()
+    public var enabled = false {
+        didSet {
+            self.appModes[self.activeAppName] = enabled
+            self.eventHook.setEnabled(enabled)
+        }
+    }
+    public var typingMethod: TypingMethods {
+        didSet {
+            self.inputProcessor.changeTypingMethod(newMethod: typingMethod)
+            Defaults[.typingMethod] = typingMethod
+        }
+    }
+    public var allowedZWJF: Bool {
+        didSet {
+            if allowedZWJF {
+                TiengViet.PhuAmDau =
+                    TiengViet.PhuAmGhep + TiengViet.PhuAmDon + TiengViet.PhuAmDonNuocNgoai
+            } else {
+                TiengViet.PhuAmDau = TiengViet.PhuAmGhep + TiengViet.PhuAmDon
+            }
 
-    @Published public var enabled = false
-    @Published public var typingMethod: TypingMethods
-    @Published public var allowedZWJF: Bool
-    @Published public var secureInputActive = false
+            Defaults[.allowedZWJF] = allowedZWJF
+        }
+    }
+    public var secureInputActive = false
 
     public var inputProcessor: InputProcessor
     public var eventHook: EventHook
@@ -30,31 +50,22 @@ class AppState: ObservableObject, FileMonitorDelegate {
         bundleId = Bundle.main.bundleIdentifier ?? "com.khanhicetea.Caffee"
 
         let defaultMethod = Defaults[.typingMethod]
+        // Use direct assignment to avoid didSet during init if not needed, 
+        // but here we want to ensure side effects are consistent.
+        // Actually, didSet does NOT run in init.
         typingMethod = defaultMethod
         allowedZWJF = Defaults[.allowedZWJF]
-        inputProcessor = InputProcessor(method: defaultMethod)
-        eventHook = EventHook(inputProcessor: inputProcessor)
+        
+        let processor = InputProcessor(method: defaultMethod)
+        inputProcessor = processor
+        eventHook = EventHook(inputProcessor: processor)
 
-        $enabled.sink { newState in
-            self.appModes[self.activeAppName] = newState
-            self.eventHook.setEnabled(newState)
-        }.store(in: &cancellables)
-
-        $typingMethod.sink { newState in
-            self.inputProcessor.changeTypingMethod(newMethod: newState)
-            Defaults[.typingMethod] = newState
-        }.store(in: &cancellables)
-
-        $allowedZWJF.sink { newState in
-            if newState {
-                TiengViet.PhuAmDau =
-                    TiengViet.PhuAmGhep + TiengViet.PhuAmDon + TiengViet.PhuAmDonNuocNgoai
-            } else {
-                TiengViet.PhuAmDau = TiengViet.PhuAmGhep + TiengViet.PhuAmDon
-            }
-
-            Defaults[.allowedZWJF] = newState
-        }.store(in: &cancellables)
+        // Initial setup for allowedZWJF side effects since didSet doesn't run in init
+        if allowedZWJF {
+            TiengViet.PhuAmDau = TiengViet.PhuAmGhep + TiengViet.PhuAmDon + TiengViet.PhuAmDonNuocNgoai
+        } else {
+            TiengViet.PhuAmDau = TiengViet.PhuAmGhep + TiengViet.PhuAmDon
+        }
 
         KeyboardShortcuts.onKeyUp(for: .toggleInputMode) { [self] in
             self.setEnabled(set: !self.enabled)
@@ -89,9 +100,9 @@ class AppState: ObservableObject, FileMonitorDelegate {
 
     func registerSwitchFileMonitor() {
         let tmpPath = URL(fileURLWithPath: "/tmp/caffee_switch")
-        try! "".write(to: tmpPath, atomically: true, encoding: .utf8)
-        let fMonitor = try! FileMonitor(url: tmpPath)
-        fMonitor.delegate = self
+        try? "".write(to: tmpPath, atomically: true, encoding: .utf8)
+        let fMonitor = try? FileMonitor(url: tmpPath)
+        fMonitor?.delegate = self
     }
 
     func didReceive(changes: String) {

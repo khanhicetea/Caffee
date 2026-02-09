@@ -2,7 +2,7 @@ import Cocoa
 import SwiftUI
 
 struct GuideView: View {
-  @EnvironmentObject var appState: AppState
+  @Environment(AppState.self) var appState
 
   @State var requested: Bool = false
   @State var checkOk: Bool = false
@@ -89,7 +89,7 @@ class WindowController: NSWindowController {
 struct GuideView_Previews: PreviewProvider {
   static var previews: some View {
     GuideView()
-      .environmentObject(AppState())
+      .environment(AppState())
       .previewLayout(PreviewLayout.sizeThatFits)
       .padding()
       .previewDisplayName("GuideView preview")

@@ -5,12 +5,13 @@ import Settings
 import SwiftUI
 
 struct GeneralView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState
     @Default(.checkForUpdatesAutomatically) var checkForUpdatesAutomatically
 
     let appVersion = Bundle.main.appVersionLong
 
     var body: some View {
+        @Bindable var appState = appState
         VStack {
             Image("Cficon")
                 .resizable()
@@ -77,7 +78,7 @@ struct GeneralView: View {
 struct GeneralView_Previews: PreviewProvider {
     static var previews: some View {
         GeneralView()
-            .environmentObject(AppState())
+            .environment(AppState())
             .previewLayout(PreviewLayout.sizeThatFits)
             .padding()
             .previewDisplayName("GeneralView preview")

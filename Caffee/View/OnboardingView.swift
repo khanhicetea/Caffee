@@ -9,10 +9,12 @@ import Cocoa
 import Defaults
 import LaunchAtLogin
 import SwiftUI
+import Observation
 
 // MARK: - Onboarding ViewModel
 
-class OnboardingViewModel: ObservableObject {
+@Observable
+class OnboardingViewModel {
     enum Step: Int, CaseIterable {
         case welcome = 0
         case permission = 1
@@ -20,10 +22,10 @@ class OnboardingViewModel: ObservableObject {
         case removeIME = 3
     }
 
-    @Published var currentStep: Step = .welcome
-    @Published var permissionGranted: Bool = false
-    @Published var selectedMethod: TypingMethods = Defaults[.typingMethod]
-    @Published var launchAtLogin: Bool = true
+    var currentStep: Step = .welcome
+    var permissionGranted: Bool = false
+    var selectedMethod: TypingMethods = Defaults[.typingMethod]
+    var launchAtLogin: Bool = true
 
     private var permissionTimer: Timer?
 
@@ -88,8 +90,8 @@ class OnboardingViewModel: ObservableObject {
 // MARK: - Main Onboarding View
 
 struct OnboardingView: View {
-    @EnvironmentObject var appState: AppState
-    @StateObject private var viewModel = OnboardingViewModel()
+    @Environment(AppState.self) var appState
+    @State private var viewModel = OnboardingViewModel()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -141,7 +143,7 @@ struct StepIndicator: View {
 // MARK: - Step 1: Welcome
 
 struct WelcomeStepView: View {
-    @ObservedObject var viewModel: OnboardingViewModel
+    var viewModel: OnboardingViewModel
 
     var body: some View {
         VStack(spacing: 28) {
@@ -222,7 +224,7 @@ struct FeatureRow: View {
 // MARK: - Step 2: Permission
 
 struct PermissionStepView: View {
-    @ObservedObject var viewModel: OnboardingViewModel
+    var viewModel: OnboardingViewModel
     let appState: AppState
     @State private var hasRequestedPermission = false
 
@@ -353,10 +355,11 @@ struct InstructionStep: View {
 // MARK: - Step 3: Configuration
 
 struct ConfigurationStepView: View {
-    @ObservedObject var viewModel: OnboardingViewModel
+    var viewModel: OnboardingViewModel
     let appState: AppState
 
     var body: some View {
+        @Bindable var viewModel = viewModel
         VStack(spacing: 20) {
             // Header
             HStack {
@@ -512,7 +515,7 @@ struct TypingMethodCard: View {
 // MARK: - Step 4: Remove IME
 
 struct RemoveIMEStepView: View {
-    @ObservedObject var viewModel: OnboardingViewModel
+    var viewModel: OnboardingViewModel
     let appState: AppState
     @State private var currentPage = 0
     @State private var carouselTimer: Timer? = nil
@@ -709,7 +712,7 @@ class OnboardingWindowController: NSWindowController {
 struct OnboardingView_Previews: PreviewProvider {
     static var previews: some View {
         OnboardingView()
-            .environmentObject(AppState())
+            .environment(AppState())
             .previewDisplayName("Onboarding")
     }
 }

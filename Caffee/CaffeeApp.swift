@@ -1,24 +1,102 @@
-import AppKit
+//
+//  CaffeeApp.swift
+//  Caffee
+//
+//  Created by KhanhIceTea on 20/02/2024.
+//
 
-// CaffeeApp is the main entry point of the application.
+import SwiftUI
+import Sparkle
+
 @main
-struct CaffeeApp {
+struct CaffeeApp: App {
+  @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
-  // The main function sets up the application delegate and starts the main event loop.
-  static func main() {
-    // Initialize the AppDelegate which will manage the application lifecycle.
+  var body: some Scene {
+    MenuBarExtra {
+      if appDelegate.isTrusted {
+        MainMenuView(appState: appDelegate.appState, updaterController: appDelegate.updaterController)
+      } else {
+        GuideMenuView(appDelegate: appDelegate)
+      }
+    } label: {
+      MenuBarLabel(appState: appDelegate.appState, isTrusted: appDelegate.isTrusted)
+    }
 
-    let appDelegate = AppDelegate()
+    Settings {
+      GeneralView()
+        .environment(appDelegate.appState)
+    }
+  }
+}
 
-    // Get the shared NSApplication instance and set the delegate.
-    let app = NSApplication.shared
-    app.delegate = appDelegate
+struct MainMenuView: View {
+  var appState: AppState
+  var updaterController: SPUStandardUpdaterController
 
-    // Set the application activation policy to accessory.
-    // This means the app doesn't appear in the Dock or Force Quit window.
-    app.setActivationPolicy(.accessory)
+  var body: some View {
+    Button("Tắt / Mở") {
+      appState.enabled.toggle()
+    }
+    
+    Divider()
+    
+    Button(appState.typingMethod == .Telex ? "[✔] Kiểu Telex" : "Kiểu Telex") {
+      appState.typingMethod = .Telex
+    }
+    
+    Button(appState.typingMethod == .VNI ? "[✔] Kiểu VNI" : "Kiểu VNI") {
+      appState.typingMethod = .VNI
+    }
+    
+    Divider()
+    
+    Button("Check for Updates...") {
+      updaterController.checkForUpdates(nil)
+    }
+    
+    SettingsLink {
+      Text("Cài Đặt")
+    }
+    .keyboardShortcut(",", modifiers: .command)
+    
+    Divider()
+    
+    Button("Thoát") {
+      NSApp.terminate(nil)
+    }
+    .keyboardShortcut("q", modifiers: .command)
+  }
+}
 
-    // Start the main event loop of the application.
-    _ = NSApplicationMain(CommandLine.argc, CommandLine.unsafeArgv)
+struct GuideMenuView: View {
+  var appDelegate: AppDelegate
+
+  var body: some View {
+    Button("Hướng dẫn cài đặt") {
+      appDelegate.openGuide()
+    }
+    
+    Divider()
+    
+    Button("Thoát") {
+      NSApp.terminate(nil)
+    }
+    .keyboardShortcut("q", modifiers: .command)
+  }
+}
+
+struct MenuBarLabel: View {
+  var appState: AppState
+  var isTrusted: Bool
+
+  var body: some View {
+    if !isTrusted {
+      Image(systemName: "gear.badge.questionmark")
+    } else if appState.secureInputActive {
+      Image(systemName: "lock.square")
+    } else {
+      Image(systemName: appState.enabled ? "v.square" : "e.square")
+    }
   }
 }
