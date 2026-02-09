@@ -853,4 +853,35 @@ final class CaffeeTests: XCTestCase {
     XCTAssertEqual(vni, "toi yêu việt nam")
   }
 
+  // MARK: - InputProcessor Recovery Rollback Tests
+
+  func testInputProcessorRecoveryRollback() throws {
+    let inputProcessor = InputProcessor(method: .Telex)
+
+    // Type "hồ" (hoof)
+    inputProcessor.push(char: "h")
+    inputProcessor.push(char: "o")
+    inputProcessor.push(char: "o")
+    inputProcessor.push(char: "f")
+    XCTAssertEqual(inputProcessor.transformed, "hồ")
+    XCTAssertFalse(inputProcessor.stopProcessing)
+
+    // Type "z" -> triggers recovery
+    inputProcessor.push(char: "z")
+    XCTAssertTrue(inputProcessor.stopProcessing)
+    XCTAssertEqual(inputProcessor.transformed, "hoofz")
+
+    // Backspace
+    let (numBackspaces, diffChars) = inputProcessor.pop()
+
+    // "hoofz" and "hồ" share "h"
+    // "hoofz" is ["h", "o", "o", "f", "z"] (5 chars)
+    // "hồ" is ["h", "ồ"] (2 chars)
+    // Common prefix "h" (1 char)
+    // Backspaces: 5 - 1 = 4
+    XCTAssertEqual(numBackspaces, 4, "numBackspaces should be 4")
+    XCTAssertEqual(String(diffChars), "ồ", "diffChars should be ồ")
+    XCTAssertEqual(inputProcessor.transformed, "hồ", "transformed should be hồ")
+    XCTAssertFalse(inputProcessor.stopProcessing, "stopProcessing should be false")
+  }
 }

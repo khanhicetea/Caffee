@@ -21,7 +21,12 @@ class InputProcessor {
   static let NewWordTaskKeys: [TaskKey] = [.Enter, .Space, .Tab]
   static let JumpTaskKeys: [TaskKey] = [.Home, .End, .ArrowUp, .ArrowDown, .ArrowLeft, .ArrowRight]
 
-
+  struct WordStateSnapshot {
+    let wordState: TiengVietState
+    let keys: [Character]
+    let transformed: String
+    let stopProcessing: Bool
+  }
 
   public var engine: TypingMethod
   public var typingMethod: TypingMethods
@@ -31,6 +36,8 @@ class InputProcessor {
   public var stopProcessing = false
   public var lastTransformed = ""
   public var transformed = ""
+
+  public var lastValidSnapshot: WordStateSnapshot?
 
   public var activeApp = ""
   public var previousWordState: TiengVietState?
@@ -133,29 +140,85 @@ class InputProcessor {
     }
 
     keys = []
+    lastValidSnapshot = nil
     stopProcessing = false
     lastTransformed = ""
     transformed = ""
   }
 
-  public func pop() {
+  public func pop() -> (Int, [Character]) {
+    lastTransformed = transformed
+
+    // Single chance rollback if we are in recovery and it was caused by the LATEST keystroke
+    if stopProcessing, let valid = lastValidSnapshot, keys.count == valid.keys.count + 1 {
+      wordState = valid.wordState
+      keys = valid.keys
+      transformed = valid.transformed
+      stopProcessing = valid.stopProcessing
+      lastValidSnapshot = nil
+
+      let (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
+        from: lastTransformed, to: transformed)
+
+      if numBackspaces == 1 && diffChars.isEmpty {
+        return (0, [])
+      }
+
+      return (numBackspaces, diffChars)
+    }
+
+    // Normal pop logic
     if wordState.isBlank, let prev = previousWordState {
       wordState = prev
       previousWordState = nil
       keys = Array(wordState.chuKhongDau)
       transformed = wordState.transformed
       lastTransformed = transformed
+      stopProcessing = false
+      lastValidSnapshot = nil
+      return (0, [])  // Let OS handle the backspace that brought us here
     } else {
       wordState = engine.pop(state: wordState)
       keys = Array(wordState.chuKhongDau)
-      transformed = String(transformed.dropLast(1))
+      stopProcessing = wordState.needsRecovery
+
+      if stopProcessing {
+        transformed = String(keys)
+      } else {
+        transformed = wordState.transformed
+      }
+
+      lastValidSnapshot = nil
+
+      let (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
+        from: lastTransformed, to: transformed)
+
+      // If it's a simple 1-char deletion, let the OS handle it
+      if numBackspaces == 1 && diffChars.isEmpty {
+        return (0, [])
+      }
+
+      return (numBackspaces, diffChars)
     }
   }
 
   public func push(char: Character) {
-    keys.append(char)
+    // Save current state before mutation
+    let snapshot = WordStateSnapshot(
+      wordState: wordState,
+      keys: keys,
+      transformed: transformed,
+      stopProcessing: stopProcessing
+    )
 
+    keys.append(char)
     lastTransformed = transformed
+
+    if stopProcessing {
+      transformed = String(keys)
+      return
+    }
+
     let result = engine.push(char: char, state: wordState)
     wordState = result.state
 
@@ -164,8 +227,15 @@ class InputProcessor {
       stopProcessing = true
       // Use keys array which contains ALL typed characters (including tone marks like 's', 'f' etc.)
       transformed = String(keys)
+
+      // If we JUST entered recovery mode, save the snapshot for rollback
+      if !snapshot.stopProcessing {
+        lastValidSnapshot = snapshot
+      }
     } else {
       transformed = wordState.transformed
+      // Clear snapshot if we are in valid state
+      lastValidSnapshot = nil
     }
 
     if engine.shouldStopProcessing(keyStr: String(keys)) {
@@ -205,12 +275,19 @@ class InputProcessor {
       if InputProcessor.NewWordTaskKeys.contains(taskKey) {
         newWord(storePrevious: true)
       } else if taskKey == .Delete {
-        pop()
+        let (numBackspaces, diffChars) = pop()
+        if numBackspaces > 0 || !diffChars.isEmpty {
+          let strategy = getCurrentStrategy()
+          EventSimulator.sendReplacement(
+            backspaceCount: numBackspaces,
+            diffChars: diffChars,
+            strategy: strategy
+          )
+          return nil
+        }
       } else if InputProcessor.JumpTaskKeys.contains(taskKey) {
         newWord()
       }
-    } else if stopProcessing {
-      return Unmanaged.passRetained(event)
     } else if let newChar = keyLayout.mapText(keyCode: keyCode, withShift: shifted) {
       // Check if this is a word-ending character (punctuation, etc.) BEFORE processing
       // This prevents punctuation from triggering recovery on valid Vietnamese words
@@ -224,7 +301,9 @@ class InputProcessor {
       var (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
         from: lastTransformed, to: transformed)
 
-      if let firstDiffChar = diffChars.first, diffChars.count == 1 && firstDiffChar == newChar {
+      if let firstDiffChar = diffChars.first,
+        diffChars.count == 1 && firstDiffChar == newChar && numBackspaces == 0
+      {
         return Unmanaged.passRetained(event)
       } else {
         if needToFixAutocomplete() {
@@ -232,7 +311,9 @@ class InputProcessor {
         }
 
         // Check for transformation failures and auto-switch if needed
-        if detectTransformationFailure(input: newChar, expectedOutput: transformed, actualContext: nil) {
+        if detectTransformationFailure(
+          input: newChar, expectedOutput: transformed, actualContext: nil)
+        {
           autoSwitchStrategyIfNeeded()
         }
 
