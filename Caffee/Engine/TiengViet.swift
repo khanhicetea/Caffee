@@ -267,6 +267,26 @@ enum TiengViet {
   /// Tất cả nguyên âm (nguyên âm ghép trước để match đúng thứ tự ưu tiên)
   static let NguyenAm = NguyenAmGhep + NguyenAmDon
 
+  // MARK: - Tries for Optimization
+
+  static let PhuAmDauTrie: Trie = {
+    let trie = Trie()
+    PhuAmDau.forEach { trie.insert($0) }
+    return trie
+  }()
+
+  static let NguyenAmTrie: Trie = {
+    let trie = Trie()
+    NguyenAm.forEach { trie.insert($0) }
+    return trie
+  }()
+
+  static let PhuAmCuoiTrie: Trie = {
+    let trie = Trie()
+    PhuAmCuoi.forEach { trie.insert($0) }
+    return trie
+  }()
+
   /// Nguyên âm chứa "uo" - cần xử lý đặc biệt khi đặt dấu móc (→ "ươ")
   static let NguyenAmUO = [
     "uo", "uO", "Uo", "UO",

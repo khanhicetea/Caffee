@@ -24,37 +24,30 @@ enum TiengVietParser {
 
     guard !remaining.isEmpty else { return result }
 
-    // Bước 1: Tách phụ âm đầu
-    for phuAmDau in TiengViet.PhuAmDau {
-      if remaining.hasPrefix(phuAmDau) {
-        let matched = String(remaining.prefix(phuAmDau.count))
+    // Bước 1: Tách phụ âm đầu bằng Trie
+    if let matched = TiengViet.PhuAmDauTrie.findLongestPrefix(in: remaining) {
+      // Trường hợp đặc biệt: "gi" cần xử lý riêng
+      // - "gia", "giet" → "gi" là phụ âm đầu, tiếp tục phân tích nguyên âm
+      // - "gi" đứng một mình → "g" là phụ âm đầu, "i" là nguyên âm
+      if matched.lowercased() == "gi" {
+        let afterGi = String(remaining.dropFirst(2))
+        let hasFollowingVowel = TiengViet.NguyenAmTrie.findLongestPrefix(in: afterGi) != nil
 
-        // Trường hợp đặc biệt: "gi" cần xử lý riêng
-        // - "gia", "giet" → "gi" là phụ âm đầu, tiếp tục phân tích nguyên âm
-        // - "gi" đứng một mình → "g" là phụ âm đầu, "i" là nguyên âm
-        if matched.lowercased() == "gi" {
-          let afterGi = String(remaining.dropFirst(2))
-          let hasFollowingVowel = TiengViet.NguyenAm.contains { vowel in
-            afterGi.lowercased().hasPrefix(vowel.lowercased())
-          }
-
-          if hasFollowingVowel {
-            // "gia", "giet" → "gi" là phụ âm đầu
-            result.phuAmDau = Array(matched)
-            remaining = afterGi
-          } else {
-            // "gi" đứng một mình → "g" là phụ âm đầu, "i" là nguyên âm
-            result.phuAmDau = [matched.first!]
-            result.nguyenAm = [matched.last!]
-            remaining = afterGi
-            // Bỏ qua bước tách nguyên âm vì đã có, tiếp tục với phụ âm cuối
-            return finishParsing(result: &result, remaining: remaining, skipVowel: true)
-          }
-        } else {
+        if hasFollowingVowel {
+          // "gia", "giet" → "gi" là phụ âm đầu
           result.phuAmDau = Array(matched)
-          remaining = String(remaining.dropFirst(phuAmDau.count))
+          remaining = afterGi
+        } else {
+          // "gi" đứng một mình → "g" là phụ âm đầu, "i" là nguyên âm
+          result.phuAmDau = [matched.first!]
+          result.nguyenAm = [matched.last!]
+          remaining = afterGi
+          // Bỏ qua bước tách nguyên âm vì đã có, tiếp tục với phụ âm cuối
+          return finishParsing(result: &result, remaining: remaining, skipVowel: true)
         }
-        break
+      } else {
+        result.phuAmDau = Array(matched)
+        remaining = String(remaining.dropFirst(matched.count))
       }
     }
 
@@ -72,29 +65,21 @@ enum TiengVietParser {
   ) -> ThanhPhanTieng {
     var remaining = remaining
 
-    // Bước 2: Tách nguyên âm (nếu chưa có từ trường hợp "gi")
+    // Bước 2: Tách nguyên âm bằng Trie (nếu chưa có từ trường hợp "gi")
     if !skipVowel {
-      for nguyenAm in TiengViet.NguyenAm {
-        if remaining.hasPrefix(nguyenAm) {
-          let matched = String(remaining.prefix(nguyenAm.count))
-          result.nguyenAm = Array(matched)
-          result.chuaNguyenAmUO = TiengViet.NguyenAmUO.contains {
-            $0.lowercased() == nguyenAm.lowercased()
-          }
-          remaining = String(remaining.dropFirst(nguyenAm.count))
-          break
+      if let matched = TiengViet.NguyenAmTrie.findLongestPrefix(in: remaining) {
+        result.nguyenAm = Array(matched)
+        result.chuaNguyenAmUO = TiengViet.NguyenAmUO.contains {
+          $0.lowercased() == matched.lowercased()
         }
+        remaining = String(remaining.dropFirst(matched.count))
       }
     }
 
-    // Bước 3: Tách phụ âm cuối
-    for phuAmCuoi in TiengViet.PhuAmCuoi {
-      if remaining.hasPrefix(phuAmCuoi) {
-        let matched = String(remaining.prefix(phuAmCuoi.count))
-        result.phuAmCuoi = Array(matched)
-        remaining = String(remaining.dropFirst(phuAmCuoi.count))
-        break
-      }
+    // Bước 3: Tách phụ âm cuối bằng Trie
+    if let matched = TiengViet.PhuAmCuoiTrie.findLongestPrefix(in: remaining) {
+      result.phuAmCuoi = Array(matched)
+      remaining = String(remaining.dropFirst(matched.count))
     }
 
     // Bước 4: Phần còn lại (không thuộc âm tiết tiếng Việt hợp lệ)
