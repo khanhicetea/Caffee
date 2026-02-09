@@ -72,6 +72,10 @@ enum TiengVietValidator {
     // uy - huynh, quýt...
     "uy": ["c", "ch", "n", "nh", "p", "t"],
 
+    // uyê - khuyên, duyệt...
+    "uyê": ["n", "t"],
+    "uye": ["n", "t"],
+
     // yê - yến, yêm...
     "yê": ["m", "n", "p", "t"],
     "ye": ["m", "n", "p", "t"],
@@ -92,6 +96,8 @@ enum TiengVietValidator {
     "ôi": [],
     "ơi": [],
     "ua": [],
+    "uya": [],
+    "uơ": [],
     "ui": [],
     "ưa": [],
     "ưi": [],
