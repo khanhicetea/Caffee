@@ -29,6 +29,11 @@ struct AppSendingConfig {
 }
 
 class EventSimulator {
+  /// Dedicated serial queue for event simulation to avoid blocking the event tap callback.
+  /// Strategies that use usleep (stepByStep, hybrid) dispatch to this queue so the
+  /// CGEvent tap callback returns immediately, preventing macOS from disabling the tap.
+  private static let simulationQueue = DispatchQueue(label: "com.khanhicetea.Caffee.eventSimulator", qos: .userInteractive)
+
   /// Per-app sending strategy configuration.
   /// Apps are checked in order - first match wins.
   /// Apps not listed use the default batch strategy.
@@ -189,23 +194,30 @@ class EventSimulator {
     diffChars: [Character],
     strategy: SendingStrategy
   ) {
-    let source = CGEventSource(stateID: .privateState)
-
     switch strategy {
     case .batch:
+      // Batch has no delays, safe to run synchronously on the event tap thread
+      let source = CGEventSource(stateID: .privateState)
       sendBackspace(backspaceCount, source: source, delayMicroseconds: 0)
       sendString(String(diffChars), source: source)
 
     case .stepByStep:
-      sendBackspace(backspaceCount, source: source, delayMicroseconds: 2000)
-      usleep(3000)
-      sendStringStepByStep(String(diffChars), source: source, delayMicroseconds: 2000)
-      usleep(3000)
+      // Dispatch to background queue to avoid blocking the event tap
+      simulationQueue.async {
+        let source = CGEventSource(stateID: .privateState)
+        sendBackspace(backspaceCount, source: source, delayMicroseconds: 2000)
+        usleep(3000)
+        sendStringStepByStep(String(diffChars), source: source, delayMicroseconds: 2000)
+        usleep(3000)
+      }
 
     case .hybrid(let backspaceDelay):
-      sendBackspace(backspaceCount, source: source, delayMicroseconds: backspaceDelay)
-      sendString(String(diffChars), source: source)
-
+      // Dispatch to background queue to avoid blocking the event tap
+      simulationQueue.async {
+        let source = CGEventSource(stateID: .privateState)
+        sendBackspace(backspaceCount, source: source, delayMicroseconds: backspaceDelay)
+        sendString(String(diffChars), source: source)
+      }
     }
   }
 }

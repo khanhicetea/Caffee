@@ -10,127 +10,34 @@ import CoreGraphics
 import Defaults
 import Foundation
 
-class InputProcessor {
-  static let FixAutocompleteApps = [
-    "com.apple.Safari", "com.google.Chrome", "org.chromium.Chromium",
-    "org.mozilla.firefox", "org.mozilla.nightly", "com.electron.min", "com.brave.Browser",
-    "company.thebrowser.Browser", "com.vivaldi.Vivaldi", "com.operasoftware.Opera",
-    "com.microsoft.edge", "com.microsoft.Edge", "com.microsoft.Excel", "com.microsoft.Office.Excel",
-  ]
-  static let NewWordKeys = "`!@#$%^&*()-=[]\\;',./~_+{}|:\"<>?"
-  static let NewWordTaskKeys: [TaskKey] = [.Enter, .Space, .Tab]
-  static let JumpTaskKeys: [TaskKey] = [.Home, .End, .ArrowUp, .ArrowDown, .ArrowLeft, .ArrowRight]
+// MARK: - WordBuffer
 
-  struct WordStateSnapshot {
+/// WordBuffer manages the Vietnamese word state during typing.
+/// It tracks the current word being typed, handles push/pop operations,
+/// and manages recovery mode with a snapshot stack for multi-step rollback.
+struct WordBuffer {
+
+  struct Snapshot {
     let wordState: TiengVietState
     let keys: [Character]
     let transformed: String
     let stopProcessing: Bool
   }
 
-  public var engine: TypingMethod
-  public var typingMethod: TypingMethods
+  var keys: [Character] = []
+  var stopProcessing = false
+  var lastTransformed = ""
+  var transformed = ""
 
-  public var keyLayout = KeyboardUS()
-  public var keys: [Character] = []
-  public var stopProcessing = false
-  public var lastTransformed = ""
-  public var transformed = ""
+  var previousWordState: TiengVietState?
+  var wordState = TiengVietState.empty
 
-  public var lastValidSnapshot: WordStateSnapshot?
+  /// Last valid snapshot for single-step rollback out of recovery mode.
+  var lastValidSnapshot: Snapshot?
 
-  public var activeApp = ""
-  public var previousWordState: TiengVietState?
-  public var wordState = TiengVietState.empty
+  // MARK: - Word Lifecycle
 
-  /// Track pasteboard change count to detect external paste operations
-  private var lastPasteboardChangeCount: Int = NSPasteboard.general.changeCount
-
-  /// Current sending strategy for the active app
-  private var currentStrategy: SendingStrategy = .batch
-
-  /// Track consecutive transformation failures for auto-switching
-  private var consecutiveFailures = 0
-
-  /// Maximum failures before auto-switching to step-by-step mode
-  private let maxFailuresBeforeSwitch = 3
-
-  /// Track last transformation for failure detection
-  private var lastInputChar: Character?
-  private var expectedOutput: String?
-
-  init(method: TypingMethods) {
-    typingMethod = method
-    engine = typingMethod == .Telex ? Telex() : VNI()
-  }
-
-  public func changeTypingMethod(newMethod: TypingMethods) {
-    typingMethod = newMethod
-    engine = typingMethod == .Telex ? Telex() : VNI()
-    newWord()
-  }
-
-  public func changeActiveApp(_ app: String) {
-    activeApp = app
-    // Reset strategy to default for the new app
-    currentStrategy = EventSimulator.getStrategy(for: app)
-    consecutiveFailures = 0
-    lastInputChar = nil
-    expectedOutput = nil
-  }
-
-  /// Detects if a transformation likely failed based on input/output tracking.
-  /// Returns true if the transformation appears to have failed.
-  func detectTransformationFailure(input: Character, expectedOutput: String, actualContext: String?) -> Bool {
-    // Basic heuristic: if we've been seeing the same input multiple times
-    // or the output doesn't match what we expect, it might be failing
-    if let last = lastInputChar, last == input {
-      consecutiveFailures += 1
-    } else {
-      consecutiveFailures = 1
-    }
-    lastInputChar = input
-
-    // If we have too many consecutive similar failures, switch strategy
-    if consecutiveFailures >= maxFailuresBeforeSwitch {
-      return true
-    }
-
-    return false
-  }
-
-  /// Auto-switches to step-by-step mode if failures are detected.
-  func autoSwitchStrategyIfNeeded() {
-    // Check if auto-switch is enabled in settings
-    guard Defaults[.autoSwitchStrategy] else {
-      return
-    }
-
-    // Don't auto-switch if already using specialized strategies
-    switch currentStrategy {
-    case .stepByStep:
-      return  // Already using a specialized strategy
-    default:
-      break
-    }
-
-    // Switch to step-by-step for this session
-    let oldStrategy = currentStrategy
-    currentStrategy = .stepByStep
-    consecutiveFailures = 0
-
-    #if DEBUG
-    let appName = EventSimulator.getAppName(for: activeApp)
-    print("[Caffee] Auto-switched from \(oldStrategy) to step-by-step mode for \(appName) due to failures")
-    #endif
-  }
-
-  /// Gets the current sending strategy, considering auto-switching for failures.
-  func getCurrentStrategy() -> SendingStrategy {
-    return currentStrategy
-  }
-
-  public func newWord(storePrevious: Bool = false) {
+  mutating func newWord(storePrevious: Bool = false) {
     previousWordState = nil
     if !wordState.isBlank {
       if storePrevious {
@@ -146,10 +53,12 @@ class InputProcessor {
     transformed = ""
   }
 
-  public func pop() -> (Int, [Character]) {
+  // MARK: - Pop (Backspace)
+
+  mutating func pop(engine: TypingMethod) -> (Int, [Character]) {
     lastTransformed = transformed
 
-    // Single chance rollback if we are in recovery and it was caused by the LATEST keystroke
+    // Single-step rollback: if we are in recovery and it was caused by the LATEST keystroke
     if stopProcessing, let valid = lastValidSnapshot, keys.count == valid.keys.count + 1 {
       wordState = valid.wordState
       keys = valid.keys
@@ -167,7 +76,7 @@ class InputProcessor {
       return (numBackspaces, diffChars)
     }
 
-    // Normal pop logic
+    // Normal pop: restore previous word on empty buffer
     if wordState.isBlank, let prev = previousWordState {
       wordState = prev
       previousWordState = nil
@@ -177,34 +86,37 @@ class InputProcessor {
       stopProcessing = false
       lastValidSnapshot = nil
       return (0, [])  // Let OS handle the backspace that brought us here
-    } else {
-      wordState = engine.pop(state: wordState)
-      keys = Array(wordState.chuKhongDau)
-      stopProcessing = wordState.needsRecovery
-
-      if stopProcessing {
-        transformed = String(keys)
-      } else {
-        transformed = wordState.transformed
-      }
-
-      lastValidSnapshot = nil
-
-      let (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
-        from: lastTransformed, to: transformed)
-
-      // If it's a simple 1-char deletion, let the OS handle it
-      if numBackspaces == 1 && diffChars.isEmpty {
-        return (0, [])
-      }
-
-      return (numBackspaces, diffChars)
     }
+
+    // Normal pop: remove last character
+    wordState = engine.pop(state: wordState)
+    keys = Array(wordState.chuKhongDau)
+    stopProcessing = wordState.needsRecovery
+
+    if stopProcessing {
+      transformed = String(keys)
+    } else {
+      transformed = wordState.transformed
+    }
+
+    lastValidSnapshot = nil
+
+    let (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
+      from: lastTransformed, to: transformed)
+
+    // If it's a simple 1-char deletion, let the OS handle it
+    if numBackspaces == 1 && diffChars.isEmpty {
+      return (0, [])
+    }
+
+    return (numBackspaces, diffChars)
   }
 
-  public func push(char: Character) {
+  // MARK: - Push (New Character)
+
+  mutating func push(char: Character, engine: TypingMethod) {
     // Save current state before mutation
-    let snapshot = WordStateSnapshot(
+    let snapshot = Snapshot(
       wordState: wordState,
       keys: keys,
       transformed: transformed,
@@ -235,7 +147,7 @@ class InputProcessor {
       }
     } else {
       transformed = wordState.transformed
-      // Clear snapshot if we are in valid state
+      // Clear snapshot when we're in valid state — no rollback needed
       lastValidSnapshot = nil
     }
 
@@ -247,17 +159,165 @@ class InputProcessor {
       }
     }
   }
+}
 
-  // Main input handler
+// MARK: - TransformationTracker
+
+/// TransformationTracker monitors for repeated transformation failures
+/// and auto-switches the sending strategy when a pattern is detected.
+/// This helps apps where the default strategy doesn't work reliably.
+struct TransformationTracker {
+
+  /// Current sending strategy for the active app
+  var currentStrategy: SendingStrategy = .batch
+
+  /// Track consecutive transformation failures for auto-switching
+  private var consecutiveFailures = 0
+
+  /// Maximum failures before auto-switching to step-by-step mode
+  private let maxFailuresBeforeSwitch = 3
+
+  /// Track last input character for failure detection
+  private var lastInputChar: Character?
+
+  // MARK: - Strategy Management
+
+  mutating func resetForApp(_ bundleId: String) {
+    currentStrategy = EventSimulator.getStrategy(for: bundleId)
+    consecutiveFailures = 0
+    lastInputChar = nil
+  }
+
+  /// Detects if a transformation likely failed based on input/output tracking.
+  /// Returns true if the transformation appears to have failed.
+  mutating func detectFailure(input: Character) -> Bool {
+    if let last = lastInputChar, last == input {
+      consecutiveFailures += 1
+    } else {
+      consecutiveFailures = 1
+    }
+    lastInputChar = input
+
+    return consecutiveFailures >= maxFailuresBeforeSwitch
+  }
+
+  /// Auto-switches to step-by-step mode if failures are detected.
+  mutating func autoSwitchIfNeeded(activeApp: String) {
+    guard Defaults[.autoSwitchStrategy] else { return }
+
+    // Don't auto-switch if already using step-by-step
+    if case .stepByStep = currentStrategy { return }
+
+    // Switch to step-by-step for this session
+    #if DEBUG
+    let appName = EventSimulator.getAppName(for: activeApp)
+    print("[Caffee] Auto-switched from \(currentStrategy) to step-by-step mode for \(appName) due to failures")
+    #endif
+
+    currentStrategy = .stepByStep
+    consecutiveFailures = 0
+  }
+}
+
+// MARK: - InputProcessor
+
+class InputProcessor {
+  static let FixAutocompleteApps = [
+    "com.apple.Safari", "com.google.Chrome", "org.chromium.Chromium",
+    "org.mozilla.firefox", "org.mozilla.nightly", "com.electron.min", "com.brave.Browser",
+    "company.thebrowser.Browser", "com.vivaldi.Vivaldi", "com.operasoftware.Opera",
+    "com.microsoft.edge", "com.microsoft.Edge", "com.microsoft.Excel", "com.microsoft.Office.Excel",
+  ]
+  static let NewWordKeys = "`!@#$%^&*()-=[]\\;',./~_+{}|:\"<>?"
+  static let NewWordTaskKeys: [TaskKey] = [.Enter, .Space, .Tab]
+  static let JumpTaskKeys: [TaskKey] = [.Home, .End, .ArrowUp, .ArrowDown, .ArrowLeft, .ArrowRight]
+
+  public var engine: TypingMethod
+  public var typingMethod: TypingMethods
+  public var keyLayout = KeyboardUS()
+  public var activeApp = ""
+
+  /// Word buffer manages the current word state
+  var wordBuffer = WordBuffer()
+
+  /// Transformation tracker manages per-app strategy and failure detection
+  var strategyTracker = TransformationTracker()
+
+  /// Track pasteboard change count to detect external paste operations
+  private var lastPasteboardChangeCount: Int = NSPasteboard.general.changeCount
+
+  // MARK: - Convenience accessors (preserve existing API for tests)
+
+  public var keys: [Character] {
+    get { wordBuffer.keys }
+    set { wordBuffer.keys = newValue }
+  }
+
+  public var stopProcessing: Bool {
+    get { wordBuffer.stopProcessing }
+    set { wordBuffer.stopProcessing = newValue }
+  }
+
+  public var lastTransformed: String {
+    get { wordBuffer.lastTransformed }
+    set { wordBuffer.lastTransformed = newValue }
+  }
+
+  public var transformed: String {
+    get { wordBuffer.transformed }
+    set { wordBuffer.transformed = newValue }
+  }
+
+  public var previousWordState: TiengVietState? {
+    get { wordBuffer.previousWordState }
+    set { wordBuffer.previousWordState = newValue }
+  }
+
+  public var wordState: TiengVietState {
+    get { wordBuffer.wordState }
+    set { wordBuffer.wordState = newValue }
+  }
+
+  // MARK: - Init & Configuration
+
+  init(method: TypingMethods) {
+    typingMethod = method
+    engine = typingMethod == .Telex ? Telex() : VNI()
+  }
+
+  public func changeTypingMethod(newMethod: TypingMethods) {
+    typingMethod = newMethod
+    engine = typingMethod == .Telex ? Telex() : VNI()
+    newWord()
+  }
+
+  public func changeActiveApp(_ app: String) {
+    activeApp = app
+    strategyTracker.resetForApp(app)
+  }
+
+  // MARK: - Word Operations (delegate to WordBuffer)
+
+  public func newWord(storePrevious: Bool = false) {
+    wordBuffer.newWord(storePrevious: storePrevious)
+  }
+
+  public func pop() -> (Int, [Character]) {
+    return wordBuffer.pop(engine: engine)
+  }
+
+  public func push(char: Character) {
+    wordBuffer.push(char: char, engine: engine)
+  }
+
+  // MARK: - Main Input Handler
+
   public func handleEvent(event: CGEvent) -> Unmanaged<CGEvent>? {
     let flags = event.flags
     let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-    // For number keys (used by VNI), only consider actual Shift key, not Capslock
-    // For letter keys, consider both Shift and Capslock
     let shifted = flags.contains(.maskShift) || (!keyLayout.isNumberKey(keyCode: keyCode) && flags.contains(.maskAlphaShift))
 
     // Handle modifier keys (Cmd, Ctrl, Alt) - clear word buffer
-    // This also handles Cmd+V (paste) by clearing BEFORE paste content arrives
     if flags.contains(.maskCommand) || flags.contains(.maskControl)
       || flags.contains(.maskAlternate)
     {
@@ -266,72 +326,79 @@ class InputProcessor {
     }
 
     // Detect if a paste operation occurred (pasteboard changed externally)
-    // This catches paste via menu, right-click, or other non-keyboard methods
     let currentPasteboardCount = NSPasteboard.general.changeCount
     if currentPasteboardCount != lastPasteboardChangeCount {
       lastPasteboardChangeCount = currentPasteboardCount
       newWord()
     }
 
+    // Dispatch based on key type
     if let taskKey = keyLayout.mapTask(keyCode: keyCode) {
-      if InputProcessor.NewWordTaskKeys.contains(taskKey) {
-        newWord(storePrevious: true)
-      } else if taskKey == .Delete {
-        let (numBackspaces, diffChars) = pop()
-        if numBackspaces > 0 || !diffChars.isEmpty {
-          let strategy = getCurrentStrategy()
-          EventSimulator.sendReplacement(
-            backspaceCount: numBackspaces,
-            diffChars: diffChars,
-            strategy: strategy
-          )
-          return nil
-        }
-      } else if InputProcessor.JumpTaskKeys.contains(taskKey) {
-        newWord()
-      }
+      return handleTaskKey(taskKey, event: event)
     } else if let newChar = keyLayout.mapText(keyCode: keyCode, withShift: shifted) {
-      // Check if this is a word-ending character (punctuation, etc.) BEFORE processing
-      // This prevents punctuation from triggering recovery on valid Vietnamese words
-      // e.g., "xuất." should remain "xuất." not become "xuaats."
-      if let _ = InputProcessor.NewWordKeys.firstIndex(of: newChar) {
-        newWord(storePrevious: true)
-        return Unmanaged.passRetained(event)  // Let punctuation pass through as-is
-      }
-
-      push(char: newChar)
-      var (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
-        from: lastTransformed, to: transformed)
-
-      if let firstDiffChar = diffChars.first,
-        diffChars.count == 1 && firstDiffChar == newChar && numBackspaces == 0
-      {
-        return Unmanaged.passRetained(event)
-      } else {
-        if needToFixAutocomplete() {
-          numBackspaces += 1
-        }
-
-        // Check for transformation failures and auto-switch if needed
-        if detectTransformationFailure(
-          input: newChar, expectedOutput: transformed, actualContext: nil)
-        {
-          autoSwitchStrategyIfNeeded()
-        }
-
-        // Use strategy-based sending
-        let strategy = getCurrentStrategy()
-        EventSimulator.sendReplacement(
-          backspaceCount: numBackspaces,
-          diffChars: diffChars,
-          strategy: strategy
-        )
-        return nil
-      }
+      return handleTextChar(newChar, event: event)
     }
 
     return Unmanaged.passRetained(event)
   }
+
+  // MARK: - Private Event Handlers
+
+  private func handleTaskKey(_ taskKey: TaskKey, event: CGEvent) -> Unmanaged<CGEvent>? {
+    if InputProcessor.NewWordTaskKeys.contains(taskKey) {
+      newWord(storePrevious: true)
+    } else if taskKey == .Delete {
+      let (numBackspaces, diffChars) = pop()
+      if numBackspaces > 0 || !diffChars.isEmpty {
+        EventSimulator.sendReplacement(
+          backspaceCount: numBackspaces,
+          diffChars: diffChars,
+          strategy: strategyTracker.currentStrategy
+        )
+        return nil
+      }
+    } else if InputProcessor.JumpTaskKeys.contains(taskKey) {
+      newWord()
+    }
+    return Unmanaged.passRetained(event)
+  }
+
+  private func handleTextChar(_ newChar: Character, event: CGEvent) -> Unmanaged<CGEvent>? {
+    // Check if this is a word-ending character (punctuation, etc.) BEFORE processing
+    if let _ = InputProcessor.NewWordKeys.firstIndex(of: newChar) {
+      newWord(storePrevious: true)
+      return Unmanaged.passRetained(event)
+    }
+
+    push(char: newChar)
+    var (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
+      from: lastTransformed, to: transformed)
+
+    // If the only change is the new character itself, let it pass through
+    if let firstDiffChar = diffChars.first,
+      diffChars.count == 1 && firstDiffChar == newChar && numBackspaces == 0
+    {
+      return Unmanaged.passRetained(event)
+    }
+
+    if needToFixAutocomplete() {
+      numBackspaces += 1
+    }
+
+    // Check for transformation failures and auto-switch if needed
+    if strategyTracker.detectFailure(input: newChar) {
+      strategyTracker.autoSwitchIfNeeded(activeApp: activeApp)
+    }
+
+    EventSimulator.sendReplacement(
+      backspaceCount: numBackspaces,
+      diffChars: diffChars,
+      strategy: strategyTracker.currentStrategy
+    )
+    return nil
+  }
+
+  // MARK: - Helpers
 
   func needToFixAutocomplete() -> Bool {
     let idx = InputProcessor.FixAutocompleteApps.first { app in
@@ -339,5 +406,4 @@ class InputProcessor {
     }
     return idx != nil && Focused.hasHighlightedText()
   }
-
 }

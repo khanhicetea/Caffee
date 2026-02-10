@@ -15,6 +15,9 @@ class EventHook {
   var processing = false
   var appState: AppState?
 
+  /// Tracks how many times the tap has been auto-recovered
+  var tapRecoveryCount = 0
+
   init(inputProcessor: InputProcessor) {
     self.keyLayout = KeyboardUS()
     self.inputProcessor = inputProcessor
@@ -80,6 +83,19 @@ func eventTapCallback(
 ) -> Unmanaged<CGEvent>? {
   guard let refcon else { return Unmanaged.passRetained(event) }
   let eventHook = Unmanaged<EventHook>.fromOpaque(refcon).takeUnretainedValue()
+
+  // Auto-recover when macOS disables the event tap
+  // This happens when the tap callback takes too long or the system is under load
+  if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+    if let eventTap = eventHook.eventTap {
+      CGEvent.tapEnable(tap: eventTap, enable: true)
+      eventHook.tapRecoveryCount += 1
+      #if DEBUG
+      print("[Caffee] Event tap was disabled by system (\(type == .tapDisabledByTimeout ? "timeout" : "user input")), auto-recovered (count: \(eventHook.tapRecoveryCount))")
+      #endif
+    }
+    return Unmanaged.passRetained(event)
+  }
 
   // Ignore keystrokes not from hardware (HID system state).
   if event.getIntegerValueField(.eventSourceStateID) != 1 {
