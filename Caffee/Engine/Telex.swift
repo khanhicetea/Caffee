@@ -38,35 +38,49 @@ import Foundation
 
 class Telex: TypingMethod {
 
-  // MARK: - Regex phát hiện dừng xử lý
-
-  /// Các pattern regex phát hiện khi nào DỪNG xử lý Telex và in ký tự gốc
-  ///
-  /// - `ss$`, `ff$`, `rr$`, `xx$`, `jj$`, `ww$`: Gõ đúp phím dấu → hủy dấu
-  /// - `[0-9]$`: Gõ số → dừng xử lý tiếng Việt
-  /// - `a+[a-zA-Z]*aa$`: Gõ 'a' thứ 3 sau khi đã có 'â' → in 'a' thường
-  /// - `o+[a-zA-Z]*oo$`: Tương tự cho 'o'
-  /// - `e+[a-zA-Z]*ee$`: Tương tự cho 'e'
-  /// - `d+[a-zA-Z]*dd$`: Gõ 'd' thứ 3 → hủy 'đ', in 'd' thường
-  ///
-  /// Pre-compiled for performance (avoid creating regex on every keystroke)
-  private static let compiledStoppingRegex: [NSRegularExpression] = {
-    let patterns = [
-      "ss$", "ff$", "rr$", "xx$", "jj$", "ww$", "[0-9]$",
-      "a+[a-zA-Z]*aa$", "o+[a-zA-Z]*oo$", "e+[a-zA-Z]*ee$", "d+[a-zA-Z]*dd$",
-    ]
-    return patterns.compactMap { try? NSRegularExpression(pattern: $0) }
-  }()
-
   // MARK: - TypingMethod Protocol
 
-  /// Kiểm tra có nên dừng xử lý Telex không (dựa trên StoppingRegex)
+  /// Kiểm tra có nên dừng xử lý Telex không
   public func shouldStopProcessing(keyStr: String) -> Bool {
     let lowerKeyStr = keyStr.lowercased()
-    let range = NSRange(location: 0, length: lowerKeyStr.utf16.count)
-    return Telex.compiledStoppingRegex.contains { regex in
-      regex.firstMatch(in: lowerKeyStr, options: [], range: range) != nil
+
+    // 1. Check simple suffixes (double tap tone marks or w)
+    if lowerKeyStr.hasSuffix("ss") || lowerKeyStr.hasSuffix("ff") ||
+       lowerKeyStr.hasSuffix("rr") || lowerKeyStr.hasSuffix("xx") ||
+       lowerKeyStr.hasSuffix("jj") || lowerKeyStr.hasSuffix("ww") {
+      return true
     }
+
+    // 2. Check digit suffix
+    if let lastChar = lowerKeyStr.last, lastChar.isNumber {
+      return true
+    }
+      
+    // 3. Check complex cases (double tap vowel/d when it already exists)
+    // "aa", "oo", "ee", "dd" -> Cancel mark if the character exists before
+    
+    // Check "aa" suffix: requires 'a' to exist previously
+    if lowerKeyStr.hasSuffix("aa") {
+      // Check content before suffix for 'a'
+      return lowerKeyStr.dropLast(2).contains("a")
+    }
+    
+    // Check "oo" suffix: requires 'o' to exist previously
+    if lowerKeyStr.hasSuffix("oo") {
+      return lowerKeyStr.dropLast(2).contains("o")
+    }
+    
+    // Check "ee" suffix: requires 'e' to exist previously
+    if lowerKeyStr.hasSuffix("ee") {
+      return lowerKeyStr.dropLast(2).contains("e")
+    }
+    
+    // Check "dd" suffix: requires 'd' to exist previously
+    if lowerKeyStr.hasSuffix("dd") {
+      return lowerKeyStr.dropLast(2).hasPrefix("d")
+    }
+
+    return false
   }
 
   /// Xử lý ký tự nhập vào theo kiểu gõ Telex

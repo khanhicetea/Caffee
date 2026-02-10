@@ -202,7 +202,7 @@ enum TiengViet {
     "qu", "qU", "Qu", "QU",
     "th", "tH", "Th", "TH",
     "tr", "tR", "Tr", "TR",
-  ]
+  ].sorted { $0.count > $1.count }
 
   /// Tất cả phụ âm đầu (phụ âm ghép trước để match đúng thứ tự ưu tiên)
   static var PhuAmDau: [String] = PhuAmGhep + PhuAmDon
@@ -217,7 +217,7 @@ enum TiengViet {
     "c", "C",
     "p", "P",
     "t", "T",
-  ]
+  ].sorted { $0.count > $1.count }
 
   // MARK: - Bảng nguyên âm
 
@@ -262,7 +262,7 @@ enum TiengViet {
     "Eu", "eU", "EU", "eu",
     "ue", "Ue", "uE", "UE",
     "iu", "Iu", "iU", "IU",
-  ]
+  ].sorted { $0.count > $1.count }
 
   /// Tất cả nguyên âm (nguyên âm ghép trước để match đúng thứ tự ưu tiên)
   static let NguyenAm = NguyenAmGhep + NguyenAmDon

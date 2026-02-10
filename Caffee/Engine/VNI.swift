@@ -38,34 +38,32 @@ import Foundation
 
 class VNI: TypingMethod {
 
-  // MARK: - Regex phát hiện dừng xử lý
-
-  /// Các pattern regex phát hiện khi nào DỪNG xử lý VNI và in ký tự gốc
-  ///
-  /// - `11$`, `22$`, `33$`, `44$`, `55$`, `88$`: Gõ đúp phím số → hủy dấu
-  /// - `a+[a-zA-Z]*66$`: Gõ 6 lần 2 sau 'a' → hủy dấu mũ
-  /// - `o+[a-zA-Z]*66$`: Tương tự cho 'o'
-  /// - `e+[a-zA-Z]*66$`: Tương tự cho 'e'
-  /// - `d+[a-zA-Z]*99$`: Gõ 9 lần 2 sau 'd' → hủy gạch ngang
-  ///
-  /// Pre-compiled for performance (avoid creating regex on every keystroke)
-  private static let compiledStoppingRegex: [NSRegularExpression] = {
-    let patterns = [
-      "11$", "22$", "33$", "44$", "55$", "88$",
-      "a+[a-zA-Z]*66$", "o+[a-zA-Z]*66$", "e+[a-zA-Z]*66$", "d+[a-zA-Z]*99$",
-    ]
-    return patterns.compactMap { try? NSRegularExpression(pattern: $0) }
-  }()
-
   // MARK: - TypingMethod Protocol
 
-  /// Kiểm tra có nên dừng xử lý VNI không (dựa trên StoppingRegex)
+  /// Kiểm tra có nên dừng xử lý VNI không
   public func shouldStopProcessing(keyStr: String) -> Bool {
     let lowerKeyStr = keyStr.lowercased()
-    let range = NSRange(location: 0, length: lowerKeyStr.utf16.count)
-    return VNI.compiledStoppingRegex.contains { regex in
-      regex.firstMatch(in: lowerKeyStr, options: [], range: range) != nil
+    
+    // 1. Check simple suffixes (double tap tone marks)
+    let simpleSuffixes = ["11", "22", "33", "44", "55", "88"]
+    if simpleSuffixes.contains(where: { lowerKeyStr.hasSuffix($0) }) {
+        return true
     }
+    
+    // 2. Check complex cases (double tap vowel/d when it already exists)
+    // "66", "99" -> Cancel mark if the character exists before
+    
+    // Check "66" suffix: requires 'a', 'e', or 'o' to exist previously (circumflex)
+    if lowerKeyStr.hasSuffix("66") {
+      return lowerKeyStr.contains("a") || lowerKeyStr.contains("e") || lowerKeyStr.contains("o")
+    }
+    
+    // Check "99" suffix: requires 'd' to exist previously (stroked d)
+    if lowerKeyStr.hasSuffix("99") {
+      return lowerKeyStr.hasPrefix("d")
+    }
+
+    return false
   }
 
   /// Xử lý ký tự nhập vào theo kiểu gõ VNI
