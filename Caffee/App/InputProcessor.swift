@@ -215,7 +215,8 @@ class InputProcessor {
     lastTransformed = transformed
 
     if stopProcessing {
-      transformed = String(keys)
+      transformed.append(char)
+      wordState = wordState.push(char)
       return
     }
 
@@ -242,6 +243,7 @@ class InputProcessor {
       stopProcessing = true
       if transformed.count == lastTransformed.count {
         transformed.append(char)
+        wordState = wordState.push(char)
       }
     }
   }

@@ -853,6 +853,36 @@ final class CaffeeTests: XCTestCase {
     XCTAssertEqual(vni, "toi yêu việt nam")
   }
 
+  func testBugTesst() throws {
+    let inputProcessor = InputProcessor(method: .Telex)
+    inputProcessor.push(char: "t")
+    inputProcessor.push(char: "e")
+    inputProcessor.push(char: "s")
+    XCTAssertEqual(inputProcessor.transformed, "té")
+    inputProcessor.push(char: "s")
+    XCTAssertEqual(inputProcessor.transformed, "tes")
+    XCTAssertTrue(inputProcessor.stopProcessing)
+    inputProcessor.push(char: "t")
+    XCTAssertEqual(inputProcessor.transformed, "test")
+  }
+
+  func testBugTesstBackspace() throws {
+    let inputProcessor = InputProcessor(method: .Telex)
+    inputProcessor.push(char: "t")
+    inputProcessor.push(char: "e")
+    inputProcessor.push(char: "s")
+    inputProcessor.push(char: "s")
+    XCTAssertEqual(inputProcessor.transformed, "tes")
+    XCTAssertTrue(inputProcessor.stopProcessing)
+    inputProcessor.push(char: "t")
+    XCTAssertEqual(inputProcessor.transformed, "test")
+    
+    // Backspace from "test"
+    let _ = inputProcessor.pop()
+    XCTAssertEqual(inputProcessor.transformed, "tes")
+    XCTAssertTrue(inputProcessor.stopProcessing)
+  }
+
   // MARK: - InputProcessor Recovery Rollback Tests
 
   func testInputProcessorRecoveryRollback() throws {
