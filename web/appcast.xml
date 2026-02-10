@@ -6,6 +6,29 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.25.0</title>
+      <sparkle:version>12500</sparkle:version>
+      <sparkle:shortVersionString>1.25.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <pubDate>Tue, 10 Feb 2026 22:00:00 +0700</pubDate>
+      <enclosure
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.25.0/Caffee-v1.25.0.dmg"
+                sparkle:edSignature="7NAsauF2rXClIEXBSCYNshBCr/6hDKmAw8pFNGerSA7NJD2Mr5LoOzJseJXT5+14C5omuSKnjyw5DvouZueiBg=="
+                length="4439885"
+                type="application/octet-stream"
+            />
+      <description>
+        <![CDATA[
+        <h2>Có gì mới</h2>
+        <ul>
+          <li>Tối ưu hóa hiệu năng (loại bỏ Regex)</li>
+          <li>Cải thiện xử lý âm tiết 'gi'</li>
+          <li>Sửa lỗi gõ 'test' thành 'tesst'</li>
+        </ul>
+      ]]>
+      </description>
+    </item>
+    <item>
       <title>Version 1.24.0</title>
       <sparkle:version>12400</sparkle:version>
       <sparkle:shortVersionString>1.24.0</sparkle:shortVersionString>
