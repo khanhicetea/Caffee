@@ -6,6 +6,28 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.27.1</title>
+      <sparkle:version>12701</sparkle:version>
+      <sparkle:shortVersionString>1.27.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Wed, 11 Feb 2026 19:00:00 +0700</pubDate>
+      <enclosure
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.27.1/Caffee-v1.27.1.dmg"
+                sparkle:edSignature="RDZs5zVkCypsRea7eVhAJivmDMIpOgYuvivYZlxgWG951qJ3Hl6NAyqqKfx3bSBRQRzraLDfmrTwZxHWNt96AQ=="
+                length="4467045"
+                type="application/octet-stream"
+            />
+      <description>
+        <![CDATA[
+        <h2>Có gì mới</h2>
+        <ul>
+          <li>[Enhance] Cập nhật danh sách bundle app mới (các trình duyệt mới nhất)</li>
+          <li>Cập nhật README.md</li>
+        </ul>
+      ]]>
+      </description>
+    </item>
+    <item>
       <title>Version 1.27.0</title>
       <sparkle:version>12700</sparkle:version>
       <sparkle:shortVersionString>1.27.0</sparkle:shortVersionString>
