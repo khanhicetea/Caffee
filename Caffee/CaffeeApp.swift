@@ -32,6 +32,7 @@ struct CaffeeApp: App {
 
 struct MainMenuView: View {
   var appDelegate: AppDelegate
+  @Environment(\.openSettings) private var openSettings
 
   var body: some View {
     if let updateItem = appDelegate.updateItem {
@@ -61,8 +62,9 @@ struct MainMenuView: View {
       appDelegate.updaterController.checkForUpdates(nil)
     }
     
-    SettingsLink {
-      Text("Cài Đặt")
+    Button("Cài Đặt") {
+      try? openSettings()
+      NSApp.activate(ignoringOtherApps: true)
     }
     .keyboardShortcut(",", modifiers: .command)
     

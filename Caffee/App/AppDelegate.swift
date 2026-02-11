@@ -102,6 +102,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
     NSApp.activate(ignoringOtherApps: true)
   }
 
+  // Opens settings window
+  @objc func openSettings() {
+    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        NSApp.activate(ignoringOtherApps: true)
+    }
+  }
+
   // Quits the application
   @objc func quitApp() {
     NSApp.terminate(self)
