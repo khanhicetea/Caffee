@@ -22,13 +22,13 @@ When the user invokes this skill with an app path:
    - Example: `cp -R ~/Documents/Caffee-v1.18.0 ~/Documents/Caffee.app`
 
 4. **Create DMG**
-   - Run: `create-dmg Caffee.app .` (use the renamed Caffee.app)
+   - Run: `create-dmg Caffee.app .` (use the renamed Caffee.app)  (use which for get path)
    - This creates a DMG in the current directory
    - Rename the output to `Caffee-{VERSION}.dmg` (e.g., `Caffee-v1.18.0.dmg`)
    - Clean up: remove the temporary Caffee.app copy
 
 5. **Sign the DMG**
-   - Run: `sign_update Caffee-{VERSION}.dmg`
+   - Run: `sign_update Caffee-{VERSION}.dmg` (use which for get path)
    - Capture the output which contains:
      - `sparkle:edSignature="..."`
      - `length="..."`
@@ -49,6 +49,7 @@ When the user invokes this skill with an app path:
 8. **Update web/index.html**
    - Update the download button version text and link
    - Add new release notes entry in the Release Notes section with checksum
+   - Release notes (changelogs) translate into Vietnamese
 
 9. **Update web/download.html**
    - Update the meta refresh URL to point to the new DMG release
