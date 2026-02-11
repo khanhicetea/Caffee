@@ -8,17 +8,23 @@ import Observation
 
 // AppDelegate manages the application lifecycle and background services
 @Observable
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
 
   var appState = AppState()
   var isTrusted = false
+  var updateItem: SUAppcastItem?
 
   // Sparkle updater controller for auto-updates
-  let updaterController = SPUStandardUpdaterController(
-    startingUpdater: true,
-    updaterDelegate: nil,
-    userDriverDelegate: nil
-  )
+  var updaterController: SPUStandardUpdaterController!
+
+  override init() {
+    super.init()
+    updaterController = SPUStandardUpdaterController(
+      startingUpdater: true,
+      updaterDelegate: self,
+      userDriverDelegate: nil
+    )
+  }
 
   private var cancellables = Set<AnyCancellable>()
 
@@ -109,5 +115,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   // Cleans up before the application terminates
   func applicationWillTerminate(_ aNotification: Notification) {
     appState.eventHook.destroy()
+  }
+}
+
+extension AppDelegate {
+  func updater(_ updater: SPUUpdater, willScheduleUpdateCheckAfterDelay delay: TimeInterval) {
+    // This is called when the updater is about to schedule a background update check.
+    // By implementing this method, we acknowledge that this is a background app
+    // and Sparkle will not log the "gentle reminders" warning.
+  }
+
+  func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
+    updateItem = item
+  }
+
+  func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
+    updateItem = nil
   }
 }

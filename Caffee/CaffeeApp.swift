@@ -15,7 +15,7 @@ struct CaffeeApp: App {
   var body: some Scene {
     MenuBarExtra {
       if appDelegate.isTrusted {
-        MainMenuView(appState: appDelegate.appState, updaterController: appDelegate.updaterController)
+        MainMenuView(appDelegate: appDelegate)
       } else {
         GuideMenuView(appDelegate: appDelegate)
       }
@@ -31,28 +31,34 @@ struct CaffeeApp: App {
 }
 
 struct MainMenuView: View {
-  var appState: AppState
-  var updaterController: SPUStandardUpdaterController
+  var appDelegate: AppDelegate
 
   var body: some View {
+    if let updateItem = appDelegate.updateItem {
+      Button("Cập nhật mới \(updateItem.displayVersionString) đã có sẵn!") {
+        appDelegate.updaterController.checkForUpdates(nil)
+      }
+      Divider()
+    }
+
     Button("Tắt / Mở") {
-      appState.enabled.toggle()
+      appDelegate.appState.enabled.toggle()
     }
     
     Divider()
     
-    Button(appState.typingMethod == .Telex ? "[✔] Kiểu Telex" : "Kiểu Telex") {
-      appState.typingMethod = .Telex
+    Button(appDelegate.appState.typingMethod == .Telex ? "[✔] Kiểu Telex" : "Kiểu Telex") {
+      appDelegate.appState.typingMethod = .Telex
     }
     
-    Button(appState.typingMethod == .VNI ? "[✔] Kiểu VNI" : "Kiểu VNI") {
-      appState.typingMethod = .VNI
+    Button(appDelegate.appState.typingMethod == .VNI ? "[✔] Kiểu VNI" : "Kiểu VNI") {
+      appDelegate.appState.typingMethod = .VNI
     }
     
     Divider()
     
     Button("Check for Updates...") {
-      updaterController.checkForUpdates(nil)
+      appDelegate.updaterController.checkForUpdates(nil)
     }
     
     SettingsLink {
