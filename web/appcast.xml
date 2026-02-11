@@ -6,10 +6,33 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.27.0</title>
+      <sparkle:version>12700</sparkle:version>
+      <sparkle:shortVersionString>1.27.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Wed, 11 Feb 2026 18:00:00 +0700</pubDate>
+      <enclosure
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.27.0/Caffee-v1.27.0.dmg"
+                sparkle:edSignature="8SrAUzMyens4PBmkqFvk3I3W3UjnsI45JPyZJ7kQFCNy95RkD3vlqGw2w166aI6/n9Qj4H0hnec4dcXyXLVHAw=="
+                length="4465572"
+                type="application/octet-stream"
+            />
+      <description>
+        <![CDATA[
+        <h2>Có gì mới</h2>
+        <ul>
+          <li>[Fix] Mở cửa sổ Cài đặt lên trên cùng</li>
+          <li>[Fix] Bộ cập nhật chạy dưới nền</li>
+          <li>[Enhance] Tự động khôi phục event tap, an toàn luồng — các chiến lược stepByStep/hybrid và phân tách InputProcessor</li>
+        </ul>
+      ]]>
+      </description>
+    </item>
+    <item>
       <title>Version 1.25.0</title>
       <sparkle:version>12500</sparkle:version>
       <sparkle:shortVersionString>1.25.0</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <pubDate>Tue, 10 Feb 2026 22:00:00 +0700</pubDate>
       <enclosure
                 url="https://github.com/khanhicetea/Caffee/releases/download/v1.25.0/Caffee-v1.25.0.dmg"
@@ -32,7 +55,7 @@
       <title>Version 1.24.0</title>
       <sparkle:version>12400</sparkle:version>
       <sparkle:shortVersionString>1.24.0</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <pubDate>Mon, 09 Feb 2026 23:27:00 +0700</pubDate>
       <enclosure
                 url="https://github.com/khanhicetea/Caffee/releases/download/v1.24.0/Caffee-v1.24.0.dmg"
@@ -55,7 +78,7 @@
       <title>Version 1.23.0</title>
       <sparkle:version>12300</sparkle:version>
       <sparkle:shortVersionString>1.23.0</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <pubDate>Mon, 09 Feb 2026 22:02:00 +0700</pubDate>
       <enclosure
                 url="https://github.com/khanhicetea/Caffee/releases/download/v1.23.0/Caffee-v1.23.0.dmg"
