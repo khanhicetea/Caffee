@@ -1,6 +1,6 @@
 #  Caffee
 
-Bộ gõ tiếng Việt đơn giản nhất (native cho mac, viết bằng Swift, support macOS 13+ Ventura trở lên)
+Bộ gõ tiếng Việt đơn giản nhất (native cho mac, viết bằng Swift, support macOS 14+ Sonoma trở lên)
 
 ## Chức năng
 
@@ -21,17 +21,7 @@ Bộ gõ tiếng Việt đơn giản nhất (native cho mac, viết bằng Swift
 
 ## Nâng cấp phiên bản
 
-Nếu đã từng dùng phiên bản cũ, bạn có thể tải file .dmg của bản mới nhất về làm từ bước 1-3 như trên (không cần cấp lại quyền). Nhưng trước khi nâng cấp vui lòng Quit app bản cũ bằng cách click biểu tượng trên Menu, chọn Quit App.
-
-## Build
-
-Nhớ cài cái tool `swift-format` vì mình cho nó format code trước khi build (không thích thì vào Build Phases bỏ ra nhé)
-
-```shell
-$ brew install swift-format
-```
-
-Build như 1 macOS bình thường (XCode 15+)
+Vào menu bar > chọn 'Check for Updates' để kiểm tra và nâng cấp phiên bản mới nhất.
 
 ## FAQ
 
@@ -61,19 +51,16 @@ Build như 1 macOS bình thường (XCode 15+)
 - Việc open-source cho các Dev khác chung sở thích và muốn hiểu hơn về bộ gõ có thể đóng góp
 - Mình thấy đa phần các App trước OpenSource viết khá khó hiểu (như OpenKey viết bằng Obj-C) và Engine nhìn rất Hard-core (mỗi khi mình muốn Contribute phải vận rất nhiều nội công học lại - nên đa phần bỏ cuộc ở bước đọc code)
 
+5. App có dùng AI để phát triển không ?
+
+Có, trước năm 2026 hoàn toàn kiến trúc bộ gõ (Engine) là do tự mình nghĩ và phát triển. Từ 2026, mình dùng AI để tìm bugs, cải thiện UX, và phát triển các tính năng mới dựa trên kiến trúc bộ gõ (Engine).
+
+Mọi commits đều được review và test kĩ trước khi push và release app.
+
 ## Package .dmg file
 
 ```shell
-create-dmg \
-  --volname "Caffee Installer" \
-  --window-pos 200 120 \
-  --window-size 800 400 \
-  --icon-size 100 \
-  --icon "Caffee.app" 200 190 \
-  --hide-extension "Caffee.app" \
-  --app-drop-link 600 185 \
-  "Caffee-Installer.dmg" \
-  "Caffee1.4/"
+create-dmg "Caffee.app"
 ```
 
 ## LICENSE
