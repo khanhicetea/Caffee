@@ -223,10 +223,34 @@ struct TransformationTracker {
 
 class InputProcessor {
   static let FixAutocompleteApps = [
-    "com.apple.Safari", "com.google.Chrome", "org.chromium.Chromium",
-    "org.mozilla.firefox", "org.mozilla.nightly", "com.electron.min", "com.brave.Browser",
-    "company.thebrowser.Browser", "com.vivaldi.Vivaldi", "com.operasoftware.Opera",
-    "com.microsoft.edge", "com.microsoft.Edge", "com.microsoft.Excel", "com.microsoft.Office.Excel",
+    // Chromium-based
+    "com.google.Chrome", "com.google.Chrome.canary", "com.google.Chrome.beta",
+    "org.chromium.Chromium",
+    "com.brave.Browser", "com.brave.Browser.beta", "com.brave.Browser.nightly",
+    "com.microsoft.edgemac", "com.microsoft.edgemac.Beta", "com.microsoft.edgemac.Dev", "com.microsoft.edgemac.Canary",
+    "com.vivaldi.Vivaldi", "com.vivaldi.Vivaldi.snapshot",
+    "ru.yandex.desktop.yandex-browser", "com.naver.Whale",
+
+    // Opera
+    "com.opera.Opera", "com.operasoftware.Opera", "com.operasoftware.OperaGX",
+    "com.operasoftware.OperaAir", "com.opera.OperaNext",
+
+    // Firefox-based
+    "org.mozilla.firefox", "org.mozilla.nightly", "org.torproject.torbrowser", "org.librewolf.LibreWolf",
+    "app.zen-browser.zen",
+
+    // Safari & WebKit-based
+    "com.apple.Safari", "com.apple.SafariTechnologyPreview", "com.apple.Safari.TechnologyPreview",
+    "com.kagi.kagimacOS", "com.duckduckgo.mac", "com.duckduckgo.macos.browser",
+
+    // Arc & Others
+    "company.thebrowser.Browser", "company.thebrowser.Arc", "company.thebrowser.dia",
+    "com.sigmaos.sigmaos", "com.sigmaos.sigmaos.macos",
+    "com.pushplaylabs.sidekick", "com.firstversionist.polypane",
+    "ai.perplexity.comet", "com.electron.min",
+
+    // Office & Legacy
+    "com.microsoft.Excel", "com.microsoft.Office.Excel", "com.microsoft.edge", "com.microsoft.Edge",
   ]
   static let NewWordKeys = "`!@#$%^&*()-=[]\\;',./~_+{}|:\"<>?"
   static let NewWordTaskKeys: [TaskKey] = [.Enter, .Space, .Tab]

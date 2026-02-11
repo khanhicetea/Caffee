@@ -38,23 +38,6 @@ class EventSimulator {
   /// Apps are checked in order - first match wins.
   /// Apps not listed use the default batch strategy.
   static let appStrategies: [AppSendingConfig] = [
-    AppSendingConfig(bundlePrefix: "com.microsoft.VSCode", strategy: .stepByStep, name: "VS Code"),
-    AppSendingConfig(bundlePrefix: "com.electron", strategy: .stepByStep, name: "Electron Apps"),
-    AppSendingConfig(bundlePrefix: "com.hnc.Discord", strategy: .stepByStep, name: "Discord"),
-    AppSendingConfig(bundlePrefix: "com.tinyspeck.slackmacgap", strategy: .stepByStep, name: "Slack"),
-    AppSendingConfig(bundlePrefix: "com.spotify.client", strategy: .stepByStep, name: "Spotify"),
-
-    AppSendingConfig(bundlePrefix: "com.google.Chrome", strategy: .hybrid(backspaceDelayMicroseconds: 800), name: "Chrome"),
-    AppSendingConfig(bundlePrefix: "org.chromium.Chromium", strategy: .hybrid(backspaceDelayMicroseconds: 800), name: "Chromium"),
-    AppSendingConfig(bundlePrefix: "com.brave.Browser", strategy: .hybrid(backspaceDelayMicroseconds: 800), name: "Brave"),
-    AppSendingConfig(bundlePrefix: "com.microsoft.Edge", strategy: .hybrid(backspaceDelayMicroseconds: 800), name: "Edge"),
-    AppSendingConfig(bundlePrefix: "com.microsoft.edge", strategy: .hybrid(backspaceDelayMicroseconds: 800), name: "Edge (Legacy)"),
-    AppSendingConfig(bundlePrefix: "company.thebrowser.Browser", strategy: .hybrid(backspaceDelayMicroseconds: 800), name: "Arc"),
-    AppSendingConfig(bundlePrefix: "com.vivaldi.Vivaldi", strategy: .hybrid(backspaceDelayMicroseconds: 800), name: "Vivaldi"),
-    AppSendingConfig(bundlePrefix: "com.operasoftware.Opera", strategy: .hybrid(backspaceDelayMicroseconds: 800), name: "Opera"),
-    AppSendingConfig(bundlePrefix: "org.mozilla.firefox", strategy: .hybrid(backspaceDelayMicroseconds: 600), name: "Firefox"),
-    AppSendingConfig(bundlePrefix: "org.mozilla.nightly", strategy: .hybrid(backspaceDelayMicroseconds: 600), name: "Firefox Nightly"),
-
     AppSendingConfig(bundlePrefix: "com.microsoft.Word", strategy: .hybrid(backspaceDelayMicroseconds: 1000), name: "Word"),
     AppSendingConfig(bundlePrefix: "com.microsoft.Excel", strategy: .hybrid(backspaceDelayMicroseconds: 1000), name: "Excel"),
     AppSendingConfig(bundlePrefix: "com.microsoft.Powerpoint", strategy: .hybrid(backspaceDelayMicroseconds: 1000), name: "PowerPoint"),
@@ -68,7 +51,7 @@ class EventSimulator {
     AppSendingConfig(bundlePrefix: "com.warp.Warp", strategy: .stepByStep, name: "Warp"),
     AppSendingConfig(bundlePrefix: "co.zeit.hyper", strategy: .stepByStep, name: "Hyper"),
     AppSendingConfig(bundlePrefix: "org.tabby", strategy: .stepByStep, name: "Tabby"),
-    AppSendingConfig(bundlePrefix: "com.electron.alacritty", strategy: .stepByStep, name: "Alacritty"),
+    AppSendingConfig(bundlePrefix: "io.alacritty", strategy: .stepByStep, name: "Alacritty"),
   ]
 
   static func getStrategy(for bundleId: String) -> SendingStrategy {
