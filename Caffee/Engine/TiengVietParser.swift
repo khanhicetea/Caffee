@@ -37,10 +37,12 @@ enum TiengVietParser {
     // Nếu phụ âm đầu là "gi" mà không tìm thấy nguyên âm (ví dụ: "gi", "gin"),
     // thì "i" trong "gi" chính là nguyên âm.
     // Chuyển "gi" -> phụ âm "g" + nguyên âm "i".
-    if String(result.phuAmDau) == "gi",
+    if result.phuAmDau.count == 2,
+       result.phuAmDau[0] == "g" || result.phuAmDau[0] == "G",
+       result.phuAmDau[1] == "i" || result.phuAmDau[1] == "I",
        result.nguyenAm.isEmpty {
-      result.phuAmDau = ["g"]
-      result.nguyenAm = ["i"]
+      result.phuAmDau = [result.phuAmDau[0]]
+      result.nguyenAm = [result.phuAmDau[1]]
     }
 
     return result
