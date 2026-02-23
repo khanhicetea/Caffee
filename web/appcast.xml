@@ -6,6 +6,27 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.28.1</title>
+      <sparkle:version>12801</sparkle:version>
+      <sparkle:shortVersionString>1.28.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Mon, 23 Feb 2026 13:00:00 +0700</pubDate>
+      <enclosure
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.28.1/Caffee-v1.28.1.dmg"
+                sparkle:edSignature="rtegcPcsOR2dxNVm4agD4MK+/sWyWpbQR50/sAzcYc1lKWEqWZR0QXo056nHn/BdKug4cyHvJIDzn6mn9YDNDA=="
+                length="4465970"
+                type="application/octet-stream"
+            />
+      <description>
+        <![CDATA[
+        <h2>Có gì mới</h2>
+        <ul>
+          <li>[Fix] Kiểu gõ Telex: Sửa lỗi gõ chữ 'dd'</li>
+        </ul>
+      ]]>
+      </description>
+    </item>
+    <item>
       <title>Version 1.28.0</title>
       <sparkle:version>12800</sparkle:version>
       <sparkle:shortVersionString>1.28.0</sparkle:shortVersionString>

@@ -632,7 +632,7 @@
 				CODE_SIGN_ENTITLEMENTS = Caffee/Caffee.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 12800;
+				CURRENT_PROJECT_VERSION = 12801;
 				DEVELOPMENT_ASSET_PATHS = "\"Caffee/Preview Content\"";
 				DEVELOPMENT_TEAM = TFVP2N5B96;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -647,7 +647,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.28.0;
+				MARKETING_VERSION = 1.28.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.khanhicetea.Caffee.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -665,7 +665,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 12800;
+				CURRENT_PROJECT_VERSION = 12801;
 				DEVELOPMENT_ASSET_PATHS = "\"Caffee/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = TFVP2N5B96;
@@ -681,7 +681,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.28.0;
+				MARKETING_VERSION = 1.28.1;
 				"MTL_ENABLE_DEBUG_INFO[sdk=macosx*]" = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.khanhicetea.Caffee;
 				PRODUCT_NAME = "$(TARGET_NAME)";

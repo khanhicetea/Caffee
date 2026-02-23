@@ -77,7 +77,7 @@ class Telex: TypingMethod {
     
     // Check "dd" suffix: requires 'd' to exist previously at the start of the word
     if lowerKeyStr.hasSuffix("dd") {
-      return lowerKeyStr.hasPrefix("d")
+      return lowerKeyStr.dropLast(2).hasPrefix("d")
     }
 
     return false
