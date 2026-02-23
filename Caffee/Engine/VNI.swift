@@ -45,7 +45,7 @@ class VNI: TypingMethod {
     let lowerKeyStr = keyStr.lowercased()
     
     // 1. Check simple suffixes (double tap tone marks)
-    let simpleSuffixes = ["11", "22", "33", "44", "55", "88"]
+    let simpleSuffixes = ["11", "22", "33", "44", "55", "77", "88"]
     if simpleSuffixes.contains(where: { lowerKeyStr.hasSuffix($0) }) {
         return true
     }

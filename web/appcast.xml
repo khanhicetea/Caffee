@@ -6,6 +6,32 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.28.0</title>
+      <sparkle:version>12800</sparkle:version>
+      <sparkle:shortVersionString>1.28.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Mon, 23 Feb 2026 12:00:00 +0700</pubDate>
+      <enclosure
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.28.0/Caffee-v1.28.0.dmg"
+                sparkle:edSignature="NRCeTK6NJxevKl2EMiV7gCRaCoMgRV6w8mTsTFbyN8Lwubif307L+R/BkYY4NER+lb8/FnNXa+/9zLvbOx8OCg=="
+                length="4466525"
+                type="application/octet-stream"
+            />
+      <description>
+        <![CDATA[
+        <h2>Có gì mới</h2>
+        <ul>
+          <li>[Fix] TiengVietParser: Sửa lỗi crash khi xử lý "gi"</li>
+          <li>[Fix] TiengVietValidator: Cho phép tổ hợp "oe" và "uu" (xoè, hưu)</li>
+          <li>[Feature] Kiểu gõ VNI: Nhấn phím 7 hai lần để hủy dấu móc</li>
+          <li>[Enhance] Kiểu gõ Telex: Cải thiện logic hủy gạch ngang chữ 'd'</li>
+          <li>[Clean] TiengViet: Chuẩn hóa bảng chữ cái, loại bỏ ký tự dựng sẵn</li>
+          <li>[Robustness] TiengVietState: Đảm bảo tính bất biến của trạng thái</li>
+        </ul>
+      ]]>
+      </description>
+    </item>
+    <item>
       <title>Version 1.27.1</title>
       <sparkle:version>12701</sparkle:version>
       <sparkle:shortVersionString>1.27.1</sparkle:shortVersionString>

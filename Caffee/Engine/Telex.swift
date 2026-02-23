@@ -75,9 +75,9 @@ class Telex: TypingMethod {
       return lowerKeyStr.dropLast(2).contains("e")
     }
     
-    // Check "dd" suffix: requires 'd' to exist previously
+    // Check "dd" suffix: requires 'd' to exist previously at the start of the word
     if lowerKeyStr.hasSuffix("dd") {
-      return lowerKeyStr.dropLast(2).hasPrefix("d")
+      return lowerKeyStr.hasPrefix("d")
     }
 
     return false

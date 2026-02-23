@@ -108,7 +108,7 @@ enum TiengVietValidator {
   /// Tổ hợp nguyên âm không tồn tại trong tiếng Việt
   /// Các chuỗi này cần recovery ngay lập tức
   static let InvalidVowelCombinations: Set<String> = [
-    "ae", "ea", "ey", "iy", "oe", "uu", "yi", "yo", "yu",
+    "ae", "ea", "ey", "iy", "yi", "yo", "yu",
   ]
 
   // MARK: - Phương thức kiểm tra

@@ -41,8 +41,9 @@ enum TiengVietParser {
        result.phuAmDau[0] == "g" || result.phuAmDau[0] == "G",
        result.phuAmDau[1] == "i" || result.phuAmDau[1] == "I",
        result.nguyenAm.isEmpty {
+      let iChar = result.phuAmDau[1]
       result.phuAmDau = [result.phuAmDau[0]]
-      result.nguyenAm = [result.phuAmDau[1]]
+      result.nguyenAm = [iChar]
     }
 
     return result

@@ -169,7 +169,7 @@ enum TiengViet {
   /// Chữ cái tiếng Việt thường
   static let ChuCaiThuong: [Character] = [
     "a", "b", "c", "d", "e", "g", "h", "i", "k", "l", "m", "n",
-    "o", "p", "q", "r", "s", "t", "u", "ư", "v", "x", "y",
+    "o", "p", "q", "r", "s", "t", "u", "v", "x", "y",
   ]
 
   /// Tất cả chữ cái tiếng Việt (thường + hoa)
