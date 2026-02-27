@@ -269,11 +269,17 @@ enum TiengViet {
 
   // MARK: - Tries for Optimization
 
-  static let PhuAmDauTrie: Trie = {
+  static var PhuAmDauTrie: Trie = {
     let trie = Trie()
     PhuAmDau.forEach { trie.insert($0) }
     return trie
   }()
+
+  static func updatePhuAmDauTrie() {
+    let trie = Trie()
+    PhuAmDau.forEach { trie.insert($0) }
+    PhuAmDauTrie = trie
+  }
 
   static let NguyenAmTrie: Trie = {
     let trie = Trie()

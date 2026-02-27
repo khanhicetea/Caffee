@@ -482,6 +482,27 @@ final class CaffeeTests: XCTestCase {
     XCTAssertEqual(transform_text_telex(for: "wifi"), "wifi")
   }
 
+  func testAllowedZWJF() throws {
+    // Save current state
+    let oldPhuAmDau = TiengViet.PhuAmDau
+    
+    // Simulate allowedZWJF = false
+    TiengViet.PhuAmDau = TiengViet.PhuAmGhep + TiengViet.PhuAmDon
+    TiengViet.updatePhuAmDauTrie()
+    XCTAssertEqual(transform_text_telex(for: "zas"), "zas")
+    XCTAssertEqual(transform_text_telex(for: "fair"), "fair")
+    
+    // Simulate allowedZWJF = true
+    TiengViet.PhuAmDau = TiengViet.PhuAmGhep + TiengViet.PhuAmDon + TiengViet.PhuAmDonNuocNgoai
+    TiengViet.updatePhuAmDauTrie()
+    XCTAssertEqual(transform_text_telex(for: "zas"), "zá")
+    XCTAssertEqual(transform_text_telex(for: "fair"), "fải")
+    
+    // Restore
+    TiengViet.PhuAmDau = oldPhuAmDau
+    TiengViet.updatePhuAmDauTrie()
+  }
+
   // MARK: - Telex: Edge Cases
 
   /// Test single vowels with tone

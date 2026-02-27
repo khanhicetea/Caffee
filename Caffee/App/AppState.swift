@@ -34,6 +34,7 @@ class AppState: FileMonitorDelegate {
             } else {
                 TiengViet.PhuAmDau = TiengViet.PhuAmGhep + TiengViet.PhuAmDon
             }
+            TiengViet.updatePhuAmDauTrie()
 
             Defaults[.allowedZWJF] = allowedZWJF
         }
@@ -66,6 +67,7 @@ class AppState: FileMonitorDelegate {
         } else {
             TiengViet.PhuAmDau = TiengViet.PhuAmGhep + TiengViet.PhuAmDon
         }
+        TiengViet.updatePhuAmDauTrie()
 
         KeyboardShortcuts.onKeyUp(for: .toggleInputMode) { [self] in
             self.setEnabled(set: !self.enabled)

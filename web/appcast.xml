@@ -6,6 +6,27 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.28.2</title>
+      <sparkle:version>12802</sparkle:version>
+      <sparkle:shortVersionString>1.28.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Fri, 27 Feb 2026 12:00:00 +0700</pubDate>
+      <enclosure
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.28.2/Caffee-v1.28.2.dmg"
+                sparkle:edSignature="8OY5ar2xX+OFqFFIKZtK5Yj2ulhkPxL6e7WNSV2ZfiEEQmgZN/tJhpic+80yQLPpIfggQmg0ypVNYlG8lt50Cg=="
+                length="4466933"
+                type="application/octet-stream"
+            />
+      <description>
+        <![CDATA[
+        <h2>Có gì mới</h2>
+        <ul>
+          <li>[Fix] Sửa lỗi cài đặt 'allowedZWJF' không hoạt động</li>
+        </ul>
+      ]]>
+      </description>
+    </item>
+    <item>
       <title>Version 1.28.1</title>
       <sparkle:version>12801</sparkle:version>
       <sparkle:shortVersionString>1.28.1</sparkle:shortVersionString>
