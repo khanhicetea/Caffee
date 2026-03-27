@@ -105,6 +105,49 @@ final class CaffeeTests: XCTestCase {
     XCTAssertEqual(state.transformed, "gia")
   }
 
+  // MARK: - Advanced "gi" Parsing Tests
+
+  /// Test detailed parsing of "gi" in various contexts based on TiengVietParser logic
+  func testGiDetailedParsing() throws {
+    // Case 1: "gi" alone -> g (consonant) + i (vowel)
+    let res1 = TiengVietParser.parse(Array("gi"))
+    XCTAssertEqual(String(res1.phuAmDau), "g")
+    XCTAssertEqual(String(res1.nguyenAm), "i")
+
+    // Case 2: "gi" before consonant: "gin" -> g (consonant) + i (vowel) + n (final)
+    let res2 = TiengVietParser.parse(Array("gin"))
+    XCTAssertEqual(String(res2.phuAmDau), "g")
+    XCTAssertEqual(String(res2.nguyenAm), "i")
+    XCTAssertEqual(String(res2.phuAmCuoi), "n")
+
+    // Case 3: "gi" before vowel + final consonant: "gieng" -> g + ieng (merges i into vowel)
+    let res3 = TiengVietParser.parse(Array("gieng"))
+    XCTAssertEqual(String(res3.phuAmDau), "g")
+    XCTAssertEqual(String(res3.nguyenAm), "ie")
+    XCTAssertEqual(String(res3.phuAmCuoi), "ng")
+
+    // Case 4: "gi" before vowel + final consonant where "i" + vowel is invalid: "giang" -> gi + ang
+    let res4 = TiengVietParser.parse(Array("giang"))
+    XCTAssertEqual(String(res4.phuAmDau), "gi")
+    XCTAssertEqual(String(res4.nguyenAm), "a")
+    XCTAssertEqual(String(res4.phuAmCuoi), "ng")
+
+    // Case 5: "gi" before vowel without final consonant: "gia" -> gi + a (gi as consonant for mark placement)
+    let res5 = TiengVietParser.parse(Array("gia"))
+    XCTAssertEqual(String(res5.phuAmDau), "gi")
+    XCTAssertEqual(String(res5.nguyenAm), "a")
+  }
+
+  /// Test Telex outputs for complex "gi" cases
+  func testTelexGiDetailed() throws {
+    XCTAssertEqual(transform_text_telex(for: "gif"), "gì")
+    XCTAssertEqual(transform_text_telex(for: "gin"), "gin")
+    XCTAssertEqual(transform_text_telex(for: "gieengs"), "giếng")
+    XCTAssertEqual(transform_text_telex(for: "giangs"), "giáng")
+    XCTAssertEqual(transform_text_telex(for: "gias"), "giá")
+    XCTAssertEqual(transform_text_telex(for: "giuwx"), "giữ")
+  }
+
   // MARK: - Functional State Immutability Tests
 
   /// Test that state mutations return new state without affecting original

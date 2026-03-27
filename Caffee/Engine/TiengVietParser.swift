@@ -34,16 +34,49 @@ enum TiengVietParser {
     result = finishParsing(result: &result, remaining: remaining)
 
     // Xử lý đặc biệt cho "gi":
-    // Nếu phụ âm đầu là "gi" mà không tìm thấy nguyên âm (ví dụ: "gi", "gin"),
-    // thì "i" trong "gi" chính là nguyên âm.
-    // Chuyển "gi" -> phụ âm "g" + nguyên âm "i".
+    // Trong tiếng Việt, "gi" trước nguyên âm khác luôn tách thành phụ âm "g" + "i" thuộc nguyên âm.
+    // Ví dụ: "giếng" = g + iê + ng, "gia" = g + ia, "giết" = g + iê + t
+    // Nếu không có nguyên âm nào sau "gi", thì "i" chính là nguyên âm: "gì" = g + i
     if result.phuAmDau.count == 2,
        result.phuAmDau[0] == "g" || result.phuAmDau[0] == "G",
-       result.phuAmDau[1] == "i" || result.phuAmDau[1] == "I",
-       result.nguyenAm.isEmpty {
+       result.phuAmDau[1] == "i" || result.phuAmDau[1] == "I" {
       let iChar = result.phuAmDau[1]
       result.phuAmDau = [result.phuAmDau[0]]
-      result.nguyenAm = [iChar]
+
+      if result.nguyenAm.isEmpty {
+        // "gi" đứng một mình hoặc trước phụ âm: "i" là nguyên âm
+        // Ví dụ: "gi", "gin" → g + i, g + i + n
+        result.nguyenAm = [iChar]
+      } else if !result.phuAmCuoi.isEmpty {
+        // "gi" trước nguyên âm + phụ âm cuối: thử ghép "i" vào đầu nguyên âm
+        // Ví dụ: "gieng" → g + ie + ng (vì ê+ng không hợp lệ, nhưng iê+ng hợp lệ)
+        // Nhưng: "giang" → gi + a + ng (vì ia+ng không hợp lệ, a+ng hợp lệ)
+        let savedNguyenAm = result.nguyenAm
+        let savedPhuAmCuoi = result.phuAmCuoi
+        let savedConLai = result.conLai
+        let savedChuaNguyenAmUO = result.chuaNguyenAmUO
+
+        let newRemaining = String([iChar] + savedNguyenAm + savedPhuAmCuoi + savedConLai)
+        result.nguyenAm = []
+        result.phuAmCuoi = []
+        result.conLai = []
+        result = finishParsing(result: &result, remaining: newRemaining)
+
+        // Kiểm tra kết quả mới có hợp lệ hơn không
+        // Nếu không hợp lệ (ví dụ ia+ng), khôi phục lại gi + vowel + final
+        if !result.phuAmCuoi.isEmpty &&
+           TiengVietValidator.needsRecovery(result) {
+          result.phuAmDau = [result.phuAmDau[0], iChar]
+          result.nguyenAm = savedNguyenAm
+          result.phuAmCuoi = savedPhuAmCuoi
+          result.conLai = savedConLai
+          result.chuaNguyenAmUO = savedChuaNguyenAmUO
+        }
+      } else {
+        // "gi" trước nguyên âm mà không có phụ âm cuối: giữ "i" riêng ở phụ âm đầu
+        // để đặt dấu thanh đúng vị trí. Ví dụ: "giá" = gi + á (dấu trên 'a')
+        result.phuAmDau = [result.phuAmDau[0], iChar]
+      }
     }
 
     return result
