@@ -21,10 +21,34 @@ public struct Focused {
 
   public static func hasHighlightedText() -> Bool {
     guard let focusedElement = Focused.element() else { return false }
-    guard let highlightedText: AXValue = focusedElement.getAttribute(
+
+    // Method 1: Check selected text content directly
+    if let highlightedText: AXValue = focusedElement.getAttribute(
       property: kAXSelectedTextAttribute)
-    else { return false }
-    return !"\(highlightedText)".isEmpty
+    {
+      if !"\(highlightedText)".isEmpty {
+        return true
+      }
+    }
+
+    // Method 2: Check selected text range length (fallback)
+    // Some apps (e.g., Chrome's address bar) don't expose kAXSelectedTextAttribute
+    // but do expose kAXSelectedTextRangeAttribute with a valid CFRange.
+    if let rangeValue: AXValue = focusedElement.getAttribute(
+      property: kAXSelectedTextRangeAttribute)
+    {
+      var range = CFRange(location: 0, length: 0)
+      if AXValueGetValue(rangeValue, .cfRange, &range), range.length > 0 {
+        #if DEBUG
+          print(
+            "[Caffee] hasHighlightedText: detected via selectedTextRange (location=\(range.location), length=\(range.length))"
+          )
+        #endif
+        return true
+      }
+    }
+
+    return false
   }
 
   public static func highlightedText() -> String? {

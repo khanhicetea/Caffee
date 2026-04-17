@@ -395,7 +395,7 @@ class InputProcessor {
     }
 
     push(char: newChar)
-    var (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
+    let (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
       from: lastTransformed, to: transformed)
 
     // If the only change is the new character itself, let it pass through
@@ -405,29 +405,36 @@ class InputProcessor {
       return Unmanaged.passRetained(event)
     }
 
-    if needToFixAutocomplete() {
-      numBackspaces += 1
-    }
-
     // Check for transformation failures and auto-switch if needed
     if strategyTracker.detectFailure(input: newChar) {
       strategyTracker.autoSwitchIfNeeded(activeApp: activeApp)
     }
 
-    EventSimulator.sendReplacement(
-      backspaceCount: numBackspaces,
-      diffChars: diffChars,
-      strategy: strategyTracker.currentStrategy
-    )
+    if isFixAutocompleteApp() {
+      // For autocomplete-capable apps (browsers, etc.), use select-and-replace
+      // instead of backspace-and-type. Shift+Left naturally extends any existing
+      // inline autocomplete selection, so the typed replacement covers both the
+      // autocomplete text and the characters being modified.
+      EventSimulator.sendSelectAndReplace(
+        selectLeftCount: numBackspaces,
+        diffChars: diffChars,
+        strategy: strategyTracker.currentStrategy
+      )
+    } else {
+      EventSimulator.sendReplacement(
+        backspaceCount: numBackspaces,
+        diffChars: diffChars,
+        strategy: strategyTracker.currentStrategy
+      )
+    }
     return nil
   }
 
   // MARK: - Helpers
 
-  func needToFixAutocomplete() -> Bool {
-    let idx = InputProcessor.FixAutocompleteApps.first { app in
+  func isFixAutocompleteApp() -> Bool {
+    return InputProcessor.FixAutocompleteApps.contains { app in
       return activeApp.hasPrefix(app)
     }
-    return idx != nil && Focused.hasHighlightedText()
   }
 }

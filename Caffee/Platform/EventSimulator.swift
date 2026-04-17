@@ -203,4 +203,76 @@ class EventSimulator {
       }
     }
   }
+
+  /// Sends Shift+Left arrow key events to select text to the left.
+  /// This extends any existing selection (including inline autocomplete).
+  static func sendShiftLeft(
+    _ count: Int,
+    source: CGEventSource? = nil
+  ) {
+    guard count > 0 else { return }
+
+    let eventSource = source ?? CGEventSource(stateID: .combinedSessionState)
+    guard let source = eventSource else { return }
+
+    // Left arrow key code: 0x7B
+    guard
+      let downEvent = CGEvent(keyboardEventSource: source, virtualKey: 0x7B, keyDown: true),
+      let upEvent = CGEvent(keyboardEventSource: source, virtualKey: 0x7B, keyDown: false)
+    else { return }
+
+    downEvent.flags = [.maskShift, .maskNonCoalesced]
+    upEvent.flags = [.maskShift, .maskNonCoalesced]
+
+    for _ in 0..<count {
+      downEvent.post(tap: .cgSessionEventTap)
+      upEvent.post(tap: .cgSessionEventTap)
+    }
+  }
+
+  /// Uses Shift+Left to select characters then types replacement text.
+  /// Unlike backspace-based replacement, Shift+Left naturally extends any
+  /// existing inline autocomplete selection in browsers, so the replacement
+  /// covers both the autocomplete text and the characters being modified.
+  static func sendSelectAndReplace(
+    selectLeftCount: Int,
+    diffChars: [Character],
+    strategy: SendingStrategy
+  ) {
+    switch strategy {
+    case .batch:
+      let source = CGEventSource(stateID: .privateState)
+      sendShiftLeft(selectLeftCount, source: source)
+      if !diffChars.isEmpty {
+        sendString(String(diffChars), source: source)
+      } else if selectLeftCount > 0 {
+        sendBackspace(1, source: source)
+      }
+
+    case .stepByStep:
+      simulationQueue.async {
+        let source = CGEventSource(stateID: .privateState)
+        sendShiftLeft(selectLeftCount, source: source)
+        usleep(3000)
+        if !diffChars.isEmpty {
+          sendStringStepByStep(String(diffChars), source: source, delayMicroseconds: 2000)
+        } else if selectLeftCount > 0 {
+          sendBackspace(1, source: source)
+        }
+        usleep(3000)
+      }
+
+    case .hybrid(let backspaceDelay):
+      simulationQueue.async {
+        let source = CGEventSource(stateID: .privateState)
+        sendShiftLeft(selectLeftCount, source: source)
+        usleep(backspaceDelay)
+        if !diffChars.isEmpty {
+          sendString(String(diffChars), source: source)
+        } else if selectLeftCount > 0 {
+          sendBackspace(1, source: source)
+        }
+      }
+    }
+  }
 }
