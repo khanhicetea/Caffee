@@ -6,6 +6,25 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.30.0</title>
+      <sparkle:version>13000</sparkle:version>
+      <sparkle:shortVersionString>1.30.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Fri, 03 Jul 2026 11:07:00 +0700</pubDate>
+      <enclosure
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.30.0/Caffee-v1.30.0.dmg"
+                sparkle:edSignature="+i5iW31W+zohj2xI438skQVSwdtNhYGz8A8K90WfdO2PAlVmEp4CFPDlSGEwnq6Ah4YnQ51TtK6RAupVa70RCg=="
+                length="4470187"
+                type="application/octet-stream"
+            />
+      <description><![CDATA[
+    <h2>What's New</h2>
+    <ul>
+      <li>Sửa lỗi gõ tiếng Việt trong Google Docs</li>
+    </ul>
+  ]]></description>
+    </item>
+    <item>
       <title>Version 1.29.0</title>
       <sparkle:version>12900</sparkle:version>
       <sparkle:shortVersionString>1.29.0</sparkle:shortVersionString>
