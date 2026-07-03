@@ -410,11 +410,17 @@ class InputProcessor {
       strategyTracker.autoSwitchIfNeeded(activeApp: activeApp)
     }
 
-    if isFixAutocompleteApp() {
+    if isFixAutocompleteApp() && Focused.hasHighlightedText() {
       // For autocomplete-capable apps (browsers, etc.), use select-and-replace
-      // instead of backspace-and-type. Shift+Left naturally extends any existing
-      // inline autocomplete selection, so the typed replacement covers both the
-      // autocomplete text and the characters being modified.
+      // only when there is highlighted text — typically inline autocomplete
+      // ghost text that backspace cannot reach. Shift+Left extends the existing
+      // selection so the replacement covers both the autocomplete text and the
+      // characters being modified.
+      //
+      // When there is no highlighted text (e.g. Google Docs canvas editor),
+      // fall through to the backspace path below. Canvas-based web editors
+      // ignore synthetic Shift+Left, so select-and-replace would leave the old
+      // characters behind.
       EventSimulator.sendSelectAndReplace(
         selectLeftCount: numBackspaces,
         diffChars: diffChars,

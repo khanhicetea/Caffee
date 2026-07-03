@@ -234,6 +234,13 @@ class EventSimulator {
   /// Unlike backspace-based replacement, Shift+Left naturally extends any
   /// existing inline autocomplete selection in browsers, so the replacement
   /// covers both the autocomplete text and the characters being modified.
+  ///
+  /// IMPORTANT: Only call this when there is currently highlighted text in the
+  /// focused field (e.g. browser autocomplete ghost text). Canvas-based web
+  /// editors like Google Docs ignore synthetic Shift+Left, so using this path
+  /// there inserts the replacement after the old chars instead of replacing
+  /// them. When no highlighted text is present, prefer the reliable backspace
+  /// path (see `sendReplacement`).
   static func sendSelectAndReplace(
     selectLeftCount: Int,
     diffChars: [Character],
