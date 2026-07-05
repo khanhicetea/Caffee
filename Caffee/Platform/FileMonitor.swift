@@ -53,7 +53,10 @@ final class FileMonitor {
     }
 
     let newData = self.fileHandle.readDataToEndOfFile()
-    let string = String(data: newData, encoding: .utf8)!
+    // DispatchSource may fire while a writer is still appending; skip partial UTF-8.
+    guard let string = String(data: newData, encoding: .utf8) else {
+      return
+    }
     self.delegate?.didReceive(changes: string)
   }
 }

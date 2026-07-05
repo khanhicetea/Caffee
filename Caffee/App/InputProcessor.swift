@@ -270,6 +270,13 @@ class InputProcessor {
   /// Track pasteboard change count to detect external paste operations
   private var lastPasteboardChangeCount: Int = NSPasteboard.general.changeCount
 
+  /// Cache for `Focused.hasHighlightedText()` to avoid a synchronous AX call
+  /// on every replacement event in browser apps. AX calls on the event-tap
+  /// thread can push the tap past its timeout and cause macOS to disable it.
+  private var highlightedTextCached = false
+  private var highlightedTextCheckedAt: Date = .distantPast
+  private let highlightedTextThrottle: TimeInterval = 0.05
+
   // MARK: - Convenience accessors (preserve existing API for tests)
 
   public var keys: [Character] {
@@ -318,12 +325,14 @@ class InputProcessor {
   public func changeActiveApp(_ app: String) {
     activeApp = app
     strategyTracker.resetForApp(app)
+    highlightedTextCheckedAt = .distantPast
   }
 
   // MARK: - Word Operations (delegate to WordBuffer)
 
   public func newWord(storePrevious: Bool = false) {
     wordBuffer.newWord(storePrevious: storePrevious)
+    highlightedTextCheckedAt = .distantPast
   }
 
   public func pop() -> (Int, [Character]) {
@@ -410,12 +419,12 @@ class InputProcessor {
       strategyTracker.autoSwitchIfNeeded(activeApp: activeApp)
     }
 
-    if isFixAutocompleteApp() && Focused.hasHighlightedText() {
+    if isFixAutocompleteApp() && highlightedTextThrottled() {
       // For autocomplete-capable apps (browsers, etc.), use select-and-replace
-      // only when there is highlighted text — typically inline autocomplete
-      // ghost text that backspace cannot reach. Shift+Left extends the existing
-      // selection so the replacement covers both the autocomplete text and the
-      // characters being modified.
+      // only when there is highlighted text (checked through a short throttle)
+      // — typically inline autocomplete ghost text that backspace cannot reach.
+      // Shift+Left extends the existing selection so the replacement covers both
+      // the autocomplete text and the characters being modified.
       //
       // When there is no highlighted text (e.g. Google Docs canvas editor),
       // fall through to the backspace path below. Canvas-based web editors
@@ -426,6 +435,7 @@ class InputProcessor {
         diffChars: diffChars,
         strategy: strategyTracker.currentStrategy
       )
+      highlightedTextCheckedAt = .distantPast
     } else {
       EventSimulator.sendReplacement(
         backspaceCount: numBackspaces,
@@ -442,5 +452,14 @@ class InputProcessor {
     return InputProcessor.FixAutocompleteApps.contains { app in
       return activeApp.hasPrefix(app)
     }
+  }
+
+  private func highlightedTextThrottled() -> Bool {
+    let now = Date()
+    if now.timeIntervalSince(highlightedTextCheckedAt) >= highlightedTextThrottle {
+      highlightedTextCached = Focused.hasHighlightedText()
+      highlightedTextCheckedAt = now
+    }
+    return highlightedTextCached
   }
 }

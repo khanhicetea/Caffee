@@ -67,8 +67,6 @@ extension AXUIElement {
     if AXUIElementCopyAttributeValue(self, property as CFString, &ptr) != AXError.success {
       return nil
     }
-    return ptr.map {
-      $0 as! T
-    }
+    return ptr.flatMap { $0 as? T }
   }
 }

@@ -6,6 +6,27 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.30.1</title>
+      <sparkle:version>13001</sparkle:version>
+      <sparkle:shortVersionString>1.30.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Sun, 05 Jul 2026 15:42:00 +0700</pubDate>
+      <enclosure
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.30.1/Caffee-v1.30.1.dmg"
+                sparkle:edSignature="CzeEL9sGEeghXlsdL7MpMJJHw0GzbaK42GN6loGRQW1e3jmW43mBo16ui6PDGTABZCevwMdZfSIunEN9S3T7AQ=="
+                length="4472794"
+                type="application/octet-stream"
+            />
+      <description><![CDATA[
+    <h2>What's New</h2>
+    <ul>
+      <li>Tối ưu hiệu năng khi gõ trong trình duyệt: cache kiểm tra văn bản đang được chọn để tránh gọi AX API liên tục, giúp tăng tốc độ gõ</li>
+      <li>Sửa lỗi crash khi đọc file cấu hình bị cắt ngang (dữ liệu UTF-8 chưa hoàn chỉnh)</li>
+      <li>Cải thiện ổn định của Accessibility API</li>
+    </ul>
+  ]]></description>
+    </item>
+    <item>
       <title>Version 1.30.0</title>
       <sparkle:version>13000</sparkle:version>
       <sparkle:shortVersionString>1.30.0</sparkle:shortVersionString>
