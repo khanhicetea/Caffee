@@ -16,10 +16,6 @@
 		3F4564E22BA5FFD800F087BA /* GuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4564E12BA5FFD800F087BA /* GuideView.swift */; };
 		3F4564E42BA5FFD800F087BB /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4564E32BA5FFD800F087BB /* OnboardingView.swift */; };
 		3F8A64FF2B89A078009E2AF1 /* InputProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A64FE2B89A078009E2AF1 /* InputProcessor.swift */; };
-		3FCA10012C000020000001 /* KeyboardInputEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000000 /* KeyboardInputEvent.swift */; };
-		3FCA10012C000020000003 /* AppCompatibilityPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000002 /* AppCompatibilityPolicy.swift */; };
-		3FCA10012C000020000005 /* ReplacementSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000004 /* ReplacementSender.swift */; };
-		3FCA10012C000020000007 /* SelectionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000006 /* SelectionDetector.swift */; };
 		3F8A65042B89AD74009E2AF1 /* TiengViet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A65032B89AD74009E2AF1 /* TiengViet.swift */; };
 		3F8A65062B8C69C9009E2AF1 /* Telex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A65052B8C69C9009E2AF1 /* Telex.swift */; };
 		3F8A65082B8E370B009E2AF1 /* VNI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A65072B8E370B009E2AF1 /* VNI.swift */; };
@@ -44,6 +40,10 @@
 		3FCA000012C000010000003 /* TiengVietParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA000012C000010000004 /* TiengVietParser.swift */; };
 		3FCA000012C000010000005 /* TiengVietTransformer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA000012C000010000006 /* TiengVietTransformer.swift */; };
 		3FCA000012C00001000000B /* Trie.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA000012C00001000000A /* Trie.swift */; };
+		3FCA10012C000020000001 /* KeyboardInputEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000000 /* KeyboardInputEvent.swift */; };
+		3FCA10012C000020000003 /* AppCompatibilityPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000002 /* AppCompatibilityPolicy.swift */; };
+		3FCA10012C000020000005 /* ReplacementSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000004 /* ReplacementSender.swift */; };
+		3FCA10012C000020000007 /* SelectionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000006 /* SelectionDetector.swift */; };
 		3FDB83CB2BB4682F00AD6322 /* Keys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FDB83CA2BB4682F00AD6322 /* Keys.swift */; };
 		3FDB83CD2BB468BA00AD6322 /* EventSimulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FDB83CC2BB468BA00AD6322 /* EventSimulator.swift */; };
 /* End PBXBuildFile section */
@@ -73,10 +73,6 @@
 		3F4564E12BA5FFD800F087BA /* GuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuideView.swift; sourceTree = "<group>"; };
 		3F4564E32BA5FFD800F087BB /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		3F8A64FE2B89A078009E2AF1 /* InputProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputProcessor.swift; sourceTree = "<group>"; };
-		3FCA10012C000020000000 /* KeyboardInputEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardInputEvent.swift; sourceTree = "<group>"; };
-		3FCA10012C000020000002 /* AppCompatibilityPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCompatibilityPolicy.swift; sourceTree = "<group>"; };
-		3FCA10012C000020000004 /* ReplacementSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplacementSender.swift; sourceTree = "<group>"; };
-		3FCA10012C000020000006 /* SelectionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionDetector.swift; sourceTree = "<group>"; };
 		3F8A65002B89AAE0009E2AF1 /* Caffee.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = Caffee.xctestplan; sourceTree = "<group>"; };
 		3F8A65032B89AD74009E2AF1 /* TiengViet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiengViet.swift; sourceTree = "<group>"; };
 		3F8A65052B8C69C9009E2AF1 /* Telex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Telex.swift; sourceTree = "<group>"; };
@@ -104,6 +100,10 @@
 		3FCA000012C000010000004 /* TiengVietParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiengVietParser.swift; sourceTree = "<group>"; };
 		3FCA000012C000010000006 /* TiengVietTransformer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiengVietTransformer.swift; sourceTree = "<group>"; };
 		3FCA000012C00001000000A /* Trie.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trie.swift; sourceTree = "<group>"; };
+		3FCA10012C000020000000 /* KeyboardInputEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardInputEvent.swift; sourceTree = "<group>"; };
+		3FCA10012C000020000002 /* AppCompatibilityPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCompatibilityPolicy.swift; sourceTree = "<group>"; };
+		3FCA10012C000020000004 /* ReplacementSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplacementSender.swift; sourceTree = "<group>"; };
+		3FCA10012C000020000006 /* SelectionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionDetector.swift; sourceTree = "<group>"; };
 		3FD874E02BB7164F007479CC /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		3FDB83CA2BB4682F00AD6322 /* Keys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keys.swift; sourceTree = "<group>"; };
 		3FDB83CC2BB468BA00AD6322 /* EventSimulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventSimulator.swift; sourceTree = "<group>"; };
@@ -648,7 +648,7 @@
 				CODE_SIGN_ENTITLEMENTS = Caffee/Caffee.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 13001;
+				CURRENT_PROJECT_VERSION = 13002;
 				DEVELOPMENT_ASSET_PATHS = "\"Caffee/Preview Content\"";
 				DEVELOPMENT_TEAM = TFVP2N5B96;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -663,7 +663,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.30.1;
+				MARKETING_VERSION = 1.30.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.khanhicetea.Caffee.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -681,7 +681,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 13001;
+				CURRENT_PROJECT_VERSION = 13002;
 				DEVELOPMENT_ASSET_PATHS = "\"Caffee/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = TFVP2N5B96;
@@ -697,7 +697,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.30.1;
+				MARKETING_VERSION = 1.30.2;
 				"MTL_ENABLE_DEBUG_INFO[sdk=macosx*]" = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.khanhicetea.Caffee;
 				PRODUCT_NAME = "$(TARGET_NAME)";

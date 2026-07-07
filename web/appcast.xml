@@ -6,6 +6,26 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.30.2</title>
+      <sparkle:version>13002</sparkle:version>
+      <sparkle:shortVersionString>1.30.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Tue, 07 Jul 2026 10:12:31 +0700</pubDate>
+      <enclosure
+                url="https://github.com/khanhicetea/Caffee/releases/download/v1.30.2/Caffee-v1.30.2.dmg"
+                sparkle:edSignature="DGtYGLMcie3Vp2OzuIwX7MimVyPgdaygzh8kw22IDPJLJuH7lEZdwuZtg17EPFeX1M8q9cpoajDIUExLAzOsCg=="
+                length="4489806"
+                type="application/octet-stream"
+            />
+      <description><![CDATA[
+    <h2>Có gì mới</h2>
+    <ul>
+      <li>Tái cấu trúc InputProcessor để trạng thái trả về bất biến hơn</li>
+      <li>Tách InputProcessor thành các phần nhỏ hơn để dễ bảo trì</li>
+    </ul>
+  ]]></description>
+    </item>
+    <item>
       <title>Version 1.30.1</title>
       <sparkle:version>13001</sparkle:version>
       <sparkle:shortVersionString>1.30.1</sparkle:shortVersionString>
