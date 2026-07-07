@@ -19,16 +19,22 @@ enum TypingMethods: String, CaseIterable, Defaults.Serializable {
 /// Mỗi phương thức gõ (Telex, VNI) cần triển khai protocol này
 /// để xử lý ký tự nhập vào và cập nhật trạng thái.
 protocol TypingMethod {
-  /// Kiểm tra có nên dừng xử lý không (ví dụ: gõ đúp để hủy dấu)
-  func shouldStopProcessing(keyStr: String) -> Bool
-
-  /// Xử lý ký tự nhập vào - trả về state mới thay vì mutate
+  /// Xử lý ký tự nhập vào - trả về ý định rõ ràng để WordBuffer phản ứng.
   /// - Parameters:
   ///   - char: Ký tự vừa gõ
+  ///   - keyStr: Toàn bộ chuỗi phím thô của từ hiện tại
   ///   - state: Trạng thái hiện tại
-  /// - Returns: Tuple (state mới, có áp dụng dấu không)
-  func push(char: Character, state: TiengVietState) -> (state: TiengVietState, appliedMark: Bool)
+  func push(char: Character, keyStr: String, state: TiengVietState) -> TypingMethodResult
 
   /// Xóa ký tự cuối cùng - trả về state mới
   func pop(state: TiengVietState) -> TiengVietState
+}
+
+/// Kết quả xử lý của engine cho một phím vừa nhập.
+enum TypingMethodResult {
+  case insertRaw(TiengVietState)
+  case applyMark(TiengVietState)
+  case toggleToRaw(TiengVietState)
+  case recover(TiengVietState)
+  case noChange(TiengVietState)
 }

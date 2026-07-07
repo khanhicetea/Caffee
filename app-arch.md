@@ -332,9 +332,16 @@ static let ValidVowelEndings: [String: Set<String>] = [
 **TypingMethod Protocol**:
 ```swift
 protocol TypingMethod {
-    func shouldStopProcessing(keyStr: String) -> Bool
-    func push(char: Character, state: TiengVietState) -> (state: TiengVietState, appliedMark: Bool)
+    func push(char: Character, keyStr: String, state: TiengVietState) -> TypingMethodResult
     func pop(state: TiengVietState) -> TiengVietState
+}
+
+enum TypingMethodResult {
+    case insertRaw(TiengVietState)
+    case applyMark(TiengVietState)
+    case toggleToRaw(TiengVietState)
+    case recover(TiengVietState)
+    case noChange(TiengVietState)
 }
 ```
 
@@ -352,19 +359,18 @@ Diacriticals:    6=mũ(^)  7=móc(horn)  8=trăng(breve)
 Special:         9=đ
 ```
 
-**Stop Processing Detection** (Double-press to cancel):
+**Raw Toggle Detection** (Double-press to cancel):
 ```swift
-// Pre-compiled regex for performance
-private static let compiledStoppingRegex: [NSRegularExpression] = {
-    let patterns = [
-        "ss$", "ff$", "rr$", "xx$", "jj$", "ww$",  // Double tone keys
-        "[0-9]$",                                    // Number input
-        "a+[a-zA-Z]*aa$",                            // Triple 'a'
-        "o+[a-zA-Z]*oo$",                            // Triple 'o'
-        // ... more patterns
-    ]
-    return patterns.compactMap { try? NSRegularExpression(pattern: $0) }
-}()
+private func shouldToggleToRaw(keyStr: String) -> Bool {
+    let lowerKeyStr = keyStr.lowercased()
+    return lowerKeyStr.hasSuffix("ss")
+        || lowerKeyStr.hasSuffix("ff")
+        || lowerKeyStr.hasSuffix("rr")
+        || lowerKeyStr.hasSuffix("xx")
+        || lowerKeyStr.hasSuffix("jj")
+        || lowerKeyStr.hasSuffix("ww")
+        // ... vowel/d and VNI-specific rules
+}
 ```
 
 ---
@@ -413,7 +419,7 @@ Step 4: 't' pressed
 Step 5: 's' pressed (Telex tone mark)
 ├── InputProcessor.push('s')
 ├── Telex.push('s', state) → detects vowel exists
-│   └── Returns (state.withTone(.sac), true)
+│   └── Returns .applyMark(state.withTone(.sac))
 ├── TiengVietState: chuKhongDau=['v','i','e','t'], dauThanh=sac
 ├── TiengVietTransformer.transform():
 │   ├── Parse: {nguyenAm:['i','e'], phuAmCuoi:['t']}

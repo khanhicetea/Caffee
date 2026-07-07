@@ -40,45 +40,20 @@ class VNI: TypingMethod {
 
   // MARK: - TypingMethod Protocol
 
-  /// Kiểm tra có nên dừng xử lý VNI không
-  public func shouldStopProcessing(keyStr: String) -> Bool {
-    let lowerKeyStr = keyStr.lowercased()
-    
-    // 1. Check simple suffixes (double tap tone marks)
-    let simpleSuffixes = ["11", "22", "33", "44", "55", "77", "88"]
-    if simpleSuffixes.contains(where: { lowerKeyStr.hasSuffix($0) }) {
-        return true
-    }
-    
-    // 2. Check complex cases (double tap vowel/d when it already exists)
-    // "66", "99" -> Cancel mark if the character exists before
-    
-    // Check "66" suffix: requires 'a', 'e', or 'o' to exist previously (circumflex)
-    if lowerKeyStr.hasSuffix("66") {
-      return lowerKeyStr.contains("a") || lowerKeyStr.contains("e") || lowerKeyStr.contains("o")
-    }
-    
-    // Check "99" suffix: requires 'd' to exist previously (stroked d)
-    if lowerKeyStr.hasSuffix("99") {
-      return lowerKeyStr.hasPrefix("d")
-    }
-
-    return false
-  }
-
   /// Xử lý ký tự nhập vào theo kiểu gõ VNI
   /// - Parameters:
   ///   - char: Ký tự vừa gõ
+  ///   - keyStr: Toàn bộ chuỗi phím thô của từ hiện tại
   ///   - state: Trạng thái TiengVietState hiện tại
-  /// - Returns: Tuple (state mới, có áp dụng dấu không)
-  public func push(char: Character, state: TiengVietState) -> (state: TiengVietState, appliedMark: Bool) {
+  /// - Returns: Kết quả xử lý với ý định rõ ràng
+  public func push(char: Character, keyStr: String, state: TiengVietState) -> TypingMethodResult {
     let thanhPhan = state.thanhPhanTieng
 
     // Xử lý d9 → đ (phím 9 sau chữ d)
     if let chuCaiDau = state.chuKhongDau.first,
       (char == "9") && (chuCaiDau == "d" || chuCaiDau == "D")
     {
-      return (state.withGachD(), true)
+      return markResult(state.withGachD(), char: char, keyStr: keyStr)
     }
 
     // Xử lý các phím số dấu (chỉ khi đã có nguyên âm)
@@ -86,32 +61,32 @@ class VNI: TypingMethod {
       switch char {
       // Phím dấu thanh: 1=sắc, 2=huyền, 3=hỏi, 4=ngã, 5=nặng
       case "1":
-        return (state.withTone(.sac), true)
+        return markResult(state.withTone(.sac), char: char, keyStr: keyStr)
       case "2":
-        return (state.withTone(.huyen), true)
+        return markResult(state.withTone(.huyen), char: char, keyStr: keyStr)
       case "3":
-        return (state.withTone(.hoi), true)
+        return markResult(state.withTone(.hoi), char: char, keyStr: keyStr)
       case "4":
-        return (state.withTone(.nga), true)
+        return markResult(state.withTone(.nga), char: char, keyStr: keyStr)
       case "5":
-        return (state.withTone(.nang), true)
+        return markResult(state.withTone(.nang), char: char, keyStr: keyStr)
 
       // Phím 6: dấu mũ (^) cho a, e, o → â, ê, ô
       case "6":
         if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["a", "A", "o", "O", "e", "E"]) {
-          return (state.withMu(.muUp), true)
+          return markResult(state.withMu(.muUp), char: char, keyStr: keyStr)
         }
 
       // Phím 7: dấu móc (horn) cho u, o → ư, ơ
       case "7":
         if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["u", "o", "U", "O"]) {
-          return (state.withMu(.muMoc), true)
+          return markResult(state.withMu(.muMoc), char: char, keyStr: keyStr)
         }
 
       // Phím 8: dấu trăng (breve) cho a → ă
       case "8":
         if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["a", "A"]) {
-          return (state.withMu(.muNgua), true)
+          return markResult(state.withMu(.muNgua), char: char, keyStr: keyStr)
         }
 
       default:
@@ -120,11 +95,67 @@ class VNI: TypingMethod {
     }
 
     // Không áp dụng dấu, thêm ký tự như bình thường
-    return (state.push(char), false)
+    return rawResult(state.push(char), keyStr: keyStr)
   }
 
   /// Xóa ký tự cuối cùng
   public func pop(state: TiengVietState) -> TiengVietState {
     return state.pop()
+  }
+
+  // MARK: - Private Helpers
+
+  private func rawResult(_ newState: TiengVietState, keyStr: String) -> TypingMethodResult {
+    if newState.needsRecovery {
+      return .recover(newState)
+    }
+
+    if shouldToggleToRaw(keyStr: keyStr) {
+      return .toggleToRaw(newState)
+    }
+
+    return .insertRaw(newState)
+  }
+
+  private func markResult(
+    _ newState: TiengVietState,
+    char: Character,
+    keyStr: String
+  ) -> TypingMethodResult {
+    if shouldToggleToRaw(keyStr: keyStr) {
+      return .toggleToRaw(newState.push(char))
+    }
+
+    if newState.needsRecovery {
+      return .recover(newState)
+    }
+
+    return .applyMark(newState)
+  }
+
+  /// Kiểm tra có nên chuyển sang chuỗi thô VNI không.
+  private func shouldToggleToRaw(keyStr: String) -> Bool {
+    let lowerKeyStr = keyStr.lowercased()
+
+    // 1. Check simple suffixes (double tap tone marks)
+    let simpleSuffixes = ["11", "22", "33", "44", "55", "77", "88"]
+    if simpleSuffixes.contains(where: { lowerKeyStr.hasSuffix($0) }) {
+      return true
+    }
+
+    // 2. Check complex cases (double tap vowel/d when it already exists)
+    // "66", "99" -> Cancel mark if the character exists before
+
+    // Check "66" suffix: requires 'a', 'e', or 'o' to exist previously (circumflex)
+    if lowerKeyStr.hasSuffix("66") {
+      return lowerKeyStr.contains("a") || lowerKeyStr.contains("e") || lowerKeyStr.contains("o")
+    }
+
+    // Check "99" suffix: requires 'd' to exist previously (stroked d)
+    if lowerKeyStr.hasSuffix("99") {
+      return lowerKeyStr.hasPrefix("d")
+    }
+
+    return false
   }
 }

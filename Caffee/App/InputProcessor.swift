@@ -131,11 +131,24 @@ struct WordBuffer {
       return
     }
 
-    let result = engine.push(char: char, state: wordState)
-    wordState = result.state
+    let result = engine.push(char: char, keyStr: String(keys), state: wordState)
 
-    // Check if we need to recover original input (invalid Vietnamese syllable)
-    if wordState.needsRecovery {
+    switch result {
+    case .insertRaw(let newState), .applyMark(let newState):
+      wordState = newState
+      stopProcessing = false
+      transformed = wordState.transformed
+      // Clear snapshot when we're in valid state; no rollback needed
+      lastValidSnapshot = nil
+
+    case .toggleToRaw(let newState):
+      wordState = newState
+      stopProcessing = true
+      transformed = wordState.originalInput
+      lastValidSnapshot = nil
+
+    case .recover(let newState):
+      wordState = newState
       stopProcessing = true
       // Use keys array which contains ALL typed characters (including tone marks like 's', 'f' etc.)
       transformed = String(keys)
@@ -144,18 +157,11 @@ struct WordBuffer {
       if !snapshot.stopProcessing {
         lastValidSnapshot = snapshot
       }
-    } else {
-      transformed = wordState.transformed
-      // Clear snapshot when we're in valid state; no rollback needed
-      lastValidSnapshot = nil
-    }
 
-    if engine.shouldStopProcessing(keyStr: String(keys)) {
-      stopProcessing = true
-      if transformed.count == lastTransformed.count {
-        transformed.append(char)
-        wordState = wordState.push(char)
-      }
+    case .noChange(let newState):
+      wordState = newState
+      transformed = lastTransformed
+      lastValidSnapshot = nil
     }
   }
 }
