@@ -9,7 +9,7 @@ import CoreGraphics
 import Foundation
 
 /// Strategy for sending keyboard events to replace text.
-enum SendingStrategy {
+enum SendingStrategy: Equatable {
   /// Send all characters in a single batch event (fastest, may fail in some apps).
   case batch
   /// Send each character as individual key events (slowest, most compatible).
@@ -18,49 +18,11 @@ enum SendingStrategy {
   case hybrid(backspaceDelayMicroseconds: UInt32)
 }
 
-/// Configuration for per-app event sending strategies.
-struct AppSendingConfig {
-  /// Bundle ID prefix to match.
-  let bundlePrefix: String
-  /// Sending strategy for this app.
-  let strategy: SendingStrategy
-  /// Human-readable name for logging.
-  let name: String
-}
-
 class EventSimulator {
   /// Dedicated serial queue for event simulation to avoid blocking the event tap callback.
   /// Strategies that use usleep (stepByStep, hybrid) dispatch to this queue so the
   /// CGEvent tap callback returns immediately, preventing macOS from disabling the tap.
   private static let simulationQueue = DispatchQueue(label: "com.khanhicetea.Caffee.eventSimulator", qos: .userInteractive)
-
-  /// Per-app sending strategy configuration.
-  /// Apps are checked in order - first match wins.
-  /// Apps not listed use the default batch strategy.
-  static let appStrategies: [AppSendingConfig] = [
-    AppSendingConfig(bundlePrefix: "com.microsoft.Word", strategy: .hybrid(backspaceDelayMicroseconds: 1000), name: "Word"),
-    AppSendingConfig(bundlePrefix: "com.microsoft.Excel", strategy: .hybrid(backspaceDelayMicroseconds: 1000), name: "Excel"),
-    AppSendingConfig(bundlePrefix: "com.microsoft.Powerpoint", strategy: .hybrid(backspaceDelayMicroseconds: 1000), name: "PowerPoint"),
-    AppSendingConfig(bundlePrefix: "com.microsoft.Outlook", strategy: .hybrid(backspaceDelayMicroseconds: 1000), name: "Outlook"),
-    AppSendingConfig(bundlePrefix: "com.microsoft.onenote.mac", strategy: .hybrid(backspaceDelayMicroseconds: 1000), name: "OneNote"),
-
-    AppSendingConfig(bundlePrefix: "com.apple.Terminal", strategy: .stepByStep, name: "Terminal"),
-    AppSendingConfig(bundlePrefix: "com.googlecode.iterm2", strategy: .stepByStep, name: "iTerm2"),
-    AppSendingConfig(bundlePrefix: "net.kovidgoyal.kitty", strategy: .stepByStep, name: "Kitty"),
-    AppSendingConfig(bundlePrefix: "com.mitchellh.ghostty", strategy: .stepByStep, name: "Ghostty"),
-    AppSendingConfig(bundlePrefix: "com.warp.Warp", strategy: .stepByStep, name: "Warp"),
-    AppSendingConfig(bundlePrefix: "co.zeit.hyper", strategy: .stepByStep, name: "Hyper"),
-    AppSendingConfig(bundlePrefix: "org.tabby", strategy: .stepByStep, name: "Tabby"),
-    AppSendingConfig(bundlePrefix: "io.alacritty", strategy: .stepByStep, name: "Alacritty"),
-  ]
-
-  static func getStrategy(for bundleId: String) -> SendingStrategy {
-    appStrategies.first(where: { bundleId.hasPrefix($0.bundlePrefix) })?.strategy ?? .batch
-  }
-
-  static func getAppName(for bundleId: String) -> String {
-    appStrategies.first(where: { bundleId.hasPrefix($0.bundlePrefix) })?.name ?? "Unknown App"
-  }
 
   static func calcKeyStrokes(from: String, to: String) -> (Int, [Character]) {
     let fromChars = Array(from)

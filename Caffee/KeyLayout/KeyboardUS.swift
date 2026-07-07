@@ -1,6 +1,12 @@
 import Cocoa
 
-class KeyboardUS {
+protocol KeyboardLayout {
+  func mapText(keyCode: Int64, withShift shift: Bool) -> Character?
+  func mapTask(keyCode: Int64) -> TaskKey?
+  func isNumberKey(keyCode: Int64) -> Bool
+}
+
+class KeyboardUS: KeyboardLayout {
   private let keyMap: [Int64: (ascii: Character, shiftAscii: Character)]
   private let taskMap: [Int64: TaskKey]
 

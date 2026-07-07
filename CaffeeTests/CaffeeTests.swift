@@ -213,6 +213,43 @@ final class CaffeeTests: XCTestCase {
     XCTAssertEqual(result, "xin chào")
   }
 
+  func testInputProcessorHandlesKeyboardEventsWithoutCGEvent() throws {
+    let sender = MockReplacementSender()
+    let processor = InputProcessor(
+      method: .Telex,
+      replacementSender: sender,
+      selectionDetector: MockSelectionDetector(hasSelection: false),
+      compatibilityPolicy: DefaultAppCompatibilityPolicy(autoSwitchEnabled: { false })
+    )
+
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(0)), .passThrough)  // a
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(1)), .handled)  // s
+
+    XCTAssertEqual(processor.transformed, "á")
+    XCTAssertEqual(sender.replacementCalls.count, 1)
+    XCTAssertEqual(sender.replacementCalls.first?.backspaceCount, 1)
+    XCTAssertEqual(sender.replacementCalls.first?.diffChars, ["á"])
+  }
+
+  func testAutocompletePolicyUsesSelectAndReplaceWhenSelectionExists() throws {
+    let sender = MockReplacementSender()
+    let processor = InputProcessor(
+      method: .Telex,
+      replacementSender: sender,
+      selectionDetector: MockSelectionDetector(hasSelection: true),
+      compatibilityPolicy: DefaultAppCompatibilityPolicy(autoSwitchEnabled: { false })
+    )
+    processor.changeActiveApp("com.google.Chrome")
+
+    _ = processor.handleInputEvent(.keyCode(0))  // a
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(1)), .handled)  // s
+
+    XCTAssertTrue(sender.replacementCalls.isEmpty)
+    XCTAssertEqual(sender.selectAndReplaceCalls.count, 1)
+    XCTAssertEqual(sender.selectAndReplaceCalls.first?.selectLeftCount, 1)
+    XCTAssertEqual(sender.selectAndReplaceCalls.first?.diffChars, ["á"])
+  }
+
   /// Test "khong" with Telex
   func testKhongTelex() throws {
     let result = transform_text_telex(for: "khoong")
@@ -977,5 +1014,78 @@ final class CaffeeTests: XCTestCase {
     XCTAssertEqual(String(diffChars), "ồ", "diffChars should be ồ")
     XCTAssertEqual(inputProcessor.transformed, "hồ", "transformed should be hồ")
     XCTAssertFalse(inputProcessor.stopProcessing, "stopProcessing should be false")
+  }
+}
+
+private final class MockReplacementSender: ReplacementSender {
+  struct ReplacementCall {
+    let backspaceCount: Int
+    let diffChars: [Character]
+    let strategy: SendingStrategy
+  }
+
+  struct SelectAndReplaceCall {
+    let selectLeftCount: Int
+    let diffChars: [Character]
+    let strategy: SendingStrategy
+  }
+
+  var replacementCalls: [ReplacementCall] = []
+  var selectAndReplaceCalls: [SelectAndReplaceCall] = []
+
+  func sendReplacement(
+    backspaceCount: Int,
+    diffChars: [Character],
+    strategy: SendingStrategy
+  ) {
+    replacementCalls.append(
+      ReplacementCall(backspaceCount: backspaceCount, diffChars: diffChars, strategy: strategy)
+    )
+  }
+
+  func sendSelectAndReplace(
+    selectLeftCount: Int,
+    diffChars: [Character],
+    strategy: SendingStrategy
+  ) {
+    selectAndReplaceCalls.append(
+      SelectAndReplaceCall(
+        selectLeftCount: selectLeftCount,
+        diffChars: diffChars,
+        strategy: strategy
+      )
+    )
+  }
+}
+
+private final class MockSelectionDetector: SelectionDetector {
+  private let hasSelection: Bool
+
+  init(hasSelection: Bool) {
+    self.hasSelection = hasSelection
+  }
+
+  func hasHighlightedText() -> Bool {
+    hasSelection
+  }
+
+  func invalidateCache() {}
+}
+
+private extension KeyboardInputEvent {
+  static func keyCode(
+    _ keyCode: Int64,
+    shifted: Bool = false,
+    commandPressed: Bool = false,
+    controlPressed: Bool = false,
+    optionPressed: Bool = false
+  ) -> KeyboardInputEvent {
+    KeyboardInputEvent(
+      keyCode: keyCode,
+      shifted: shifted,
+      commandPressed: commandPressed,
+      controlPressed: controlPressed,
+      optionPressed: optionPressed
+    )
   }
 }

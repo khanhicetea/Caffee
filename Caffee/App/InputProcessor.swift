@@ -7,7 +7,6 @@
 
 import AppKit
 import CoreGraphics
-import Defaults
 import Foundation
 
 // MARK: - WordBuffer
@@ -147,7 +146,7 @@ struct WordBuffer {
       }
     } else {
       transformed = wordState.transformed
-      // Clear snapshot when we're in valid state — no rollback needed
+      // Clear snapshot when we're in valid state; no rollback needed
       lastValidSnapshot = nil
     }
 
@@ -161,104 +160,19 @@ struct WordBuffer {
   }
 }
 
-// MARK: - TransformationTracker
-
-/// TransformationTracker monitors for repeated transformation failures
-/// and auto-switches the sending strategy when a pattern is detected.
-/// This helps apps where the default strategy doesn't work reliably.
-struct TransformationTracker {
-
-  /// Current sending strategy for the active app
-  var currentStrategy: SendingStrategy = .batch
-
-  /// Track consecutive transformation failures for auto-switching
-  private var consecutiveFailures = 0
-
-  /// Maximum failures before auto-switching to step-by-step mode
-  private let maxFailuresBeforeSwitch = 3
-
-  /// Track last input character for failure detection
-  private var lastInputChar: Character?
-
-  // MARK: - Strategy Management
-
-  mutating func resetForApp(_ bundleId: String) {
-    currentStrategy = EventSimulator.getStrategy(for: bundleId)
-    consecutiveFailures = 0
-    lastInputChar = nil
-  }
-
-  /// Detects if a transformation likely failed based on input/output tracking.
-  /// Returns true if the transformation appears to have failed.
-  mutating func detectFailure(input: Character) -> Bool {
-    if let last = lastInputChar, last == input {
-      consecutiveFailures += 1
-    } else {
-      consecutiveFailures = 1
-    }
-    lastInputChar = input
-
-    return consecutiveFailures >= maxFailuresBeforeSwitch
-  }
-
-  /// Auto-switches to step-by-step mode if failures are detected.
-  mutating func autoSwitchIfNeeded(activeApp: String) {
-    guard Defaults[.autoSwitchStrategy] else { return }
-
-    // Don't auto-switch if already using step-by-step
-    if case .stepByStep = currentStrategy { return }
-
-    // Switch to step-by-step for this session
-    #if DEBUG
-    let appName = EventSimulator.getAppName(for: activeApp)
-    print("[Caffee] Auto-switched from \(currentStrategy) to step-by-step mode for \(appName) due to failures")
-    #endif
-
-    currentStrategy = .stepByStep
-    consecutiveFailures = 0
-  }
-}
-
 // MARK: - InputProcessor
 
 class InputProcessor {
-  static let FixAutocompleteApps = [
-    // Chromium-based
-    "com.google.Chrome", "com.google.Chrome.canary", "com.google.Chrome.beta",
-    "org.chromium.Chromium",
-    "com.brave.Browser", "com.brave.Browser.beta", "com.brave.Browser.nightly",
-    "com.microsoft.edgemac", "com.microsoft.edgemac.Beta", "com.microsoft.edgemac.Dev", "com.microsoft.edgemac.Canary",
-    "com.vivaldi.Vivaldi", "com.vivaldi.Vivaldi.snapshot",
-    "ru.yandex.desktop.yandex-browser", "com.naver.Whale",
-
-    // Opera
-    "com.opera.Opera", "com.operasoftware.Opera", "com.operasoftware.OperaGX",
-    "com.operasoftware.OperaAir", "com.opera.OperaNext",
-
-    // Firefox-based
-    "org.mozilla.firefox", "org.mozilla.nightly", "org.torproject.torbrowser", "org.librewolf.LibreWolf",
-    "app.zen-browser.zen",
-
-    // Safari & WebKit-based
-    "com.apple.Safari", "com.apple.SafariTechnologyPreview", "com.apple.Safari.TechnologyPreview",
-    "com.kagi.kagimacOS", "com.duckduckgo.mac", "com.duckduckgo.macos.browser",
-
-    // Arc & Others
-    "company.thebrowser.Browser", "company.thebrowser.Arc", "company.thebrowser.dia",
-    "com.sigmaos.sigmaos", "com.sigmaos.sigmaos.macos",
-    "com.pushplaylabs.sidekick", "com.firstversionist.polypane",
-    "ai.perplexity.comet", "com.electron.min",
-
-    // Office & Legacy
-    "com.microsoft.Excel", "com.microsoft.Office.Excel", "com.microsoft.edge", "com.microsoft.Edge",
-  ]
   static let NewWordKeys = "`!@#$%^&*()-=[]\\;',./~_+{}|:\"<>?"
   static let NewWordTaskKeys: [TaskKey] = [.Enter, .Space, .Tab]
   static let JumpTaskKeys: [TaskKey] = [.Home, .End, .ArrowUp, .ArrowDown, .ArrowLeft, .ArrowRight]
 
   public var engine: TypingMethod
   public var typingMethod: TypingMethods
-  public var keyLayout = KeyboardUS()
+  var keyboardLayout: KeyboardLayout
+  var replacementSender: ReplacementSender
+  var selectionDetector: SelectionDetector
+  var compatibilityPolicy: AppCompatibilityPolicy
   public var activeApp = ""
 
   /// Word buffer manages the current word state
@@ -269,13 +183,6 @@ class InputProcessor {
 
   /// Track pasteboard change count to detect external paste operations
   private var lastPasteboardChangeCount: Int = NSPasteboard.general.changeCount
-
-  /// Cache for `Focused.hasHighlightedText()` to avoid a synchronous AX call
-  /// on every replacement event in browser apps. AX calls on the event-tap
-  /// thread can push the tap past its timeout and cause macOS to disable it.
-  private var highlightedTextCached = false
-  private var highlightedTextCheckedAt: Date = .distantPast
-  private let highlightedTextThrottle: TimeInterval = 0.05
 
   // MARK: - Convenience accessors (preserve existing API for tests)
 
@@ -311,9 +218,19 @@ class InputProcessor {
 
   // MARK: - Init & Configuration
 
-  init(method: TypingMethods) {
+  init(
+    method: TypingMethods,
+    keyboardLayout: KeyboardLayout = KeyboardUS(),
+    replacementSender: ReplacementSender = EventSimulatorReplacementSender(),
+    selectionDetector: SelectionDetector = AccessibilitySelectionDetector(),
+    compatibilityPolicy: AppCompatibilityPolicy = DefaultAppCompatibilityPolicy()
+  ) {
     typingMethod = method
     engine = typingMethod == .Telex ? Telex() : VNI()
+    self.keyboardLayout = keyboardLayout
+    self.replacementSender = replacementSender
+    self.selectionDetector = selectionDetector
+    self.compatibilityPolicy = compatibilityPolicy
   }
 
   public func changeTypingMethod(newMethod: TypingMethods) {
@@ -324,15 +241,15 @@ class InputProcessor {
 
   public func changeActiveApp(_ app: String) {
     activeApp = app
-    strategyTracker.resetForApp(app)
-    highlightedTextCheckedAt = .distantPast
+    strategyTracker.resetForApp(app, policy: compatibilityPolicy)
+    selectionDetector.invalidateCache()
   }
 
   // MARK: - Word Operations (delegate to WordBuffer)
 
   public func newWord(storePrevious: Bool = false) {
     wordBuffer.newWord(storePrevious: storePrevious)
-    highlightedTextCheckedAt = .distantPast
+    selectionDetector.invalidateCache()
   }
 
   public func pop() -> (Int, [Character]) {
@@ -346,17 +263,7 @@ class InputProcessor {
   // MARK: - Main Input Handler
 
   public func handleEvent(event: CGEvent) -> Unmanaged<CGEvent>? {
-    let flags = event.flags
-    let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-    let shifted = flags.contains(.maskShift) || (!keyLayout.isNumberKey(keyCode: keyCode) && flags.contains(.maskAlphaShift))
-
-    // Handle modifier keys (Cmd, Ctrl, Alt) - clear word buffer
-    if flags.contains(.maskCommand) || flags.contains(.maskControl)
-      || flags.contains(.maskAlternate)
-    {
-      newWord()
-      return Unmanaged.passRetained(event)
-    }
+    let inputEvent = KeyboardInputEvent(event: event, keyboardLayout: keyboardLayout)
 
     // Detect if a paste operation occurred (pasteboard changed externally)
     let currentPasteboardCount = NSPasteboard.general.changeCount
@@ -365,42 +272,52 @@ class InputProcessor {
       newWord()
     }
 
-    // Dispatch based on key type
-    if let taskKey = keyLayout.mapTask(keyCode: keyCode) {
-      return handleTaskKey(taskKey, event: event)
-    } else if let newChar = keyLayout.mapText(keyCode: keyCode, withShift: shifted) {
-      return handleTextChar(newChar, event: event)
+    return handleInputEvent(inputEvent) == .handled ? nil : Unmanaged.passRetained(event)
+  }
+
+  func handleInputEvent(_ event: KeyboardInputEvent) -> InputEventResult {
+    // Handle modifier keys (Cmd, Ctrl, Alt) - clear word buffer
+    if event.hasBypassModifier {
+      newWord()
+      return .passThrough
     }
 
-    return Unmanaged.passRetained(event)
+    // Dispatch based on key type
+    if let taskKey = keyboardLayout.mapTask(keyCode: event.keyCode) {
+      return handleTaskKey(taskKey)
+    } else if let newChar = keyboardLayout.mapText(keyCode: event.keyCode, withShift: event.shifted) {
+      return handleTextChar(newChar)
+    }
+
+    return .passThrough
   }
 
   // MARK: - Private Event Handlers
 
-  private func handleTaskKey(_ taskKey: TaskKey, event: CGEvent) -> Unmanaged<CGEvent>? {
+  private func handleTaskKey(_ taskKey: TaskKey) -> InputEventResult {
     if InputProcessor.NewWordTaskKeys.contains(taskKey) {
       newWord(storePrevious: true)
     } else if taskKey == .Delete {
       let (numBackspaces, diffChars) = pop()
       if numBackspaces > 0 || !diffChars.isEmpty {
-        EventSimulator.sendReplacement(
+        replacementSender.sendReplacement(
           backspaceCount: numBackspaces,
           diffChars: diffChars,
           strategy: strategyTracker.currentStrategy
         )
-        return nil
+        return .handled
       }
     } else if InputProcessor.JumpTaskKeys.contains(taskKey) {
       newWord()
     }
-    return Unmanaged.passRetained(event)
+    return .passThrough
   }
 
-  private func handleTextChar(_ newChar: Character, event: CGEvent) -> Unmanaged<CGEvent>? {
+  private func handleTextChar(_ newChar: Character) -> InputEventResult {
     // Check if this is a word-ending character (punctuation, etc.) BEFORE processing
     if let _ = InputProcessor.NewWordKeys.firstIndex(of: newChar) {
       newWord(storePrevious: true)
-      return Unmanaged.passRetained(event)
+      return .passThrough
     }
 
     push(char: newChar)
@@ -411,18 +328,20 @@ class InputProcessor {
     if let firstDiffChar = diffChars.first,
       diffChars.count == 1 && firstDiffChar == newChar && numBackspaces == 0
     {
-      return Unmanaged.passRetained(event)
+      return .passThrough
     }
 
     // Check for transformation failures and auto-switch if needed
     if strategyTracker.detectFailure(input: newChar) {
-      strategyTracker.autoSwitchIfNeeded(activeApp: activeApp)
+      strategyTracker.autoSwitchIfNeeded(activeApp: activeApp, policy: compatibilityPolicy)
     }
 
-    if isFixAutocompleteApp() && highlightedTextThrottled() {
+    if compatibilityPolicy.shouldFixAutocomplete(for: activeApp)
+      && selectionDetector.hasHighlightedText()
+    {
       // For autocomplete-capable apps (browsers, etc.), use select-and-replace
       // only when there is highlighted text (checked through a short throttle)
-      // — typically inline autocomplete ghost text that backspace cannot reach.
+      // typically inline autocomplete ghost text that backspace cannot reach.
       // Shift+Left extends the existing selection so the replacement covers both
       // the autocomplete text and the characters being modified.
       //
@@ -430,36 +349,19 @@ class InputProcessor {
       // fall through to the backspace path below. Canvas-based web editors
       // ignore synthetic Shift+Left, so select-and-replace would leave the old
       // characters behind.
-      EventSimulator.sendSelectAndReplace(
+      replacementSender.sendSelectAndReplace(
         selectLeftCount: numBackspaces,
         diffChars: diffChars,
         strategy: strategyTracker.currentStrategy
       )
-      highlightedTextCheckedAt = .distantPast
+      selectionDetector.invalidateCache()
     } else {
-      EventSimulator.sendReplacement(
+      replacementSender.sendReplacement(
         backspaceCount: numBackspaces,
         diffChars: diffChars,
         strategy: strategyTracker.currentStrategy
       )
     }
-    return nil
-  }
-
-  // MARK: - Helpers
-
-  func isFixAutocompleteApp() -> Bool {
-    return InputProcessor.FixAutocompleteApps.contains { app in
-      return activeApp.hasPrefix(app)
-    }
-  }
-
-  private func highlightedTextThrottled() -> Bool {
-    let now = Date()
-    if now.timeIntervalSince(highlightedTextCheckedAt) >= highlightedTextThrottle {
-      highlightedTextCached = Focused.hasHighlightedText()
-      highlightedTextCheckedAt = now
-    }
-    return highlightedTextCached
+    return .handled
   }
 }

@@ -16,6 +16,10 @@
 		3F4564E22BA5FFD800F087BA /* GuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4564E12BA5FFD800F087BA /* GuideView.swift */; };
 		3F4564E42BA5FFD800F087BB /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4564E32BA5FFD800F087BB /* OnboardingView.swift */; };
 		3F8A64FF2B89A078009E2AF1 /* InputProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A64FE2B89A078009E2AF1 /* InputProcessor.swift */; };
+		3FCA10012C000020000001 /* KeyboardInputEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000000 /* KeyboardInputEvent.swift */; };
+		3FCA10012C000020000003 /* AppCompatibilityPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000002 /* AppCompatibilityPolicy.swift */; };
+		3FCA10012C000020000005 /* ReplacementSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000004 /* ReplacementSender.swift */; };
+		3FCA10012C000020000007 /* SelectionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FCA10012C000020000006 /* SelectionDetector.swift */; };
 		3F8A65042B89AD74009E2AF1 /* TiengViet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A65032B89AD74009E2AF1 /* TiengViet.swift */; };
 		3F8A65062B8C69C9009E2AF1 /* Telex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A65052B8C69C9009E2AF1 /* Telex.swift */; };
 		3F8A65082B8E370B009E2AF1 /* VNI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A65072B8E370B009E2AF1 /* VNI.swift */; };
@@ -69,6 +73,10 @@
 		3F4564E12BA5FFD800F087BA /* GuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuideView.swift; sourceTree = "<group>"; };
 		3F4564E32BA5FFD800F087BB /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		3F8A64FE2B89A078009E2AF1 /* InputProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputProcessor.swift; sourceTree = "<group>"; };
+		3FCA10012C000020000000 /* KeyboardInputEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardInputEvent.swift; sourceTree = "<group>"; };
+		3FCA10012C000020000002 /* AppCompatibilityPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCompatibilityPolicy.swift; sourceTree = "<group>"; };
+		3FCA10012C000020000004 /* ReplacementSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplacementSender.swift; sourceTree = "<group>"; };
+		3FCA10012C000020000006 /* SelectionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionDetector.swift; sourceTree = "<group>"; };
 		3F8A65002B89AAE0009E2AF1 /* Caffee.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = Caffee.xctestplan; sourceTree = "<group>"; };
 		3F8A65032B89AD74009E2AF1 /* TiengViet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiengViet.swift; sourceTree = "<group>"; };
 		3F8A65052B8C69C9009E2AF1 /* Telex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Telex.swift; sourceTree = "<group>"; };
@@ -137,6 +145,8 @@
 			children = (
 				3FAFBBB12B84A98E0032A55E /* AppDelegate.swift */,
 				3F8A64FE2B89A078009E2AF1 /* InputProcessor.swift */,
+				3FCA10012C000020000000 /* KeyboardInputEvent.swift */,
+				3FCA10012C000020000002 /* AppCompatibilityPolicy.swift */,
 				3FAFBBC52B84E88C0032A55E /* AppState.swift */,
 				3F2E85CB2B9EDF2600A95282 /* Setting.swift */,
 			);
@@ -231,6 +241,8 @@
 				3F8A650B2B8F08B3009E2AF1 /* Focused.swift */,
 				3F9FC6D42B9E14AF00659712 /* FileMonitor.swift */,
 				3FDB83CC2BB468BA00AD6322 /* EventSimulator.swift */,
+				3FCA10012C000020000004 /* ReplacementSender.swift */,
+				3FCA10012C000020000006 /* SelectionDetector.swift */,
 			);
 			path = Platform;
 			sourceTree = "<group>";
@@ -453,6 +465,7 @@
 				3FCA000012C000010000001 /* TiengVietState.swift in Sources */,
 				3FCA000012C000010000003 /* TiengVietParser.swift in Sources */,
 				3FCA000012C000010000005 /* TiengVietTransformer.swift in Sources */,
+				3FCA10012C000020000003 /* AppCompatibilityPolicy.swift in Sources */,
 				3F8A650C2B8F08B3009E2AF1 /* Focused.swift in Sources */,
 				3F8A650A2B8E3BE8009E2AF1 /* TypingMethod.swift in Sources */,
 				3FDB83CB2BB4682F00AD6322 /* Keys.swift in Sources */,
@@ -460,12 +473,15 @@
 				3F2E85CF2BA0B0D400A95282 /* MacroView.swift in Sources */,
 				3F8A65062B8C69C9009E2AF1 /* Telex.swift in Sources */,
 				3FDB83CD2BB468BA00AD6322 /* EventSimulator.swift in Sources */,
+				3FCA10012C000020000005 /* ReplacementSender.swift in Sources */,
+				3FCA10012C000020000007 /* SelectionDetector.swift in Sources */,
 				3FAFBBBF2B84AB5E0032A55E /* KeyboardUS.swift in Sources */,
 				3FAFBBC42B84E7890032A55E /* SettingView.swift in Sources */,
 				3F94E7AF2BA736E100360F8B /* UpgradeAppView.swift in Sources */,
 				3F2E85CC2B9EDF2600A95282 /* Setting.swift in Sources */,
 				3F8A65082B8E370B009E2AF1 /* VNI.swift in Sources */,
 				3FAFBB852B84A86C0032A55E /* CaffeeApp.swift in Sources */,
+				3FCA10012C000020000001 /* KeyboardInputEvent.swift in Sources */,
 				3F8A64FF2B89A078009E2AF1 /* InputProcessor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
