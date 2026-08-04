@@ -21,6 +21,7 @@ protocol AppCompatibilityPolicy {
   func replacementStrategy(for bundleId: String) -> SendingStrategy
   func appName(for bundleId: String) -> String
   func shouldFixAutocomplete(for bundleId: String) -> Bool
+  func shouldAlwaysSelectAndReplace(for bundleId: String) -> Bool
 }
 
 struct DefaultAppCompatibilityPolicy: AppCompatibilityPolicy {
@@ -52,6 +53,12 @@ struct DefaultAppCompatibilityPolicy: AppCompatibilityPolicy {
 
   func shouldFixAutocomplete(for bundleId: String) -> Bool {
     autocompleteBundlePrefixes.contains { bundleId.hasPrefix($0) }
+  }
+
+  /// Campo can drop the first Backspace-based replacement, so it always uses
+  /// select-and-replace while its Spotlight search field is active.
+  func shouldAlwaysSelectAndReplace(for bundleId: String) -> Bool {
+    bundleId.hasPrefix("com.apple.campo")
   }
 }
 
@@ -92,6 +99,16 @@ extension DefaultAppCompatibilityPolicy {
   ]
 
   static let sendingConfigs: [AppSendingConfig] = [
+    AppSendingConfig(
+      bundlePrefix: "com.apple.campo",
+      strategy: .stepByStep,
+      name: "Spotlight"
+    ),
+    AppSendingConfig(
+      bundlePrefix: "com.apple.Spotlight",
+      strategy: .stepByStep,
+      name: "Spotlight"
+    ),
     AppSendingConfig(
       bundlePrefix: "com.microsoft.Word",
       strategy: .hybrid(backspaceDelayMicroseconds: 1000),

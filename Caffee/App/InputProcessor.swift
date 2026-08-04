@@ -301,7 +301,10 @@ class InputProcessor {
   // MARK: - Private Event Handlers
 
   private func handleTaskKey(_ taskKey: TaskKey) -> InputEventResult {
-    if InputProcessor.NewWordTaskKeys.contains(taskKey) {
+    // Escape cancels the current composition without keeping it for backspace recovery.
+    if taskKey == .Escape {
+      newWord()
+    } else if InputProcessor.NewWordTaskKeys.contains(taskKey) {
       newWord(storePrevious: true)
     } else if taskKey == .Delete {
       let (numBackspaces, diffChars) = pop()
@@ -342,14 +345,14 @@ class InputProcessor {
       strategyTracker.autoSwitchIfNeeded(activeApp: activeApp, policy: compatibilityPolicy)
     }
 
-    if compatibilityPolicy.shouldFixAutocomplete(for: activeApp)
-      && selectionDetector.hasHighlightedText()
+    if compatibilityPolicy.shouldAlwaysSelectAndReplace(for: activeApp)
+      || (compatibilityPolicy.shouldFixAutocomplete(for: activeApp)
+        && selectionDetector.hasHighlightedText())
     {
-      // For autocomplete-capable apps (browsers, etc.), use select-and-replace
-      // only when there is highlighted text (checked through a short throttle)
-      // typically inline autocomplete ghost text that backspace cannot reach.
-      // Shift+Left extends the existing selection so the replacement covers both
-      // the autocomplete text and the characters being modified.
+      // Use select-and-replace when a target has text that Backspace cannot reach:
+      // autocomplete fields may expose inline ghost text, while Campo can drop
+      // the first Backspace-based replacement even without an AX selection.
+      // Shift+Left extends the selection so the replacement covers all old text.
       //
       // When there is no highlighted text (e.g. Google Docs canvas editor),
       // fall through to the backspace path below. Canvas-based web editors
