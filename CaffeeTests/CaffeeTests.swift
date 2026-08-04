@@ -231,6 +231,257 @@ final class CaffeeTests: XCTestCase {
     XCTAssertEqual(sender.replacementCalls.first?.diffChars, ["á"])
   }
 
+  func testSpotlightSearchSurfacesUseStepByStepReplacementForTuws() throws {
+    for bundleId in ["com.apple.Spotlight", "com.apple.campo"] {
+      let sender = MockReplacementSender()
+      let processor = InputProcessor(
+        method: .Telex,
+        replacementSender: sender,
+        selectionDetector: MockSelectionDetector(hasSelection: false),
+        compatibilityPolicy: DefaultAppCompatibilityPolicy(autoSwitchEnabled: { false })
+      )
+      processor.changeActiveApp(bundleId)
+
+      XCTAssertEqual(processor.handleInputEvent(.keyCode(17)), .passThrough)  // t
+      XCTAssertEqual(processor.handleInputEvent(.keyCode(32)), .passThrough)  // u
+      XCTAssertEqual(processor.handleInputEvent(.keyCode(13)), .handled)  // w
+      XCTAssertEqual(processor.handleInputEvent(.keyCode(1)), .handled)  // s
+
+      XCTAssertEqual(processor.transformed, "tứ", bundleId)
+      if bundleId == "com.apple.campo" {
+        XCTAssertTrue(sender.replacementCalls.isEmpty)
+        XCTAssertEqual(sender.selectAndReplaceCalls.count, 2)
+        XCTAssertEqual(sender.selectAndReplaceCalls[0].selectLeftCount, 1)
+        XCTAssertEqual(sender.selectAndReplaceCalls[0].diffChars, ["ư"])
+        XCTAssertEqual(sender.selectAndReplaceCalls[0].strategy, .stepByStep)
+        XCTAssertEqual(sender.selectAndReplaceCalls[1].selectLeftCount, 1)
+        XCTAssertEqual(sender.selectAndReplaceCalls[1].diffChars, ["ứ"])
+        XCTAssertEqual(sender.selectAndReplaceCalls[1].strategy, .stepByStep)
+      } else {
+        XCTAssertEqual(sender.replacementCalls.count, 2)
+        XCTAssertEqual(sender.replacementCalls[0].backspaceCount, 1)
+        XCTAssertEqual(sender.replacementCalls[0].diffChars, ["ư"])
+        XCTAssertEqual(sender.replacementCalls[0].strategy, .stepByStep)
+        XCTAssertEqual(sender.replacementCalls[1].backspaceCount, 1)
+        XCTAssertEqual(sender.replacementCalls[1].diffChars, ["ứ"])
+        XCTAssertEqual(sender.replacementCalls[1].strategy, .stepByStep)
+      }
+    }
+  }
+
+  func testEscapeClearsSpotlightWordBeforeReturningToHostApp() throws {
+    let sender = MockReplacementSender()
+    let processor = InputProcessor(
+      method: .Telex,
+      replacementSender: sender,
+      selectionDetector: MockSelectionDetector(hasSelection: false),
+      compatibilityPolicy: DefaultAppCompatibilityPolicy(autoSwitchEnabled: { false })
+    )
+    processor.changeActiveApp("com.apple.campo")
+
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(17)), .passThrough)  // t
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(32)), .passThrough)  // u
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(13)), .handled)  // w
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(1)), .handled)  // s
+    XCTAssertEqual(processor.transformed, "tứ")
+
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(53)), .passThrough)  // Escape
+    XCTAssertTrue(processor.keys.isEmpty)
+    XCTAssertEqual(processor.transformed, "")
+    XCTAssertNil(processor.previousWordState)
+
+    processor.changeActiveApp("com.openai.codex")
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(0)), .passThrough)  // a
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(1)), .handled)  // s
+    XCTAssertEqual(processor.transformed, "á")
+    XCTAssertEqual(sender.replacementCalls.last?.backspaceCount, 1)
+    XCTAssertEqual(sender.replacementCalls.last?.diffChars, ["á"])
+  }
+
+  func testCampoFocusNotificationSwitchesStrategyBeforeFirstInput() throws {
+    let sender = MockReplacementSender()
+    let processor = InputProcessor(
+      method: .Telex,
+      replacementSender: sender,
+      selectionDetector: MockSelectionDetector(hasSelection: false),
+      compatibilityPolicy: DefaultAppCompatibilityPolicy(autoSwitchEnabled: { false })
+    )
+    processor.changeActiveApp("com.openai.codex")
+    let eventHook = EventHook(inputProcessor: processor)
+
+    eventHook.spotlightFocusedUIElementDidChange()
+
+    XCTAssertEqual(processor.activeApp, "com.apple.campo")
+    XCTAssertEqual(processor.strategyTracker.currentStrategy, .stepByStep)
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(17)), .passThrough)  // t
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(32)), .passThrough)  // u
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(13)), .handled)  // w
+    XCTAssertEqual(processor.handleInputEvent(.keyCode(1)), .handled)  // s
+    XCTAssertEqual(processor.transformed, "tứ")
+    XCTAssertTrue(sender.replacementCalls.isEmpty)
+    XCTAssertEqual(
+      sender.selectAndReplaceCalls.map(\.strategy),
+      [.stepByStep, .stepByStep]
+    )
+  }
+
+  func testSpotlightDismissalRestoresPreviousApplication() throws {
+    let processor = InputProcessor(method: .Telex)
+    processor.changeActiveApp("com.openai.codex")
+    let eventHook = EventHook(inputProcessor: processor)
+
+    eventHook.spotlightFocusedUIElementDidChange()
+    eventHook.spotlightDidDismiss()
+    eventHook.spotlightFocusedUIElementDidChange()
+
+    XCTAssertEqual(processor.activeApp, "com.openai.codex")
+    XCTAssertEqual(processor.strategyTracker.currentStrategy, .batch)
+
+    eventHook.spotlightWillOpen()
+    eventHook.spotlightFocusedUIElementDidChange()
+
+    XCTAssertEqual(processor.activeApp, "com.apple.campo")
+    XCTAssertEqual(processor.strategyTracker.currentStrategy, .stepByStep)
+  }
+
+  func testAppActivationWhileSpotlightIsOpenDoesNotPoisonNextOpen() throws {
+    let processor = InputProcessor(method: .Telex)
+    processor.changeActiveApp("com.openai.codex")
+    let eventHook = EventHook(inputProcessor: processor)
+
+    eventHook.spotlightFocusedUIElementDidChange()
+    eventHook.applicationDidActivate("com.apple.TextEdit")
+    eventHook.spotlightFocusedUIElementDidChange()
+
+    XCTAssertEqual(processor.activeApp, "com.apple.TextEdit")
+
+    eventHook.spotlightWindowCreated()
+
+    XCTAssertEqual(processor.activeApp, "com.apple.campo")
+    XCTAssertEqual(processor.strategyTracker.currentStrategy, .stepByStep)
+  }
+
+  func testPendingOrAlreadyVisibleSpotlightActivatesWhenObserverAttaches() throws {
+    for isVisible in [false, true] {
+      let processor = InputProcessor(method: .Telex)
+      processor.changeActiveApp("com.openai.codex")
+      let eventHook = EventHook(inputProcessor: processor)
+
+      if !isVisible {
+        eventHook.spotlightWillOpen()
+      }
+      eventHook.spotlightObserverDidAttach(isVisible: isVisible)
+
+      XCTAssertEqual(processor.activeApp, "com.apple.campo")
+      XCTAssertEqual(processor.strategyTracker.currentStrategy, .stepByStep)
+    }
+  }
+
+  func testHiddenSpotlightDoesNotActivateWhenObserverAttaches() throws {
+    let processor = InputProcessor(method: .Telex)
+    processor.changeActiveApp("com.openai.codex")
+    let eventHook = EventHook(inputProcessor: processor)
+
+    eventHook.spotlightObserverDidAttach(isVisible: false)
+
+    XCTAssertEqual(processor.activeApp, "com.openai.codex")
+    XCTAssertEqual(processor.strategyTracker.currentStrategy, .batch)
+  }
+
+  func testHiddenSpotlightWindowNotificationDoesNotActivateCampo() throws {
+    let processor = InputProcessor(method: .Telex)
+    processor.changeActiveApp("com.openai.codex")
+    let eventHook = EventHook(inputProcessor: processor)
+
+    eventHook.spotlightWindowCreated(isVisible: false)
+
+    XCTAssertEqual(processor.activeApp, "com.openai.codex")
+    XCTAssertEqual(processor.strategyTracker.currentStrategy, .batch)
+  }
+
+  func testLayerZeroCampoWindowIsNotTreatedAsVisibleSpotlight() throws {
+    let processIdentifier: pid_t = 42
+    let windows: [[CFString: Any]] = [
+      [
+        kCGWindowOwnerPID: NSNumber(value: processIdentifier),
+        kCGWindowLayer: NSNumber(value: 0),
+      ]
+    ]
+
+    XCTAssertFalse(
+      Focused.applicationHasOnScreenWindow(
+        processIdentifier: processIdentifier,
+        windows: windows
+      )
+    )
+  }
+
+  func testCampoOverlayWindowIsTreatedAsVisibleSpotlight() throws {
+    let processIdentifier: pid_t = 42
+    let windows: [[CFString: Any]] = [
+      [
+        kCGWindowOwnerPID: NSNumber(value: processIdentifier),
+        kCGWindowLayer: NSNumber(value: 23),
+      ]
+    ]
+
+    XCTAssertTrue(
+      Focused.applicationHasOnScreenWindow(
+        processIdentifier: processIdentifier,
+        windows: windows
+      )
+    )
+  }
+
+  func testPendingSpotlightOpenCanBeCancelledBeforeObserverAttaches() throws {
+    let processor = InputProcessor(method: .Telex)
+    processor.changeActiveApp("com.openai.codex")
+    let eventHook = EventHook(inputProcessor: processor)
+    let escapeEvent = CGEvent(
+      keyboardEventSource: nil,
+      virtualKey: 53,
+      keyDown: true
+    )!
+
+    eventHook.spotlightWillOpen()
+
+    XCTAssertTrue(eventHook.shouldDismissSpotlight(type: .keyDown, event: escapeEvent))
+
+    eventHook.spotlightDidDismiss()
+    eventHook.spotlightObserverDidAttach(isVisible: true)
+
+    XCTAssertEqual(processor.activeApp, "com.openai.codex")
+    XCTAssertEqual(processor.strategyTracker.currentStrategy, .batch)
+  }
+
+  func testInitialCommandSpaceOnlyOpensAndSecondCommandSpaceCancels() throws {
+    let processor = InputProcessor(method: .Telex)
+    processor.changeActiveApp("com.openai.codex")
+    let eventHook = EventHook(inputProcessor: processor)
+    let commandSpaceEvent = CGEvent(
+      keyboardEventSource: nil,
+      virtualKey: 49,
+      keyDown: true
+    )!
+    commandSpaceEvent.flags = .maskCommand
+
+    XCTAssertFalse(
+      eventHook.prepareSpotlightLifecycle(type: .keyDown, event: commandSpaceEvent)
+    )
+
+    XCTAssertEqual(processor.activeApp, "com.apple.campo")
+
+    eventHook.spotlightDidDismiss()
+    processor.changeActiveApp("com.openai.codex")
+
+    XCTAssertFalse(
+      eventHook.prepareSpotlightLifecycle(type: .keyDown, event: commandSpaceEvent)
+    )
+    XCTAssertTrue(
+      eventHook.prepareSpotlightLifecycle(type: .keyDown, event: commandSpaceEvent)
+    )
+  }
+
   func testAutocompletePolicyUsesSelectAndReplaceWhenSelectionExists() throws {
     let sender = MockReplacementSender()
     let processor = InputProcessor(

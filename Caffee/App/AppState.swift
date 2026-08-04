@@ -46,6 +46,7 @@ class AppState: FileMonitorDelegate {
     public var appModes: [String: Bool] = [:]
     public var activeAppName = "Unknown"
     public var bundleId: String
+    private var switchFileMonitor: FileMonitor?
 
     init() {
         bundleId = Bundle.main.bundleIdentifier ?? "com.khanhicetea.Caffee"
@@ -101,10 +102,14 @@ class AppState: FileMonitorDelegate {
     }
 
     func registerSwitchFileMonitor() {
+        // Keep one monitor alive; Accessibility re-grants can call this more than once.
+        guard switchFileMonitor == nil else { return }
+
         let tmpPath = URL(fileURLWithPath: "/tmp/caffee_switch")
         try? "".write(to: tmpPath, atomically: true, encoding: .utf8)
         let fMonitor = try? FileMonitor(url: tmpPath)
         fMonitor?.delegate = self
+        switchFileMonitor = fMonitor
     }
 
     func didReceive(changes: String) {
@@ -117,7 +122,8 @@ class AppState: FileMonitorDelegate {
             appName != bundleId
         {
             activeAppName = appName
-            inputProcessor.changeActiveApp(activeAppName)
+            // EventHook also tracks transient Campo/Spotlight focus and dismissal.
+            eventHook.applicationDidActivate(activeAppName)
 
             if let appMode = appModes[activeAppName] {
                 setEnabled(set: appMode)

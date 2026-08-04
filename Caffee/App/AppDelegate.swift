@@ -27,6 +27,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
   }
 
   private var cancellables = Set<AnyCancellable>()
+  private var permissionTimer: Timer?
+  private var lastAccessibilityTrusted = false
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     // Hide dock icon since we use MenuBarExtra
@@ -44,6 +46,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
       .store(in: &cancellables)
 
     checkTrustStatus()
+    lastAccessibilityTrusted = isTrusted
+    startPermissionMonitoring()
 
     if isTrusted {
       // Set up the event tap if the process is trusted
@@ -59,29 +63,44 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
     } else {
       openGuide()
     }
-    
-    // Periodically check trust status if not trusted
-    if !isTrusted {
-        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
-            self?.checkTrustStatus()
-            if self?.isTrusted == true {
-                timer.invalidate()
-                self?.setupTrustedSession()
-            }
-        }
-    }
   }
   
   func checkTrustStatus() {
       isTrusted = appState.eventHook.isTrusted(prompt: false)
   }
   
+  /// Rebuilds the input session after Accessibility access is granted again.
   func setupTrustedSession() {
       appState.storeTrustedAppVersion()
       appState.eventHook.setupEventTap(give: appState)
       appState.load()
       appState.setEnabled(set: true)
       appState.registerSwitchFileMonitor()
+  }
+
+  /// Polls TCC because revoking Accessibility does not terminate the app or
+  /// provide an application lifecycle callback.
+  private func startPermissionMonitoring() {
+    permissionTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) {
+      [weak self] _ in
+      self?.handleAccessibilityPermissionChange()
+    }
+  }
+
+  /// Tears down the global event tap on revoke and recreates it on re-grant.
+  private func handleAccessibilityPermissionChange() {
+    let accessibilityTrusted = appState.eventHook.isTrusted(prompt: false)
+    guard accessibilityTrusted != lastAccessibilityTrusted else { return }
+
+    let wasTrusted = lastAccessibilityTrusted
+    lastAccessibilityTrusted = accessibilityTrusted
+    isTrusted = accessibilityTrusted
+
+    if wasTrusted && !accessibilityTrusted {
+      appState.eventHook.destroy()
+    } else if !wasTrusted && accessibilityTrusted {
+      setupTrustedSession()
+    }
   }
 
   // Opens onboarding guide
@@ -122,6 +141,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
 
   // Cleans up before the application terminates
   func applicationWillTerminate(_ aNotification: Notification) {
+    permissionTimer?.invalidate()
+    permissionTimer = nil
+
     appState.eventHook.destroy()
   }
 }

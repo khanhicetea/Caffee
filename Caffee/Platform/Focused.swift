@@ -12,6 +12,44 @@ public struct Focused {
     return systemWideElement.getAttribute(property: kAXFocusedUIElementAttribute)
   }
 
+  /// Returns true only for visible overlay windows, not Campo's hidden utility window.
+  public static func applicationHasOnScreenWindow(
+    processIdentifier: pid_t
+  ) -> Bool {
+    guard
+      let windows =
+        CGWindowListCopyWindowInfo(
+          [.optionOnScreenOnly, .excludeDesktopElements],
+          kCGNullWindowID
+        ) as? [[CFString: Any]]
+    else {
+      return false
+    }
+
+    return applicationHasOnScreenWindow(
+      processIdentifier: processIdentifier,
+      windows: windows
+    )
+  }
+
+  static func applicationHasOnScreenWindow(
+    processIdentifier: pid_t,
+    windows: [[CFString: Any]]
+  ) -> Bool {
+    return windows.contains {
+      guard
+        ($0[kCGWindowOwnerPID] as? NSNumber)?.int32Value == processIdentifier,
+        let layer = ($0[kCGWindowLayer] as? NSNumber)?.int32Value
+      else {
+        return false
+      }
+
+      // This is a Campo-specific heuristic: its hidden utility window is layer 0,
+      // while the visible Spotlight search surface uses an overlay layer.
+      return layer > 0
+    }
+  }
+
   public static func elementText() -> String? {
     guard let focusedElement = Focused.element() else { return nil }
     guard let selectedText: AXValue = focusedElement.getAttribute(property: kAXValueAttribute)
