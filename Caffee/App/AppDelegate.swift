@@ -110,6 +110,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
     }
   }
 
+  // Secure Input belongs to the app that enabled it, not to Caffee.
+  func showSecureInputHelp() {
+    guard appState.eventHook.refreshSecureInputState() else { return }
+
+    let alert = NSAlert()
+    alert.messageText = "macOS đang bật Secure Input"
+    alert.informativeText = """
+      macOS đang chặn bộ gõ nhận bàn phím để bảo vệ dữ liệu nhạy cảm.
+
+      Hãy đóng ô/hộp thoại nhập mật khẩu. Nếu đã chuyển sang ô văn bản thường mà vẫn bị khóa, hãy thoát và mở lại ứng dụng đã bật Secure Input (ví dụ: trình duyệt, Terminal hoặc ứng dụng quản lý mật khẩu).
+
+      Caffee không thể tắt Secure Input của ứng dụng khác. Thoát và mở lại Caffee sẽ không gỡ được khóa này. Bộ gõ sẽ tự hoạt động lại khi ứng dụng đó nhả khóa.
+      """
+    alert.addButton(withTitle: "Đã hiểu")
+    NSApp.activate(ignoringOtherApps: true)
+    alert.runModal()
+  }
+
   // Quits the application
   @objc func quitApp() {
     NSApp.terminate(self)

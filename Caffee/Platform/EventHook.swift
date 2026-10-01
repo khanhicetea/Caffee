@@ -1,10 +1,7 @@
 import ApplicationServices
+import Carbon
 import Cocoa
 import Foundation
-
-// Private macOS API to detect secure input mode (password fields)
-@_silgen_name("CGSIsSecureEventInputSet")
-func CGSIsSecureEventInputSet() -> Bool
 
 // EventHook manages keyboard events and interacts with the Telex engine.
 class EventHook {
@@ -13,14 +10,27 @@ class EventHook {
   var keyLayout: KeyboardUS
   var inputProcessor: InputProcessor
   var processing = false
-  var appState: AppState?
+  weak var appState: AppState?
+
+  private var runLoopSource: CFRunLoopSource?
+  private var secureInputTimer: Timer?
+  private let secureInputChecker: () -> Bool
+  private(set) var secureInputActive = false
 
   /// Tracks how many times the tap has been auto-recovered
   var tapRecoveryCount = 0
 
-  init(inputProcessor: InputProcessor) {
+  init(
+    inputProcessor: InputProcessor,
+    secureInputChecker: @escaping () -> Bool = { IsSecureEventInputEnabled() }
+  ) {
     self.keyLayout = KeyboardUS()
     self.inputProcessor = inputProcessor
+    self.secureInputChecker = secureInputChecker
+  }
+
+  deinit {
+    destroy()
   }
 
   func setEnabled(_ value: Bool) {
@@ -36,14 +46,28 @@ class EventHook {
 
   // Removes the event tap before the application terminates.
   func destroy() {
-    if let eventTap = eventTap {
-      CFMachPortInvalidate(eventTap)
-      unregisterEventTap(eventTap)
+    secureInputTimer?.invalidate()
+    secureInputTimer = nil
+    if let runLoopSource {
+      CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
     }
+    runLoopSource = nil
+    if let eventTap {
+      CFMachPortInvalidate(eventTap)
+    }
+    eventTap = nil
+    secureInputActive = false
+    appState?.secureInputActive = false
+    appState = nil
   }
 
   // Sets up the event tap to listen for keyboard and mouse events.
   func setupEventTap(give appState: AppState) {
+    precondition(Thread.isMainThread)
+    destroy()
+    self.appState = appState
+    startSecureInputMonitoring()
+
     let eventMask =
       (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.flagsChanged.rawValue)
       | (1 << CGEventType.leftMouseDown.rawValue) | (1 << CGEventType.rightMouseDown.rawValue)
@@ -63,17 +87,83 @@ class EventHook {
     }
 
     let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
-    CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+    CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
     CGEvent.tapEnable(tap: eventTap, enable: true)
     self.eventTap = eventTap
-    self.appState = appState
+    self.runLoopSource = runLoopSource
   }
 
-  // Unregisters the event tap from the run loop.
-  func unregisterEventTap(_ eventTap: CFMachPort) {
-    if let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0) {
-      CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+  // Secure Input suppresses keyboard tap callbacks, so do not use them as the only
+  // source of state updates. Common modes keep polling while a menu is open.
+  func startSecureInputMonitoring() {
+    precondition(Thread.isMainThread)
+    secureInputTimer?.invalidate()
+    refreshSecureInputState()
+    let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] timer in
+      guard let self else {
+        timer.invalidate()
+        return
+      }
+      if !self.refreshSecureInputState(), let eventTap = self.eventTap,
+        !CGEvent.tapIsEnabled(tap: eventTap)
+      {
+        self.recoverEventTap()
+      }
     }
+    timer.tolerance = 0.1
+    secureInputTimer = timer
+    RunLoop.main.add(timer, forMode: .common)
+  }
+
+  @discardableResult
+  func refreshSecureInputState() -> Bool {
+    precondition(Thread.isMainThread)
+    let isSecureInput = secureInputChecker()
+    if secureInputActive != isSecureInput {
+      secureInputActive = isSecureInput
+      // Never reuse a word typed before entering or leaving a protected field.
+      inputProcessor.newWord()
+    }
+    // The tap and timer both run on the main run loop. Publish synchronously so
+    // an older queued update cannot overwrite a newer Secure Input sample.
+    if let appState, appState.secureInputActive != isSecureInput {
+      appState.secureInputActive = isSecureInput
+    }
+    return isSecureInput
+  }
+
+  private func recoverEventTap() {
+    guard let eventTap else { return }
+    CGEvent.tapEnable(tap: eventTap, enable: true)
+    tapRecoveryCount += 1
+    #if DEBUG
+      print("[Caffee] Event tap auto-recovered (count: \(tapRecoveryCount))")
+    #endif
+  }
+
+  func handleEvent(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
+    // A disabled tap may stop sending normal callbacks. The timer also checks it.
+    if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+      recoverEventTap()
+      return Unmanaged.passRetained(event)
+    }
+
+    // Ignore keystrokes not from hardware (HID system state).
+    if event.getIntegerValueField(.eventSourceStateID) != 1 {
+      return Unmanaged.passRetained(event)
+    }
+
+    // Always use a fresh system sample, not the last timer/UI value, for safety.
+    let isSecureInput = refreshSecureInputState()
+    if type == .keyDown && processing {
+      if isSecureInput {
+        return Unmanaged.passRetained(event)
+      }
+      return inputProcessor.handleEvent(event: event)
+    } else if type == .leftMouseDown || type == .rightMouseDown {
+      inputProcessor.newWord()
+    }
+    return Unmanaged.passRetained(event)
   }
 }
 
@@ -83,59 +173,5 @@ func eventTapCallback(
 ) -> Unmanaged<CGEvent>? {
   guard let refcon else { return Unmanaged.passRetained(event) }
   let eventHook = Unmanaged<EventHook>.fromOpaque(refcon).takeUnretainedValue()
-
-  // Auto-recover when macOS disables the event tap
-  // This happens when the tap callback takes too long or the system is under load
-  if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-    if let eventTap = eventHook.eventTap {
-      CGEvent.tapEnable(tap: eventTap, enable: true)
-      eventHook.tapRecoveryCount += 1
-      #if DEBUG
-      print("[Caffee] Event tap was disabled by system (\(type == .tapDisabledByTimeout ? "timeout" : "user input")), auto-recovered (count: \(eventHook.tapRecoveryCount))")
-      #endif
-    }
-    return Unmanaged.passRetained(event)
-  }
-
-  // Ignore keystrokes not from hardware (HID system state).
-  if event.getIntegerValueField(.eventSourceStateID) != 1 {
-    return Unmanaged.passRetained(event)
-  }
-
-  // IME Switcher button on keyboard
-  //    if let appState = eventHook.appState,
-  //      type == .flagsChanged && (event.flags.contains(.maskSecondaryFn))  // Left Fn
-  //    {
-  //      appState.setEnabled(set: !appState.enabled)
-  //      return nil
-  //    }
-
-  let input = eventHook.inputProcessor
-
-  // Check for secure input mode (password fields)
-  let isSecureInput = CGSIsSecureEventInputSet()
-  if let appState = eventHook.appState, appState.secureInputActive != isSecureInput {
-    DispatchQueue.main.async {
-      appState.secureInputActive = isSecureInput
-    }
-  }
-
-  if type == .keyDown && eventHook.processing {
-    // Skip IME processing when secure input is active (password fields)
-    if isSecureInput {
-      return Unmanaged.passRetained(event)
-    }
-
-    // Benchmark
-    //    let start = CFAbsoluteTimeGetCurrent()
-    let ret = input.handleEvent(event: event)
-    //    let diff = CFAbsoluteTimeGetCurrent() - start
-    //    print("Processed handler in \(diff * 1000) ms")
-
-    return ret
-  } else if type == .leftMouseDown || type == .rightMouseDown {
-    input.newWord()
-  }
-
-  return Unmanaged.passRetained(event)
+  return eventHook.handleEvent(type: type, event: event)
 }

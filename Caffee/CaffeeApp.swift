@@ -42,6 +42,13 @@ struct MainMenuView: View {
       Divider()
     }
 
+    if appDelegate.appState.secureInputActive {
+      Button("Bàn phím bị khóa bởi macOS (Secure Input)…") {
+        appDelegate.showSecureInputHelp()
+      }
+      Divider()
+    }
+
     Button("Tắt / Mở") {
       appDelegate.appState.enabled.toggle()
     }
@@ -103,6 +110,8 @@ struct MenuBarLabel: View {
       Image(systemName: "gear.badge.questionmark")
     } else if appState.secureInputActive {
       Image(systemName: "lock.square")
+        .help("macOS Secure Input đang chặn bàn phím. Mở menu để xem cách khắc phục.")
+        .accessibilityLabel("Bàn phím bị khóa bởi macOS Secure Input")
     } else {
       Image(systemName: appState.enabled ? "v.square" : "e.square")
     }

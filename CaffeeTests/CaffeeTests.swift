@@ -5,9 +5,155 @@
 //  Created by KhanhIceTea on 20/02/2024.
 //
 
+import CoreGraphics
 import XCTest
 
 @testable import Caffee
+
+final class SecureInputTests: XCTestCase {
+
+  func testRapidSecureInputChangesPublishTheLatestStateSynchronously() {
+    var secureInput = false
+    let state = AppState()
+    let hook = EventHook(
+      inputProcessor: state.inputProcessor, secureInputChecker: { secureInput })
+    state.eventHook = hook
+    hook.appState = state
+
+    secureInput = true
+    XCTAssertTrue(hook.refreshSecureInputState())
+    XCTAssertTrue(state.secureInputActive)
+
+    secureInput = false
+    XCTAssertFalse(hook.refreshSecureInputState())
+    XCTAssertFalse(state.secureInputActive)
+
+    // Drain the queue: an older asynchronous true update must not re-lock the UI.
+    let drained = expectation(description: "Main queue drained")
+    DispatchQueue.main.async {
+      XCTAssertFalse(state.secureInputActive)
+      drained.fulfill()
+    }
+    wait(for: [drained], timeout: 2)
+  }
+
+  func testMonitorDetectsSecureInputReleaseWithoutKeyboardEvents() {
+    var secureInput = true
+    let processor = InputProcessor(method: .Telex)
+    let hook = EventHook(inputProcessor: processor, secureInputChecker: { secureInput })
+    defer { hook.destroy() }
+
+    processor.push(char: "a")
+    hook.startSecureInputMonitoring()
+    XCTAssertTrue(hook.secureInputActive)  // Also sample a lock held before startup.
+    XCTAssertTrue(processor.keys.isEmpty)
+
+    secureInput = false
+    let released = XCTNSPredicateExpectation(
+      predicate: NSPredicate { _, _ in !hook.secureInputActive }, object: nil)
+    wait(for: [released], timeout: 3)
+    XCTAssertFalse(hook.secureInputActive)
+  }
+
+  func testSecureInputTransitionsClearWordAndPreviousWord() {
+    var secureInput = false
+    let processor = InputProcessor(method: .Telex)
+    let hook = EventHook(inputProcessor: processor, secureInputChecker: { secureInput })
+
+    processor.push(char: "a")
+    processor.newWord(storePrevious: true)
+    processor.push(char: "b")
+    secureInput = true
+    hook.refreshSecureInputState()
+    XCTAssertTrue(processor.keys.isEmpty)
+    XCTAssertNil(processor.previousWordState)
+
+    processor.push(char: "c")
+    secureInput = false
+    hook.refreshSecureInputState()
+    XCTAssertTrue(processor.keys.isEmpty)
+    XCTAssertEqual(processor.transformed, "")
+  }
+
+  func testUnchangedSecureInputSamplePreservesCurrentWord() {
+    let processor = InputProcessor(method: .Telex)
+    let hook = EventHook(inputProcessor: processor, secureInputChecker: { false })
+
+    processor.push(char: "a")
+    hook.refreshSecureInputState()
+    hook.refreshSecureInputState()
+    XCTAssertEqual(processor.keys, ["a"])
+    XCTAssertEqual(processor.transformed, "a")
+  }
+
+  func testKeyboardGateUsesFreshSecureInputAndResumesAfterRelease() throws {
+    var secureInput = false
+    let sender = MockReplacementSender()
+    let processor = InputProcessor(
+      method: .Telex,
+      replacementSender: sender,
+      selectionDetector: MockSelectionDetector(hasSelection: false)
+    )
+    let hook = EventHook(inputProcessor: processor, secureInputChecker: { secureInput })
+    hook.setEnabled(true)
+    hook.refreshSecureInputState()
+
+    // Secure Input changed after the timer's last sample. Do not process this key.
+    secureInput = true
+    let protectedResult = hook.handleEvent(type: .keyDown, event: try hardwareKey(0))
+    XCTAssertNotNil(protectedResult)
+    _ = protectedResult?.takeRetainedValue()
+    XCTAssertTrue(processor.keys.isEmpty)
+    XCTAssertTrue(sender.replacementCalls.isEmpty)
+    XCTAssertTrue(hook.processing)  // The user's enabled preference stays unchanged.
+
+    // Release the global lock without an intervening timer tick or app restart.
+    secureInput = false
+    _ = hook.handleEvent(type: .keyDown, event: try hardwareKey(0))?.takeRetainedValue()
+    XCTAssertNil(hook.handleEvent(type: .keyDown, event: try hardwareKey(1)))
+    XCTAssertEqual(processor.transformed, "á")
+    XCTAssertEqual(sender.replacementCalls.count, 1)
+  }
+
+  func testSyntheticKeysDoNotEnterTheProcessor() throws {
+    let processor = InputProcessor(method: .Telex)
+    let hook = EventHook(inputProcessor: processor, secureInputChecker: { false })
+    hook.setEnabled(true)
+    let event = try hardwareKey(0)
+    event.setIntegerValueField(.eventSourceStateID, value: 0)
+
+    let result = hook.handleEvent(type: .keyDown, event: event)
+    XCTAssertNotNil(result)
+    _ = result?.takeRetainedValue()
+    XCTAssertTrue(processor.keys.isEmpty)
+  }
+
+  func testDestroyStopsSecureInputMonitoring() {
+    var samples = 0
+    let hook = EventHook(
+      inputProcessor: InputProcessor(method: .Telex),
+      secureInputChecker: {
+        samples += 1
+        return true
+      })
+    hook.startSecureInputMonitoring()
+    XCTAssertEqual(samples, 1)
+    hook.destroy()
+    XCTAssertFalse(hook.secureInputActive)
+
+    let elapsed = expectation(description: "Timer interval elapsed")
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { elapsed.fulfill() }
+    wait(for: [elapsed], timeout: 2)
+    XCTAssertEqual(samples, 1)
+  }
+
+  private func hardwareKey(_ keyCode: CGKeyCode) throws -> CGEvent {
+    let event = try XCTUnwrap(
+      CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: true))
+    event.setIntegerValueField(.eventSourceStateID, value: 1)
+    return event
+  }
+}
 
 final class CaffeeTests: XCTestCase {
 

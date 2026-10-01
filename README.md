@@ -57,6 +57,20 @@ Có, trước năm 2026 hoàn toàn kiến trúc bộ gõ (Engine) là do tự m
 
 Mọi commits đều được review và test kĩ trước khi push và release app.
 
+6. Vì sao biểu tượng ổ khóa vẫn hiện sau khi rời ô mật khẩu hoặc mở lại Caffee?
+
+- Ổ khóa cho biết **macOS Secure Input** đang bật. Đây là khóa của hệ thống, không phải chế độ được Caffee lưu lại. macOS không chuyển sự kiện bàn phím cho bộ gõ khi bất kỳ ứng dụng nào giữ khóa này, kể cả ứng dụng chạy nền.
+- Hãy đóng ô/hộp thoại mật khẩu. Nếu vẫn bị khóa, thoát và mở lại ứng dụng đã bật Secure Input (thường là trình duyệt, Terminal hoặc ứng dụng quản lý mật khẩu). Với Terminal, kiểm tra mục **Terminal > Secure Keyboard Entry**.
+- Caffee tự kiểm tra trạng thái khóa và hoạt động lại khi khóa được nhả. Mở lại riêng Caffee không thể gỡ khóa của ứng dụng khác. Bấm mục **Bàn phím bị khóa bởi macOS (Secure Input)…** trong menu để xem hướng dẫn.
+- Để tìm ứng dụng giữ khóa, có thể chạy lệnh chỉ đọc sau trong Terminal:
+
+  ```sh
+  ioreg -l -w 0 | grep -o '"kCGSSessionSecureInputPID"[[:space:]]*=[[:space:]]*[0-9]*' | sort -u
+  ```
+
+  Nếu có PID, dùng `ps -p PID -o comm=` (thay `PID` bằng số vừa tìm được) để xem tiến trình. Thông tin chẩn đoán này có thể không xuất hiện trên một số phiên bản macOS; không có kết quả không có nghĩa là Secure Input đã tắt. Không cần và không nên buộc tắt bảo vệ mật khẩu từ Caffee.
+- Tham khảo: [Apple TN2150 — Using Secure Event Input Fairly](https://developer.apple.com/library/archive/technotes/tn2150/_index.html).
+
 ## Package .dmg file
 
 ```shell
