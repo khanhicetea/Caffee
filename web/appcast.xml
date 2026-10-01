@@ -6,6 +6,27 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.30.3</title>
+      <sparkle:version>13003</sparkle:version>
+      <sparkle:shortVersionString>1.30.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Thu, 01 Oct 2026 19:47:19 +0700</pubDate>
+      <enclosure
+        url="https://github.com/khanhicetea/Caffee/releases/download/v1.30.3/Caffee-v1.30.3.dmg"
+        sparkle:edSignature="vILcJLsrpdFUMFZbnaQi62RlFjQLQdiKu9pzL0in2luYnyuXGAig9MdDX0ruhgM5WyXoZVNawDv3vWj3MXM0DQ=="
+        length="4488873"
+        type="application/octet-stream"
+      />
+      <description><![CDATA[
+    <h2>Có gì mới</h2>
+    <ul>
+      <li>Sửa lỗi trạng thái khóa Secure Input (Password) không cập nhật khi rời ô mật khẩu</li>
+      <li>Tự kiểm tra trạng thái khóa và khôi phục bộ gõ khi macOS nhả khóa</li>
+      <li>Thêm hướng dẫn xác định ứng dụng đang giữ khóa Secure Input</li>
+    </ul>
+  ]]></description>
+    </item>
+    <item>
       <title>Version 1.30.2</title>
       <sparkle:version>13002</sparkle:version>
       <sparkle:shortVersionString>1.30.2</sparkle:shortVersionString>
