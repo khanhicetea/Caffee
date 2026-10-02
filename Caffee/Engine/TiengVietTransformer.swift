@@ -21,6 +21,7 @@ enum TiengVietTransformer {
   ///   - dauThanh: Dấu thanh cần đặt (sắc, huyền, hỏi, ngã, nặng)
   ///   - dauMu: Dấu mũ cần đặt (mũ, móc, trăng)
   ///   - gachD: Có gạch ngang chữ D không (d → đ)
+  ///   - mocCaHai: Móc cả "u" lẫn "o" của nhóm "uo" kể cả khi chưa có phụ âm cuối
   ///   - tonePlacement: Vị trí dấu thanh trên oa/oe/uy (hòa hay hoà)
   /// - Returns: Chuỗi tiếng Việt đã biến đổi với dấu
   static func transform(
@@ -28,6 +29,7 @@ enum TiengVietTransformer {
     dauThanh: DauThanh,
     dauMu: DauMu,
     gachD: Bool,
+    mocCaHai: Bool = false,
     tonePlacement: TonePlacement = .firstVowel
   ) -> String {
     // Clone để không thay đổi bản gốc
@@ -45,7 +47,7 @@ enum TiengVietTransformer {
     apDungGachD(vaoTieng: &tieng, gachD: gachD)
 
     // Bước 2: Áp dụng dấu mũ
-    apDungDauMu(vaoTieng: &tieng, dauMu: dauMu, soNguyenAm: countNguyenAm)
+    apDungDauMu(vaoTieng: &tieng, dauMu: dauMu, mocCaHai: mocCaHai)
 
     // Bước 3: Áp dụng dấu thanh
     apDungDauThanh(
@@ -75,12 +77,15 @@ enum TiengVietTransformer {
   /// - Trường hợp đặc biệt "uo" + dấu móc → "ươ" (cả 2 nguyên âm đều có dấu)
   /// - Có 3 nguyên âm hoặc 2 nguyên âm + phụ âm cuối: đặt ở nguyên âm thứ 2
   /// - Còn lại: đặt ở nguyên âm đầu tiên có thể nhận dấu
-  private static func apDungDauMu(
+  ///
+  /// Validator cũng dùng hàm này để kiểm tra đúng nguyên âm mà người dùng sẽ thấy.
+  static func apDungDauMu(
     vaoTieng tieng: inout ThanhPhanTieng,
     dauMu: DauMu,
-    soNguyenAm: Int
+    mocCaHai: Bool
   ) {
     guard let quyTac = TiengViet.QuyTacDatMu[dauMu], !quyTac.isEmpty else { return }
+    let soNguyenAm = tieng.nguyenAm.count
 
     // Hàm nội bộ: thử đặt dấu mũ tại vị trí idx
     func thuDatDauMu(_ idx: Int) -> Bool {
@@ -96,8 +101,8 @@ enum TiengVietTransformer {
 
     // Trường hợp đặc biệt: "uo" + dấu móc → "ươ"
     if datDauMocUO && thuDatDauMu(1) {
-      // Nếu có 3 nguyên âm hoặc có phụ âm cuối, đặt dấu cho cả nguyên âm đầu
-      if soNguyenAm == 3 || !tieng.phuAmCuoi.isEmpty,
+      // Nếu có 3 nguyên âm, có phụ âm cuối hoặc người gõ đã móc "u", đặt dấu cho cả nguyên âm đầu
+      if soNguyenAm == 3 || !tieng.phuAmCuoi.isEmpty || mocCaHai,
         let dauU = chuyenKyTu(kytu: tieng.nguyenAm[0], quyTac: quyTac)
       {
         tieng.nguyenAm[0] = dauU
@@ -134,7 +139,6 @@ enum TiengVietTransformer {
     func thuDatDauThanh(_ idx: Int) -> Bool {
       if let kyTuMoi = chuyenKyTu(kytu: tieng.nguyenAm[idx], quyTac: quyTac) {
         tieng.nguyenAm[idx] = kyTuMoi
-        tieng.viTriDauThanh = idx
         return true
       }
       return false

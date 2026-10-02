@@ -80,18 +80,16 @@ struct Telex: TypingMethod {
       case "a", "o", "e", "A", "O", "E":
         // "oe" + "o" spells the triphthong "oeo" (ngoèo, khoèo), not a circumflex.
         let isOeo = String(thanhPhan.nguyenAm).lowercased() == "oe" && (char == "o" || char == "O")
-        if !isOeo
-          && (thanhPhan.nguyenAmChua(char: char)
-            || thanhPhan.nguyenAmChua(char: char.uppercased().first!))
-        {
+        let hoaThuong = [Character(char.lowercased()), Character(char.uppercased())]
+        if !isOeo && thanhPhan.nguyenAmChua1KyTu(mangKyTu: hoaThuong) {
           return markResult(state.withMu(.muUp), char: char, keyStr: keyStr)
         }
 
       // Phím w: dấu móc (ơ, ư) hoặc dấu trăng (ă) tùy nguyên âm
       case "w", "W":
         if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["u", "U"]) {
-          // uw → ư (móc)
-          return markResult(state.withMu(.muMoc), char: char, keyStr: keyStr)
+          // uw → ư (móc), uow → ươ
+          return hornResult(state, char: char, keyStr: keyStr, doubleKey: "ww")
         } else if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["a", "A"]) {
           // aw → ă (trăng)
           return markResult(state.withMu(.muNgua), char: char, keyStr: keyStr)

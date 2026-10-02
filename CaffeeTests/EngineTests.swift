@@ -211,12 +211,6 @@ final class EngineTests: EngineTestCase {
     XCTAssertFalse(validState.needsRecovery)
   }
 
-  /// Test originalInput property
-  func testOriginalInputProperty() throws {
-    let state = TiengVietState.empty.push("t").push("h").push("a").push("e")
-    XCTAssertEqual(state.originalInput, "thae")
-  }
-
   /// Test "xuất" - the vowel "ua" with circumflex becomes "uâ" which CAN take "t"
   func testXuatWithCircumflex() throws {
     let result = transform_text_telex(for: "xuaats")

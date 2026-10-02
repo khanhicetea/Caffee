@@ -53,6 +53,31 @@ class EngineTestCase: XCTestCase {
   }
 }
 
+/// Types `keys` into an `InputProcessor` and applies every replacement to a simulated screen, the
+/// way the OS would. `<` is Backspace. Returns what the user would see.
+func typeOnScreen(_ keys: String, method: TypingMethods, config: EngineConfig = EngineConfig())
+  -> String
+{
+  let processor = InputProcessor(method: method, config: config)
+  var screen: [Character] = []
+  func apply(_ replacement: Replacement) {
+    screen.removeLast(min(replacement.deleteCount, screen.count))
+    screen += replacement.insert
+  }
+  for key in keys {
+    if key == "<" {
+      let replacement = processor.pop()
+      // An empty replacement lets the system's own Backspace delete one character.
+      if replacement.isEmpty { _ = screen.popLast() } else { apply(replacement) }
+    } else {
+      processor.push(char: key)
+      apply(
+        .diff(from: processor.wordBuffer.lastTransformed, to: processor.wordBuffer.transformed))
+    }
+  }
+  return String(screen)
+}
+
 final class MockReplacementSender: ReplacementSender {
   struct Call: Equatable {
     let backspaceCount: Int

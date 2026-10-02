@@ -93,9 +93,7 @@ enum TiengVietParser {
     // Bước 2: Tách nguyên âm bằng Trie
     if let matched = TiengViet.NguyenAmTrie.findLongestPrefix(in: remaining) {
       result.nguyenAm = Array(matched)
-      result.chuaNguyenAmUO = TiengViet.NguyenAmUO.contains {
-        $0.lowercased() == matched.lowercased()
-      }
+      result.chuaNguyenAmUO = TiengViet.NguyenAmUO.contains(matched.lowercased())
       remaining = String(remaining.dropFirst(matched.count))
     }
 

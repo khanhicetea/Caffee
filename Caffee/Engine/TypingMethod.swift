@@ -63,6 +63,22 @@ extension TypingMethod {
 
     return .applyMark(newState)
   }
+
+  /// Dấu móc (ư, ơ). Móc "u" trước khi gõ "o" sẽ móc cả hai (tuwo → tươ); gõ phím móc lần nữa
+  /// trên "uo" đã móc (uwow, u7o7) giữ dấu thay vì hủy. Gõ đúp liền nhau (`doubleKey`) vẫn hủy.
+  func hornResult(
+    _ state: TiengVietState,
+    char: Character,
+    keyStr: String,
+    doubleKey: String
+  ) -> TypingMethodResult {
+    let thanhPhan = state.thanhPhanTieng
+    if thanhPhan.chuaNguyenAmUO, state.dauMu == .muMoc, !keyStr.lowercased().hasSuffix(doubleKey) {
+      return markResult(state.withMocCaHai(), char: char, keyStr: keyStr)
+    }
+    let mocTruocO = !thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["o", "O"])
+    return markResult(state.withMu(.muMoc, mocCaHai: mocTruocO), char: char, keyStr: keyStr)
+  }
 }
 
 /// Kết quả xử lý của engine cho một phím vừa nhập.
@@ -71,5 +87,4 @@ enum TypingMethodResult {
   case applyMark(TiengVietState)
   case toggleToRaw(TiengVietState)
   case recover(TiengVietState)
-  case noChange(TiengVietState)
 }

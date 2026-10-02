@@ -26,12 +26,16 @@ struct TiengVietState {
   let dauThanh: DauThanh
   /// Dấu mũ hiện tại (mũ, móc, trăng)
   let dauMu: DauMu
+  /// Dấu móc đặt cho cả "u" lẫn "o" của nhóm "uo" kể cả khi chưa có phụ âm cuối: người gõ đã
+  /// móc "u" trước khi gõ "o" (tuwo → tươ) hoặc móc lần nữa (uwow). Không có cờ này, "uo" mở chỉ
+  /// móc "o" (thuở, huơ).
+  let mocCaHai: Bool
   /// Có gạch ngang chữ D không (d → đ)
   let gachD: Bool
   /// Cấu hình engine áp dụng cho state này
   let config: EngineConfig
-  /// Cached parsed syllable components (computed once per state)
-  private let _cachedThanhPhan: ThanhPhanTieng?
+  /// Các thành phần âm tiết đã phân tích (parse một lần cho mỗi state)
+  let thanhPhanTieng: ThanhPhanTieng
 
   /// State rỗng - điểm khởi đầu (cấu hình mặc định)
   static let empty = TiengVietState.empty(config: EngineConfig())
@@ -42,35 +46,32 @@ struct TiengVietState {
       chuKhongDau: [],
       dauThanh: .bang,
       dauMu: .khongMu,
+      mocCaHai: false,
       gachD: false,
       config: config,
-      cachedThanhPhan: ThanhPhanTieng(phuAmDau: [], nguyenAm: [], phuAmCuoi: [], conLai: [])
+      thanhPhanTieng: ThanhPhanTieng()
     )
   }
 
-  /// Internal initializer with cached thanhPhan
   private init(
     chuKhongDau: [Character],
     dauThanh: DauThanh,
     dauMu: DauMu,
+    mocCaHai: Bool,
     gachD: Bool,
     config: EngineConfig,
-    cachedThanhPhan: ThanhPhanTieng?
+    thanhPhanTieng: ThanhPhanTieng
   ) {
     self.chuKhongDau = chuKhongDau
     self.dauThanh = dauThanh
     self.dauMu = dauMu
+    self.mocCaHai = mocCaHai
     self.gachD = gachD
     self.config = config
-    self._cachedThanhPhan = cachedThanhPhan
+    self.thanhPhanTieng = thanhPhanTieng
   }
 
   // MARK: - Computed Properties
-
-  /// Các thành phần âm tiết đã phân tích - cached để tránh parse lại nhiều lần
-  var thanhPhanTieng: ThanhPhanTieng {
-    _cachedThanhPhan ?? TiengVietParser.parse(chuKhongDau, config: config)
-  }
 
   /// Chuỗi đã biến đổi với dấu tiếng Việt
   var transformed: String {
@@ -80,6 +81,7 @@ struct TiengVietState {
       dauThanh: dauThanh,
       dauMu: dauMu,
       gachD: gachD,
+      mocCaHai: mocCaHai,
       tonePlacement: config.tonePlacement
     )
   }
@@ -90,12 +92,9 @@ struct TiengVietState {
   /// Kiểm tra âm tiết có cần recovery không (không hợp lệ tiếng Việt)
   /// Khi true, nên dùng chuỗi gốc thay vì chuỗi đã biến đổi
   var needsRecovery: Bool {
-    config.spellingCheck && TiengVietValidator.needsRecovery(thanhPhanTieng, dauMu: dauMu)
-  }
-
-  /// Chuỗi gốc (dùng khi cần recovery)
-  var originalInput: String {
-    String(chuKhongDau)
+    config.spellingCheck
+      && TiengVietValidator.needsRecovery(
+        thanhPhanTieng, dauMu: dauMu, dauThanh: dauThanh, mocCaHai: mocCaHai)
   }
 }
 
@@ -110,9 +109,10 @@ extension TiengVietState {
       chuKhongDau: newChuKhongDau,
       dauThanh: dauThanh,
       dauMu: dauMu,
+      mocCaHai: mocCaHai,
       gachD: gachD,
       config: config,
-      cachedThanhPhan: TiengVietParser.parse(newChuKhongDau, config: config)
+      thanhPhanTieng: TiengVietParser.parse(newChuKhongDau, config: config)
     )
   }
 
@@ -124,21 +124,16 @@ extension TiengVietState {
     let newThanhPhan = TiengVietParser.parse(newChuKhongDau, config: config)
 
     // Reset dấu nếu không còn nguyên âm
-    var newDauMu = dauMu
-    var newDauThanh = dauThanh
-
-    if newThanhPhan.nguyenAm.isEmpty {
-      newDauMu = .khongMu
-      newDauThanh = .bang
-    }
+    let conNguyenAm = !newThanhPhan.nguyenAm.isEmpty
 
     return TiengVietState(
       chuKhongDau: newChuKhongDau,
-      dauThanh: newDauThanh,
-      dauMu: newDauMu,
+      dauThanh: conNguyenAm ? dauThanh : .bang,
+      dauMu: conNguyenAm ? dauMu : .khongMu,
+      mocCaHai: conNguyenAm && mocCaHai,
       gachD: gachD,
       config: config,
-      cachedThanhPhan: newThanhPhan
+      thanhPhanTieng: newThanhPhan
     )
   }
 
@@ -148,21 +143,38 @@ extension TiengVietState {
       chuKhongDau: chuKhongDau,
       dauThanh: dauThanh == tone ? .bang : tone,
       dauMu: dauMu,
+      mocCaHai: mocCaHai,
       gachD: gachD,
       config: config,
-      cachedThanhPhan: _cachedThanhPhan
+      thanhPhanTieng: thanhPhanTieng
     )
   }
 
   /// Đặt/xóa dấu mũ (toggle: gõ cùng dấu 2 lần sẽ xóa)
-  func withMu(_ mu: DauMu) -> TiengVietState {
+  /// - Parameter mocCaHai: với dấu móc, có móc cả "u" lẫn "o" của nhóm "uo" không
+  func withMu(_ mu: DauMu, mocCaHai: Bool = false) -> TiengVietState {
+    let newDauMu: DauMu = dauMu == mu ? .khongMu : mu
+    return TiengVietState(
+      chuKhongDau: chuKhongDau,
+      dauThanh: dauThanh,
+      dauMu: newDauMu,
+      mocCaHai: newDauMu == .muMoc && mocCaHai,
+      gachD: gachD,
+      config: config,
+      thanhPhanTieng: thanhPhanTieng
+    )
+  }
+
+  /// Giữ dấu móc và móc cả "u" lẫn "o" (phím móc gõ lần nữa trên "uo": uwow, u7o7)
+  func withMocCaHai() -> TiengVietState {
     TiengVietState(
       chuKhongDau: chuKhongDau,
       dauThanh: dauThanh,
-      dauMu: dauMu == mu ? .khongMu : mu,
+      dauMu: .muMoc,
+      mocCaHai: true,
       gachD: gachD,
       config: config,
-      cachedThanhPhan: _cachedThanhPhan
+      thanhPhanTieng: thanhPhanTieng
     )
   }
 
@@ -172,9 +184,10 @@ extension TiengVietState {
       chuKhongDau: chuKhongDau,
       dauThanh: dauThanh,
       dauMu: dauMu,
+      mocCaHai: mocCaHai,
       gachD: !gachD,
       config: config,
-      cachedThanhPhan: _cachedThanhPhan
+      thanhPhanTieng: thanhPhanTieng
     )
   }
 }

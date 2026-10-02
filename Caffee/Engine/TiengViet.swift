@@ -131,24 +131,12 @@ struct ThanhPhanTieng {
 
   /// Vị trí nguyên âm có dấu phụ (-1 nếu chưa đặt)
   var viTriDauMu = -1
-  /// Vị trí nguyên âm có dấu thanh (-1 nếu chưa đặt)
-  var viTriDauThanh = -1
   /// Cờ: chứa nguyên âm "uo" (xử lý đặc biệt dấu móc → "ươ")
   var chuaNguyenAmUO = false
-
-  /// Kiểm tra nguyên âm có chứa ký tự chỉ định không
-  func nguyenAmChua(char: Character) -> Bool {
-    nguyenAm.contains(char)
-  }
 
   /// Kiểm tra nguyên âm có chứa ít nhất một ký tự trong danh sách không
   func nguyenAmChua1KyTu(mangKyTu: [Character]) -> Bool {
     mangKyTu.contains { nguyenAm.contains($0) }
-  }
-
-  /// Kiểm tra chuỗi không phải tiếng Việt hợp lệ (chỉ có phần conLai)
-  func notTiengViet() -> Bool {
-    phuAmDau.isEmpty && nguyenAm.isEmpty && phuAmCuoi.isEmpty && !conLai.isEmpty
   }
 }
 
@@ -158,22 +146,10 @@ struct ThanhPhanTieng {
 ///
 /// Enum này đóng vai trò namespace cho tất cả dữ liệu tĩnh được sử dụng
 /// bởi engine gõ tiếng Việt, bao gồm:
-/// - Bảng chữ cái (ChuCai)
 /// - Bảng phụ âm (PhuAm)
 /// - Bảng nguyên âm (NguyenAm)
 /// - Quy tắc chuyển đổi (QuyTac)
 enum TiengViet {
-
-  // MARK: - Bảng chữ cái
-
-  /// Chữ cái tiếng Việt thường
-  static let ChuCaiThuong: [Character] = [
-    "a", "b", "c", "d", "e", "g", "h", "i", "k", "l", "m", "n",
-    "o", "p", "q", "r", "s", "t", "u", "v", "x", "y",
-  ]
-
-  /// Tất cả chữ cái tiếng Việt (thường + hoa)
-  static let ChuCai: [Character] = ChuCaiThuong + ChuCaiThuong.map { $0.uppercased().first! }
 
   // MARK: - Bảng phụ âm
 
@@ -241,8 +217,8 @@ enum TiengViet {
 
   static let PhuAmCuoiTrie = makeTrie(PhuAmCuoi)
 
-  /// Nguyên âm chứa "uo" - cần xử lý đặc biệt khi đặt dấu móc (→ "ươ")
-  static let NguyenAmUO: [String] = caseVariants(of: ["uo", "uoi", "uou"])
+  /// Nguyên âm chứa "uo" (chữ thường) - cần xử lý đặc biệt khi đặt dấu móc (→ "ươ")
+  static let NguyenAmUO: Set<String> = ["uo", "uoi", "uou"]
 
   // MARK: - Quy tắc chuyển đổi
 

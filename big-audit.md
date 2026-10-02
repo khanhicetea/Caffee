@@ -41,6 +41,8 @@ Everything below is **done** unless it is listed under "Not done". The sections 
 
 Bugs the new corpus test found and fixed: the validator rejected the rime `eng` (xẻng, kẻng) and `uâng` (khuâng), and typing `o` after `oe` produced `ôe` instead of `oeo` (ngoèo, khoèo).
 
+A later engine review (`review-engine.md`) found and fixed: `uwow`/`u7o7` cancelling the horn, Backspace corrupting recovered words, double-key cancel wiping the other marks, and huyền/hỏi/ngã accepted on c/ch/p/t finals (text → tẽt).
+
 ---
 
 ## 0. TL;DR — Top 10

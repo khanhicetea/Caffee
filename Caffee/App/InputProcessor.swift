@@ -72,6 +72,22 @@ struct WordBuffer {
         Replacement.diff(from: lastTransformed, to: transformed))
     }
 
+    // Raw mode: the screen is plain text, so remove exactly one character. Rebuilding it from the
+    // state would lose keys that were used as marks before recovery (texting⌫ → tetin).
+    if stopProcessing, !transformed.isEmpty {
+      _ = keys.popLast()
+      transformed.removeLast()
+      wordState = engine.pop(state: wordState)
+      lastValidSnapshot = nil
+      if transformed.isEmpty {
+        wordState = .empty(config: config)
+        keys = []
+        stopProcessing = false
+      }
+      return Self.letSystemDeleteOneCharacter(
+        Replacement.diff(from: lastTransformed, to: transformed))
+    }
+
     // Normal pop: restore previous word on empty buffer
     if wordState.isBlank, let prev = previousWordState {
       wordState = prev
@@ -139,7 +155,8 @@ struct WordBuffer {
     case .toggleToRaw(let newState):
       wordState = newState
       stopProcessing = true
-      transformed = wordState.originalInput
+      // Only the cancelled mark is gone; the other marks stay (tieenss → tiêns).
+      transformed = wordState.transformed
       lastValidSnapshot = nil
 
     case .recover(let newState):
@@ -152,11 +169,6 @@ struct WordBuffer {
       if !snapshot.stopProcessing {
         lastValidSnapshot = snapshot
       }
-
-    case .noChange(let newState):
-      wordState = newState
-      transformed = lastTransformed
-      lastValidSnapshot = nil
     }
   }
 }

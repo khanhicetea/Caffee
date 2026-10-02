@@ -80,7 +80,7 @@ struct VNI: TypingMethod {
       // Phím 7: dấu móc (horn) cho u, o → ư, ơ
       case "7":
         if thanhPhan.nguyenAmChua1KyTu(mangKyTu: ["u", "o", "U", "O"]) {
-          return markResult(state.withMu(.muMoc), char: char, keyStr: keyStr)
+          return hornResult(state, char: char, keyStr: keyStr, doubleKey: "77")
         }
 
       // Phím 8: dấu trăng (breve) cho a → ă

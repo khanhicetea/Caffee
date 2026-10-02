@@ -69,6 +69,7 @@ final class EngineConfigTests: XCTestCase {
 
   func testTonePlacementDoesNotAffectOtherSyllables() {
     // Closed syllables, marked vowels, diphthongs and triphthongs are the same in both styles.
+    XCTAssertEqual(type("dduwowcj", config: EngineConfig()), "được")
     for keys in ["hoanf", "toans", "tieengs", "maij", "meof", "ngoaif", "quys", "muaf", "dduwowcj"]
     {
       XCTAssertEqual(
@@ -87,6 +88,9 @@ final class EngineConfigTests: XCTestCase {
     XCTAssertEqual(type("aims", config: checked), "aims")
     // Without the check the tone key is applied anyway.
     XCTAssertNotEqual(type("aims", config: unchecked), "aims")
+    // Without the check a digit is printed raw but the tone already typed stays.
+    XCTAssertEqual(type("as1", config: unchecked), "á1")
+    XCTAssertEqual(type("tas1", config: unchecked), "tá1")
     // Valid Vietnamese is unaffected by the switch.
     XCTAssertEqual(type("tieengs", config: unchecked), "tiếng")
   }
@@ -97,7 +101,8 @@ final class EngineConfigTests: XCTestCase {
     XCTAssertEqual(TiengViet.PhuAmGhep.count, 48)
     XCTAssertEqual(TiengViet.PhuAmCuoi.count, 22)
     XCTAssertEqual(TiengViet.NguyenAmGhep.count, 180)
-    XCTAssertEqual(TiengViet.NguyenAmUO.count, 20)
+    XCTAssertEqual(TiengViet.NguyenAmUO, ["uo", "uoi", "uou"])
+    XCTAssertTrue(TiengVietParser.parse(Array("TUOi")).chuaNguyenAmUO)
     XCTAssertTrue(TiengViet.PhuAmGhep.contains("nGH"))
     XCTAssertTrue(TiengViet.NguyenAmGhep.contains("uOI"))
   }

@@ -13,14 +13,6 @@ import Foundation
 /// kích hoạt recovery về chuỗi gốc.
 enum TiengVietValidator {
 
-  // MARK: - Bảng phụ âm cuối hợp lệ
-
-  /// Phụ âm cuối hợp lệ trong tiếng Việt
-  /// Chỉ có các phụ âm này mới có thể xuất hiện ở cuối âm tiết
-  static let ValidPhuAmCuoi: Set<String> = [
-    "c", "ch", "m", "n", "ng", "nh", "p", "t",
-  ]
-
   // MARK: - Bảng kết hợp nguyên âm + phụ âm cuối hợp lệ
 
   /// Quy tắc kết hợp nguyên âm với phụ âm cuối theo ngữ âm học tiếng Việt
@@ -63,11 +55,18 @@ enum TiengVietValidator {
     // oă - xoắn, loắt...
     "oă": ["c", "m", "n", "ng", "p", "t"],
 
+    // oe - hoen, khoét
+    "oe": ["n", "t"],
+
+    // oo - boong, xoong, soóc ("n" là bước trung gian của "ng")
+    "oo": ["c", "n", "ng"],
+
     // uâ - luật, xuân, khuâng...
     "uâ": ["n", "ng", "t"],
 
-    // uê - huệch, tuềnh... (hiếm)
+    // uê - huệch, tuềnh... (hiếm); "ue" là bước trung gian khi gõ dấu mũ sau cùng
     "uê": ["c", "ch", "n", "nh"],
+    "ue": ["c", "ch", "n", "nh"],
 
     // uy - huynh, quýt...
     "uy": ["c", "ch", "n", "nh", "p", "t"],
@@ -89,8 +88,10 @@ enum TiengVietValidator {
     "âu": [],
     "ây": [],
     "eo": [],
+    "eu": [],
     "êu": [],
     "ia": [],
+    "io": [],
     "iu": [],
     "oi": [],
     "ôi": [],
@@ -99,10 +100,14 @@ enum TiengVietValidator {
     "uya": [],
     "uơ": [],
     "ui": [],
+    "uu": [],
     "ưa": [],
     "ưi": [],
     "ươi": [],
     "ưu": [],
+    "ieu": [], "iêu": [], "yeu": [], "yêu": [],
+    "oai": [], "oao": [], "oay": [], "oeo": [],
+    "uay": [], "uây": [], "uoi": [], "uôi": [], "uou": [], "ươu": [], "uyu": [],
   ]
 
   /// Tổ hợp nguyên âm không tồn tại trong tiếng Việt
@@ -111,14 +116,34 @@ enum TiengVietValidator {
     "ae", "ea", "ey", "iy", "yi", "yo", "yu",
   ]
 
+  /// Mọi nguyên âm có dấu mũ/móc/trăng xuất hiện trong âm tiết tiếng Việt, kể cả các bước trung
+  /// gian khi gõ (uâ trước khi có "n", ươ trước khi có "i"...). Dấu đặt vào nguyên âm khác
+  /// (hôa, ôe, ưy...) là không hợp lệ.
+  static let ValidNguyenAmCoMu: Set<String> = [
+    "ă", "â", "ê", "ô", "ơ", "ư",
+    "âu", "ây", "êu", "ôi", "ơi", "ưa", "ưi", "ưu",
+    "iê", "yê", "uô", "ươ", "uơ", "oă", "uâ", "uê",
+    "iêu", "yêu", "uôi", "ươi", "ươu", "uây", "uyê",
+  ]
+
+  /// Phụ âm cuối tắc: âm tiết kết thúc bằng các phụ âm này chỉ mang thanh sắc hoặc nặng
+  static let PhuAmCuoiTac: Set<String> = ["c", "ch", "p", "t"]
+
   // MARK: - Phương thức kiểm tra
 
   /// Kiểm tra âm tiết có cần recovery không (không hợp lệ tiếng Việt)
   /// - Parameters:
   ///   - thanhPhan: Các thành phần âm tiết đã phân tích
   ///   - dauMu: Dấu mũ hiện tại (mũ, móc, trăng)
+  ///   - dauThanh: Dấu thanh hiện tại
+  ///   - mocCaHai: Móc cả "u" lẫn "o" của nhóm "uo"
   /// - Returns: true nếu âm tiết không hợp lệ và cần recovery
-  static func needsRecovery(_ thanhPhan: ThanhPhanTieng, dauMu: DauMu = .khongMu) -> Bool {
+  static func needsRecovery(
+    _ thanhPhan: ThanhPhanTieng,
+    dauMu: DauMu = .khongMu,
+    dauThanh: DauThanh = .bang,
+    mocCaHai: Bool = false
+  ) -> Bool {
     // Trường hợp 1: Có ký tự thừa (conLai) không khớp mẫu tiếng Việt
     if !thanhPhan.conLai.isEmpty {
       return true
@@ -130,81 +155,46 @@ enum TiengVietValidator {
       return true
     }
 
-    // Trường hợp 3: Kiểm tra kết hợp nguyên âm + phụ âm cuối
+    // Trường hợp 3: Phụ âm đầu không đi với nguyên âm ("q" luôn đi với "u"; "gh", "ngh" chỉ
+    // đứng trước e, ê, i). Không kiểm tra "k" vì có địa danh như Bắc Kạn, Kon Tum.
+    if let dauNguyenAm = nguyenAm.first {
+      switch String(thanhPhan.phuAmDau).lowercased() {
+      case "q":
+        return true
+      case "gh", "ngh":
+        if dauNguyenAm != "e" && dauNguyenAm != "i" { return true }
+      default:
+        break
+      }
+    }
+
+    // Trường hợp 4: Nguyên âm sau khi đặt dấu mũ (đúng như người dùng sẽ thấy) phải tồn tại
+    var coMu = thanhPhan
+    TiengVietTransformer.apDungDauMu(vaoTieng: &coMu, dauMu: dauMu, mocCaHai: mocCaHai)
+    let nguyenAmCoMu = String(coMu.nguyenAm).lowercased()
+    if nguyenAmCoMu != nguyenAm && !ValidNguyenAmCoMu.contains(nguyenAmCoMu) {
+      return true
+    }
+
+    // Trường hợp 5: Kiểm tra kết hợp nguyên âm + phụ âm cuối
     if !thanhPhan.phuAmCuoi.isEmpty {
       let phuAmCuoi = String(thanhPhan.phuAmCuoi).lowercased()
 
-      // Kiểm tra phụ âm cuối có hợp lệ không
-      if !ValidPhuAmCuoi.contains(phuAmCuoi) {
+      // Phụ âm cuối tắc không mang thanh huyền, hỏi, ngã (text → tẽt là sai).
+      // Thanh ngang vẫn hợp lệ vì đó là bước trung gian (tet → tết).
+      if PhuAmCuoiTac.contains(phuAmCuoi), [.huyen, .hoi, .nga].contains(dauThanh) {
         return true
       }
 
-      // Kiểm tra kết hợp nguyên âm + phụ âm cuối
-      // Cần xét cả nguyên âm đã biến đổi với dấu mũ
-      // Ví dụ: "ua" không có phụ âm cuối, nhưng "uâ" có thể kết hợp với "n", "t"
-      if !isValidVowelEnding(nguyenAm: nguyenAm, phuAmCuoi: phuAmCuoi, dauMu: dauMu) {
+      // Ưu tiên quy tắc của nguyên âm đã có dấu mũ ("ua" không có phụ âm cuối, "uâ" thì có),
+      // sau đó tới nguyên âm gốc. Phụ âm cuối luôn hợp lệ vì được tách bằng trie.
+      if let validEndings = ValidVowelEndings[nguyenAmCoMu] ?? ValidVowelEndings[nguyenAm],
+        !validEndings.contains(phuAmCuoi)
+      {
         return true
       }
     }
 
     return false
-  }
-
-  // MARK: - Phương thức nội bộ
-
-  /// Kiểm tra kết hợp nguyên âm + phụ âm cuối có hợp lệ không
-  /// - Parameters:
-  ///   - nguyenAm: Nguyên âm (chữ thường, dạng gốc chưa có dấu)
-  ///   - phuAmCuoi: Phụ âm cuối (chữ thường)
-  ///   - dauMu: Dấu mũ đang áp dụng
-  /// - Returns: true nếu kết hợp hợp lệ
-  private static func isValidVowelEnding(
-    nguyenAm: String,
-    phuAmCuoi: String,
-    dauMu: DauMu
-  ) -> Bool {
-    // Biến đổi nguyên âm với dấu mũ để kiểm tra nguyên âm thực tế
-    // Quan trọng vì một số nguyên âm gốc (như "ua") không có phụ âm cuối,
-    // nhưng dạng biến đổi (như "uâ") lại có thể kết hợp.
-    let transformedVowel = transformVowelWithMu(nguyenAm: nguyenAm, dauMu: dauMu)
-
-    // Kiểm tra nguyên âm đã biến đổi trước
-    if let validEndings = ValidVowelEndings[transformedVowel] {
-      return validEndings.contains(phuAmCuoi)
-    }
-
-    // Nếu không có quy tắc cho nguyên âm đã biến đổi, kiểm tra nguyên âm gốc
-    if let validEndings = ValidVowelEndings[nguyenAm] {
-      return validEndings.contains(phuAmCuoi)
-    }
-
-    // Với nguyên âm không có trong bảng, cho phép tất cả phụ âm cuối chuẩn
-    // Đây là cách tiếp cận an toàn - tốt hơn là cho phép thay vì từ chối sai
-    return ValidPhuAmCuoi.contains(phuAmCuoi)
-  }
-
-  /// Biến đổi nguyên âm gốc thành dạng có dấu mũ
-  /// - Parameters:
-  ///   - nguyenAm: Nguyên âm gốc (chữ thường)
-  ///   - dauMu: Dấu mũ cần áp dụng
-  /// - Returns: Nguyên âm đã biến đổi
-  private static func transformVowelWithMu(nguyenAm: String, dauMu: DauMu) -> String {
-    switch dauMu {
-    case .khongMu:
-      return nguyenAm
-    case .muUp:  // Mũ: a→â, e→ê, o→ô
-      var result = nguyenAm
-      result = result.replacingOccurrences(of: "a", with: "â")
-      result = result.replacingOccurrences(of: "e", with: "ê")
-      result = result.replacingOccurrences(of: "o", with: "ô")
-      return result
-    case .muMoc:  // Móc: o→ơ, u→ư
-      var result = nguyenAm
-      result = result.replacingOccurrences(of: "o", with: "ơ")
-      result = result.replacingOccurrences(of: "u", with: "ư")
-      return result
-    case .muNgua:  // Trăng: a→ă
-      return nguyenAm.replacingOccurrences(of: "a", with: "ă")
-    }
   }
 }

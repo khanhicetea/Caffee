@@ -173,14 +173,15 @@ final class CorpusTests: XCTestCase {
 
   // MARK: - Keystrokes
 
-  private static func telexKeys(_ text: String) -> [String] {
-    // One entry per written letter; "ươ" is typed as "uow" (the w marks both vowels).
+  private static func telexKeys(_ text: String, hornEachVowel: Bool) -> [String] {
+    // One entry per written letter; "ươ" is typed as "uow" (the w marks both vowels), or as
+    // "uwow" when each vowel gets its own horn.
     var keys: [String] = []
     var letters = Array(text)
     var i = 0
     while i < letters.count {
       let c = letters[i]
-      if c == "ư", i + 1 < letters.count, letters[i + 1] == "ơ" {
+      if c == "ư", i + 1 < letters.count, letters[i + 1] == "ơ", !hornEachVowel {
         keys.append("uo")
         keys.append("w")
         i += 2
@@ -202,13 +203,13 @@ final class CorpusTests: XCTestCase {
     return keys
   }
 
-  private static func vniKeys(_ text: String) -> [String] {
+  private static func vniKeys(_ text: String, hornEachVowel: Bool) -> [String] {
     var keys: [String] = []
     let letters = Array(text)
     var i = 0
     while i < letters.count {
       let c = letters[i]
-      if c == "ư", i + 1 < letters.count, letters[i + 1] == "ơ" {
+      if c == "ư", i + 1 < letters.count, letters[i + 1] == "ơ", !hornEachVowel {
         keys.append("uo")
         keys.append("7")
         i += 2
@@ -236,13 +237,17 @@ final class CorpusTests: XCTestCase {
   }
 
   /// Keystrokes with the tone key placed at the end, or right after the nucleus.
-  private func keystrokes(for syllable: Syllable, method: TypingMethod2, toneAfterNucleus: Bool)
-    -> String
-  {
+  private func keystrokes(
+    for syllable: Syllable, method: TypingMethod2, toneAfterNucleus: Bool, hornEachVowel: Bool
+  ) -> String {
     let tone = Self.tones[syllable.tone]
     let toneKey: String =
       syllable.tone == 0 ? "" : String(method == .telex ? tone.telex : tone.vni)
-    let encode = method == .telex ? Self.telexKeys : Self.vniKeys
+    let encode = { (text: String) in
+      method == .telex
+        ? Self.telexKeys(text, hornEachVowel: hornEachVowel)
+        : Self.vniKeys(text, hornEachVowel: hornEachVowel)
+    }
     let onset = encode(syllable.onset).joined()
     let nucleus = encode(syllable.nucleus).joined()
     let coda = syllable.coda
@@ -258,14 +263,18 @@ final class CorpusTests: XCTestCase {
     XCTAssertGreaterThan(Self.corpus.count, 8_000)
   }
 
-  private func runCorpus(method: TypingMethod2, toneAfterNucleus: Bool, capitalize: Bool = false)
-    -> [String]
-  {
+  private func runCorpus(
+    method: TypingMethod2, toneAfterNucleus: Bool, capitalize: Bool = false,
+    hornEachVowel: Bool = false
+  ) -> [String] {
     var failures: [String] = []
     for (index, syllable) in Self.corpus.enumerated() {
       if toneAfterNucleus && syllable.coda.isEmpty { continue }
       if capitalize && index % 5 != 0 { continue }
-      var keys = keystrokes(for: syllable, method: method, toneAfterNucleus: toneAfterNucleus)
+      if hornEachVowel && !syllable.written.contains("ươ") { continue }
+      var keys = keystrokes(
+        for: syllable, method: method, toneAfterNucleus: toneAfterNucleus,
+        hornEachVowel: hornEachVowel)
       var expected = syllable.written
       if capitalize {
         keys = keys.prefix(1).uppercased() + keys.dropFirst()
@@ -296,6 +305,19 @@ final class CorpusTests: XCTestCase {
       runCorpus(method: .telex, toneAfterNucleus: false, capitalize: true), "telex/caps")
   }
 
+  func testTelexRoundTripHornEachVowel() {
+    // dduwowcj → được: the second w must not cancel the first.
+    assertNoFailures(
+      runCorpus(method: .telex, toneAfterNucleus: false, hornEachVowel: true), "telex/uwow")
+    assertNoFailures(
+      runCorpus(method: .telex, toneAfterNucleus: true, hornEachVowel: true), "telex/uwow/nucleus")
+  }
+
+  func testVNIRoundTripHornEachVowel() {
+    assertNoFailures(
+      runCorpus(method: .vni, toneAfterNucleus: false, hornEachVowel: true), "vni/u7o7")
+  }
+
   func testVNIRoundTripToneAtEnd() {
     assertNoFailures(runCorpus(method: .vni, toneAfterNucleus: false), "vni/end")
   }
@@ -311,14 +333,15 @@ final class CorpusTests: XCTestCase {
   ///
   /// Not listed because Telex itself is ambiguous there, exactly as in other Vietnamese IMEs:
   /// a doubled tone key cancels the tone and prints one letter (boss → bos, pass → pas), and
-  /// x/r/s/f/j after a vowel are tone keys that form a valid syllable (text → tẽt, box → bõ,
-  /// user → ủe, data → dât).
+  /// x/r/s/f/j after a vowel are tone keys that form a valid syllable (box → bõ, user → ủe,
+  /// data → dât).
   private static let englishWords = [
     "class", "classes", "press", "dress", "glass", "grass", "cross", "access", "process",
     "success", "address", "window", "windows", "file", "json", "const", "string", "print",
     "email", "server", "exit", "index", "float", "return", "import", "export", "function",
     "package", "version", "name", "type", "object", "public", "private", "static", "while",
     "stuff", "http", "https", "github", "swift", "xcode", "macos", "linux", "docker",
+    "text", "next", "texts", "context",
   ]
 
   func testEnglishWordsAreRecoveredUnchanged() {
