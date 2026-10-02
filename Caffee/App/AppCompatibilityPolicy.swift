@@ -15,39 +15,60 @@ struct AppSendingConfig {
   let name: String
 }
 
-protocol AppCompatibilityPolicy {
-  var autoSwitchStrategyEnabled: Bool { get }
+/// User-selectable way to deliver replacements to one app.
+enum SendingStrategyOverride: String, CaseIterable, Defaults.Serializable {
+  case automatic
+  case fast
+  case balanced
+  case stepByStep
 
+  var title: String {
+    switch self {
+    case .automatic: return "Tự động"
+    case .fast: return "Nhanh"
+    case .balanced: return "Cân bằng"
+    case .stepByStep: return "Từng ký tự (chậm, tương thích nhất)"
+    }
+  }
+
+  /// nil means "use the built-in default for this app".
+  var strategy: SendingStrategy? {
+    switch self {
+    case .automatic: return nil
+    case .fast: return .batch
+    case .balanced: return .hybrid(backspaceDelayMicroseconds: 1000)
+    case .stepByStep: return .stepByStep
+    }
+  }
+}
+
+protocol AppCompatibilityPolicy {
   func replacementStrategy(for bundleId: String) -> SendingStrategy
-  func appName(for bundleId: String) -> String
   func shouldFixAutocomplete(for bundleId: String) -> Bool
 }
 
 struct DefaultAppCompatibilityPolicy: AppCompatibilityPolicy {
   private let autocompleteBundlePrefixes: [String]
   private let sendingConfigs: [AppSendingConfig]
-  private let autoSwitchEnabled: () -> Bool
+  private let overrides: () -> [String: SendingStrategyOverride]
 
   init(
     autocompleteBundlePrefixes: [String] = Self.autocompleteBundlePrefixes,
     sendingConfigs: [AppSendingConfig] = Self.sendingConfigs,
-    autoSwitchEnabled: @escaping () -> Bool = { Defaults[.autoSwitchStrategy] }
+    overrides: @escaping () -> [String: SendingStrategyOverride] = {
+      Defaults[.appStrategyOverrides]
+    }
   ) {
     self.autocompleteBundlePrefixes = autocompleteBundlePrefixes
     self.sendingConfigs = sendingConfigs
-    self.autoSwitchEnabled = autoSwitchEnabled
-  }
-
-  var autoSwitchStrategyEnabled: Bool {
-    autoSwitchEnabled()
+    self.overrides = overrides
   }
 
   func replacementStrategy(for bundleId: String) -> SendingStrategy {
-    sendingConfigs.first(where: { bundleId.hasPrefix($0.bundlePrefix) })?.strategy ?? .batch
-  }
-
-  func appName(for bundleId: String) -> String {
-    sendingConfigs.first(where: { bundleId.hasPrefix($0.bundlePrefix) })?.name ?? "Unknown App"
+    if let userChoice = overrides()[bundleId]?.strategy {
+      return userChoice
+    }
+    return sendingConfigs.first(where: { bundleId.hasPrefix($0.bundlePrefix) })?.strategy ?? .batch
   }
 
   func shouldFixAutocomplete(for bundleId: String) -> Bool {
@@ -56,39 +77,30 @@ struct DefaultAppCompatibilityPolicy: AppCompatibilityPolicy {
 }
 
 extension DefaultAppCompatibilityPolicy {
+  /// Matched with `hasPrefix`, so one entry also covers its beta/canary/nightly/snapshot variants.
   static let autocompleteBundlePrefixes = [
     // Chromium-based
-    "com.google.Chrome", "com.google.Chrome.canary", "com.google.Chrome.beta",
-    "org.chromium.Chromium",
-    "com.brave.Browser", "com.brave.Browser.beta", "com.brave.Browser.nightly",
-    "com.microsoft.edgemac", "com.microsoft.edgemac.Beta", "com.microsoft.edgemac.Dev",
-    "com.microsoft.edgemac.Canary",
-    "com.vivaldi.Vivaldi", "com.vivaldi.Vivaldi.snapshot",
-    "ru.yandex.desktop.yandex-browser", "com.naver.Whale",
+    "com.google.Chrome", "org.chromium.Chromium", "com.brave.Browser",
+    "com.microsoft.edge", "com.microsoft.Edge",
+    "com.vivaldi.Vivaldi", "ru.yandex.desktop.yandex-browser", "com.naver.Whale",
 
-    // Opera
-    "com.opera.Opera", "com.operasoftware.Opera", "com.operasoftware.OperaGX",
-    "com.operasoftware.OperaAir", "com.opera.OperaNext",
+    // Opera (com.opera.Opera also covers OperaNext; com.operasoftware.Opera covers GX/Air)
+    "com.opera.Opera", "com.operasoftware.Opera",
 
     // Firefox-based
     "org.mozilla.firefox", "org.mozilla.nightly", "org.torproject.torbrowser",
-    "org.librewolf.LibreWolf",
-    "app.zen-browser.zen",
+    "org.librewolf.LibreWolf", "app.zen-browser.zen",
 
     // Safari & WebKit-based
-    "com.apple.Safari", "com.apple.SafariTechnologyPreview",
-    "com.apple.Safari.TechnologyPreview",
-    "com.kagi.kagimacOS", "com.duckduckgo.mac", "com.duckduckgo.macos.browser",
+    "com.apple.Safari", "com.kagi.kagimacOS", "com.duckduckgo.mac",
 
-    // Arc & Others
+    // Arc & others
     "company.thebrowser.Browser", "company.thebrowser.Arc", "company.thebrowser.dia",
-    "com.sigmaos.sigmaos", "com.sigmaos.sigmaos.macos",
-    "com.pushplaylabs.sidekick", "com.firstversionist.polypane",
+    "com.sigmaos.sigmaos", "com.pushplaylabs.sidekick", "com.firstversionist.polypane",
     "ai.perplexity.comet", "com.electron.min",
 
-    // Office & Legacy
-    "com.microsoft.Excel", "com.microsoft.Office.Excel", "com.microsoft.edge",
-    "com.microsoft.Edge",
+    // Office
+    "com.microsoft.Excel", "com.microsoft.Office.Excel",
   ]
 
   static let sendingConfigs: [AppSendingConfig] = [
@@ -127,57 +139,4 @@ extension DefaultAppCompatibilityPolicy {
     AppSendingConfig(bundlePrefix: "org.tabby", strategy: .stepByStep, name: "Tabby"),
     AppSendingConfig(bundlePrefix: "io.alacritty", strategy: .stepByStep, name: "Alacritty"),
   ]
-}
-
-/// TransformationTracker monitors for repeated transformation failures
-/// and auto-switches the sending strategy when a pattern is detected.
-struct TransformationTracker {
-  /// Current sending strategy for the active app
-  var currentStrategy: SendingStrategy = .batch
-
-  /// Track consecutive transformation failures for auto-switching
-  private var consecutiveFailures = 0
-
-  /// Maximum failures before auto-switching to step-by-step mode
-  private let maxFailuresBeforeSwitch = 3
-
-  /// Track last input character for failure detection
-  private var lastInputChar: Character?
-
-  mutating func resetForApp(_ bundleId: String, policy: AppCompatibilityPolicy) {
-    currentStrategy = policy.replacementStrategy(for: bundleId)
-    consecutiveFailures = 0
-    lastInputChar = nil
-  }
-
-  /// Detects if a transformation likely failed based on input/output tracking.
-  /// Returns true if the transformation appears to have failed.
-  mutating func detectFailure(input: Character) -> Bool {
-    if let last = lastInputChar, last == input {
-      consecutiveFailures += 1
-    } else {
-      consecutiveFailures = 1
-    }
-    lastInputChar = input
-
-    return consecutiveFailures >= maxFailuresBeforeSwitch
-  }
-
-  /// Auto-switches to step-by-step mode if failures are detected.
-  mutating func autoSwitchIfNeeded(activeApp: String, policy: AppCompatibilityPolicy) {
-    guard policy.autoSwitchStrategyEnabled else { return }
-
-    // Don't auto-switch if already using step-by-step
-    if case .stepByStep = currentStrategy { return }
-
-    #if DEBUG
-      let appName = policy.appName(for: activeApp)
-      print(
-        "[Caffee] Auto-switched from \(currentStrategy) to step-by-step mode for \(appName) due to failures"
-      )
-    #endif
-
-    currentStrategy = .stepByStep
-    consecutiveFailures = 0
-  }
 }

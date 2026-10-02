@@ -16,16 +16,22 @@ enum TiengVietParser {
   // MARK: - API chính
 
   /// Phân tích chuỗi ký tự thành các thành phần âm tiết tiếng Việt
-  /// - Parameter chuKhongDau: Mảng ký tự chưa có dấu (từ bàn phím)
+  /// - Parameters:
+  ///   - chuKhongDau: Mảng ký tự chưa có dấu (từ bàn phím)
+  ///   - config: Cấu hình engine (phụ âm ngoại lai)
   /// - Returns: ThanhPhanTieng với các thành phần đã phân tích
-  static func parse(_ chuKhongDau: [Character]) -> ThanhPhanTieng {
+  static func parse(_ chuKhongDau: [Character], config: EngineConfig = EngineConfig())
+    -> ThanhPhanTieng
+  {
     var result = ThanhPhanTieng()
     var remaining = String(chuKhongDau)
 
     guard !remaining.isEmpty else { return result }
 
     // Bước 1: Tách phụ âm đầu bằng Trie
-    if let matched = TiengViet.PhuAmDauTrie.findLongestPrefix(in: remaining) {
+    if let matched = TiengViet.phuAmDauTrie(allowForeign: config.allowForeignConsonants)
+      .findLongestPrefix(in: remaining)
+    {
       result.phuAmDau = Array(matched)
       remaining = String(remaining.dropFirst(matched.count))
     }
@@ -39,8 +45,9 @@ enum TiengVietParser {
     // - Phụ âm "g" + nguyên âm "i": gì, gin, giếng, giết (g + i...)
     // Dùng classifyGi() để quyết định cách tách.
     if result.phuAmDau.count == 2,
-       result.phuAmDau[0].lowercased() == "g",
-       result.phuAmDau[1].lowercased() == "i" {
+      result.phuAmDau[0].lowercased() == "g",
+      result.phuAmDau[1].lowercased() == "i"
+    {
       let iChar = result.phuAmDau[1]
 
       switch classifyGi(

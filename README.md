@@ -6,10 +6,14 @@ Bộ gõ tiếng Việt đơn giản nhất (native cho mac, viết bằng Swift
 
 - Gõ tiếng Việt (đặt dấu theo kiểu cũ - vì tính thẩm mỹ và nhất quán - chữ viết là 1 data vì vậy nó nên nhất quán cách viết và đặt dấu)
 - Hỗ trợ 2 kiểu gõ thông dụng nhất ( TELEX và VNI )
-- Hỗ trợ nhớ chế độ gõ (Vi - En) theo ứng dụng (ví dụ app A là Vi, switch qua app B trước đó là En, switch lại app A thì chuyển về Vi)
+- Hỗ trợ nhớ chế độ gõ (Vi - En) theo ứng dụng (ví dụ app A là Vi, switch qua app B trước đó là En, switch lại app A thì chuyển về Vi). Lựa chọn được lưu lại sau khi mở lại app, và có thể ghim một ứng dụng luôn gõ Việt hoặc luôn gõ Anh (Cài đặt > Ứng dụng)
+- Chọn cách gửi phím riêng cho từng ứng dụng (Cài đặt > Ứng dụng) để sửa lỗi chữ ở các app khó tính như Terminal, Electron, Office
+- Chọn vị trí đặt dấu (hòa, thủy hay hoà, thuỷ), bật/tắt kiểm tra chính tả và phụ âm ngoại lai (z, w, j, f)
+- Hiện nhanh chữ V/E giữa màn hình mỗi khi đổi chế độ
 - Hỗ trợ fix lỗi thanh địa chỉ của trình duyệt và Excel (do tính năng tự gợi ý)
 - Hỗ trợ tạo Hot key để chuyển nhanh chế độ gõ En - Vi trong app mà không cần bấm chuột
 - Hỗ trợ khởi động cùng hệ điều hành (và tự động chạy ngầm trên System Menu)
+- Điều khiển từ script / Shortcuts / Raycast (xem mục **Tự động hóa** bên dưới)
 
 ## Cài đặt
 
@@ -17,7 +21,7 @@ Bộ gõ tiếng Việt đơn giản nhất (native cho mac, viết bằng Swift
 2. Kéo thả app tên Caffee vào thư mục Applications
 3. Mở app Caffee bằng LaunchPad hoặc Spotlight (lần đầu macOS sẽ hỏi có muốn mở app không, xác nhận Mở)
 4. Sau khi mở app lần đầu cần cài đặt quyền hệ thống để bộ gõ hoạt động được (theo hướng dẫn trên App)
-5. Sau khi làm theo hướng dẫn trên App, tắt App và mở lại 1 lần nữa là có thể dùng được bình thường
+5. Ngay sau khi cấp quyền, bộ gõ tự hoạt động (không cần mở lại App). Nếu biểu tượng trên menu bar báo lỗi, chọn "Thử lại" trong menu
 
 ## Nâng cấp phiên bản
 
@@ -70,6 +74,18 @@ Mọi commits đều được review và test kĩ trước khi push và release 
 
   Nếu có PID, dùng `ps -p PID -o comm=` (thay `PID` bằng số vừa tìm được) để xem tiến trình. Thông tin chẩn đoán này có thể không xuất hiện trên một số phiên bản macOS; không có kết quả không có nghĩa là Secure Input đã tắt. Không cần và không nên buộc tắt bảo vệ mật khẩu từ Caffee.
 - Tham khảo: [Apple TN2150 — Using Secure Event Input Fairly](https://developer.apple.com/library/archive/technotes/tn2150/_index.html).
+
+## Tự động hóa
+
+Có thể đổi chế độ gõ từ Terminal, script, Shortcuts, Raycast hay Alfred:
+
+```sh
+open caffee://mode/vi          # bật tiếng Việt (en: tắt, toggle: đảo)
+open caffee://method/telex     # đổi kiểu gõ (vni)
+echo vi > ~/Library/Application\ Support/Caffee/switch   # vi | en | toggle | telex | vni
+```
+
+File điều khiển nằm trong thư mục riêng của bạn (không dùng `/tmp` nữa vì người dùng khác trên máy có thể ghi vào đó). Để báo lỗi, vào Cài đặt > Nâng cao > **Xuất nhật ký chẩn đoán** và đính kèm file.
 
 ## Package .dmg file
 

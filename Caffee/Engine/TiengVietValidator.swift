@@ -35,7 +35,7 @@ enum TiengVietValidator {
     "a": ["c", "ch", "m", "n", "ng", "nh", "p", "t"],
     "ă": ["c", "m", "n", "ng", "p", "t"],
     "â": ["c", "m", "n", "ng", "p", "t"],
-    "e": ["c", "m", "n", "p", "t"],
+    "e": ["c", "m", "n", "ng", "p", "t"],  // xẻng, kẻng, leng keng
     "ê": ["c", "ch", "m", "n", "nh", "p", "t"],
     "i": ["c", "ch", "m", "n", "nh", "p", "t"],
     "o": ["c", "m", "n", "ng", "p", "t"],
@@ -63,8 +63,8 @@ enum TiengVietValidator {
     // oă - xoắn, loắt...
     "oă": ["c", "m", "n", "ng", "p", "t"],
 
-    // uâ - luật, xuân...
-    "uâ": ["n", "t"],
+    // uâ - luật, xuân, khuâng...
+    "uâ": ["n", "ng", "t"],
 
     // uê - huệch, tuềnh... (hiếm)
     "uê": ["c", "ch", "n", "nh"],

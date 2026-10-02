@@ -1,0 +1,16 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test
+        run: |
+          xcodebuild test -scheme Caffee -destination 'platform=macOS' \
+            -only-testing:CaffeeTests CODE_SIGNING_ALLOWED=NO

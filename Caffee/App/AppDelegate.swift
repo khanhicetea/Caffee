@@ -2,20 +2,27 @@ import Cocoa
 import Combine
 import Defaults
 import Foundation
+import Observation
 import Sparkle
 import SwiftUI
-import Observation
 
-// AppDelegate manages the application lifecycle and background services
+// AppDelegate manages the application lifecycle and composes the background services once.
+@MainActor
 @Observable
-class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
 
   var appState = AppState()
-  var isTrusted = false
   var updateItem: SUAppcastItem?
+
+  /// Whether macOS has granted Accessibility to Caffee.
+  var isTrusted: Bool { appState.permission.isTrusted }
 
   // Sparkle updater controller for auto-updates
   var updaterController: SPUStandardUpdaterController!
+
+  @ObservationIgnored private lazy var automation = AutomationService(controller: appState)
+  @ObservationIgnored private let secureInputHelp = SecureInputHelpPanel()
+  @ObservationIgnored private var cancellables = Set<AnyCancellable>()
 
   override init() {
     super.init()
@@ -25,8 +32,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
       userDriverDelegate: nil
     )
   }
-
-  private var cancellables = Set<AnyCancellable>()
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     // Hide dock icon since we use MenuBarExtra
@@ -43,45 +48,57 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
       }
       .store(in: &cancellables)
 
-    checkTrustStatus()
+    appState.start()
+    appState.onModeChange = { enabled, reason in
+      // The menu already shows its own checkmark.
+      guard reason != .menu, Defaults[.showModeHUD] else { return }
+      ModeHUD.shared.show(vietnamese: enabled)
+    }
 
-    if isTrusted {
-      // Set up the event tap if the process is trusted
-      appState.storeTrustedAppVersion()
-      appState.eventHook.setupEventTap(give: appState)
+    // Typing support starts as soon as Accessibility is granted, with no relaunch.
+    appState.permission.onChange = { [weak self] trusted in
+      if trusted { self?.setupTrustedSession() }
+    }
 
-      appState.load()
-      appState.setEnabled(set: true)
-      appState.registerSwitchFileMonitor()
-
-    } else if appState.isNewAppVersion() {
-      openUpgradeNewVersion()
+    if appState.permission.refresh() {
+      setupTrustedSession()
     } else {
+      handleMissingPermission()
+    }
+  }
+
+  private func handleMissingPermission() {
+    appState.permission.start()
+
+    guard appState.isNewAppVersion() else {
       openGuide()
+      return
     }
-    
-    // Periodically check trust status if not trusted
-    if !isTrusted {
-        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
-            self?.checkTrustStatus()
-            if self?.isTrusted == true {
-                timer.invalidate()
-                self?.setupTrustedSession()
-            }
-        }
+    // The grant normally survives an update (stable signing identity), so give macOS a moment
+    // before asking the user to toggle it again.
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+      guard let self, !self.appState.permission.refresh() else { return }
+      self.openUpgradeNewVersion()
     }
   }
-  
-  func checkTrustStatus() {
-      isTrusted = appState.eventHook.isTrusted(prompt: false)
-  }
-  
+
   func setupTrustedSession() {
-      appState.storeTrustedAppVersion()
-      appState.eventHook.setupEventTap(give: appState)
-      appState.load()
-      appState.setEnabled(set: true)
-      appState.registerSwitchFileMonitor()
+    appState.permission.stop()
+    appState.storeTrustedAppVersion()
+    appState.eventHook.setupEventTap(give: appState)
+    appState.setEnabled(set: true, reason: .menu)
+    automation.start()
+    appState.syncFrontmostApp()
+  }
+
+  /// Retries creating the event tap after a failure (menu "Thử lại").
+  func retryEventTap() {
+    guard appState.permission.refresh() else { return }
+    appState.eventHook.setupEventTap(give: appState)
+  }
+
+  func application(_ application: NSApplication, open urls: [URL]) {
+    urls.forEach(automation.handle(url:))
   }
 
   // Opens onboarding guide
@@ -106,26 +123,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
   @objc func openSettings() {
     NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-        NSApp.activate(ignoringOtherApps: true)
+      NSApp.activate(ignoringOtherApps: true)
     }
   }
 
   // Secure Input belongs to the app that enabled it, not to Caffee.
   func showSecureInputHelp() {
     guard appState.eventHook.refreshSecureInputState() else { return }
-
-    let alert = NSAlert()
-    alert.messageText = "macOS đang bật Secure Input"
-    alert.informativeText = """
-      macOS đang chặn bộ gõ nhận bàn phím để bảo vệ dữ liệu nhạy cảm.
-
-      Hãy đóng ô/hộp thoại nhập mật khẩu. Nếu đã chuyển sang ô văn bản thường mà vẫn bị khóa, hãy thoát và mở lại ứng dụng đã bật Secure Input (ví dụ: trình duyệt, Terminal hoặc ứng dụng quản lý mật khẩu).
-
-      Caffee không thể tắt Secure Input của ứng dụng khác. Thoát và mở lại Caffee sẽ không gỡ được khóa này. Bộ gõ sẽ tự hoạt động lại khi ứng dụng đó nhả khóa.
-      """
-    alert.addButton(withTitle: "Đã hiểu")
-    NSApp.activate(ignoringOtherApps: true)
-    alert.runModal()
+    secureInputHelp.show(holder: SecureInputInfo.holderName())
   }
 
   // Quits the application
@@ -145,17 +150,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
 }
 
 extension AppDelegate {
-  func updater(_ updater: SPUUpdater, willScheduleUpdateCheckAfterDelay delay: TimeInterval) {
+  nonisolated func updater(
+    _ updater: SPUUpdater, willScheduleUpdateCheckAfterDelay delay: TimeInterval
+  ) {
     // This is called when the updater is about to schedule a background update check.
     // By implementing this method, we acknowledge that this is a background app
     // and Sparkle will not log the "gentle reminders" warning.
   }
 
-  func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
-    updateItem = item
+  nonisolated func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
+    // Sparkle calls its delegate on the main thread.
+    nonisolated(unsafe) let item = item
+    MainActor.assumeIsolated { updateItem = item }
   }
 
-  func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
-    updateItem = nil
+  nonisolated func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
+    MainActor.assumeIsolated { updateItem = nil }
   }
 }

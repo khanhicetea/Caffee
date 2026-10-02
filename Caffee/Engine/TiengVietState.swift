@@ -28,17 +28,25 @@ struct TiengVietState {
   let dauMu: DauMu
   /// Có gạch ngang chữ D không (d → đ)
   let gachD: Bool
+  /// Cấu hình engine áp dụng cho state này
+  let config: EngineConfig
   /// Cached parsed syllable components (computed once per state)
   private let _cachedThanhPhan: ThanhPhanTieng?
 
-  /// State rỗng - điểm khởi đầu
-  static let empty = TiengVietState(
-    chuKhongDau: [],
-    dauThanh: .bang,
-    dauMu: .khongMu,
-    gachD: false,
-    cachedThanhPhan: ThanhPhanTieng(phuAmDau: [], nguyenAm: [], phuAmCuoi: [], conLai: [])
-  )
+  /// State rỗng - điểm khởi đầu (cấu hình mặc định)
+  static let empty = TiengVietState.empty(config: EngineConfig())
+
+  /// State rỗng với cấu hình chỉ định
+  static func empty(config: EngineConfig) -> TiengVietState {
+    TiengVietState(
+      chuKhongDau: [],
+      dauThanh: .bang,
+      dauMu: .khongMu,
+      gachD: false,
+      config: config,
+      cachedThanhPhan: ThanhPhanTieng(phuAmDau: [], nguyenAm: [], phuAmCuoi: [], conLai: [])
+    )
+  }
 
   /// Internal initializer with cached thanhPhan
   private init(
@@ -46,12 +54,14 @@ struct TiengVietState {
     dauThanh: DauThanh,
     dauMu: DauMu,
     gachD: Bool,
+    config: EngineConfig,
     cachedThanhPhan: ThanhPhanTieng?
   ) {
     self.chuKhongDau = chuKhongDau
     self.dauThanh = dauThanh
     self.dauMu = dauMu
     self.gachD = gachD
+    self.config = config
     self._cachedThanhPhan = cachedThanhPhan
   }
 
@@ -59,7 +69,7 @@ struct TiengVietState {
 
   /// Các thành phần âm tiết đã phân tích - cached để tránh parse lại nhiều lần
   var thanhPhanTieng: ThanhPhanTieng {
-    _cachedThanhPhan ?? TiengVietParser.parse(chuKhongDau)
+    _cachedThanhPhan ?? TiengVietParser.parse(chuKhongDau, config: config)
   }
 
   /// Chuỗi đã biến đổi với dấu tiếng Việt
@@ -69,7 +79,8 @@ struct TiengVietState {
       thanhPhanTieng: thanhPhanTieng,
       dauThanh: dauThanh,
       dauMu: dauMu,
-      gachD: gachD
+      gachD: gachD,
+      tonePlacement: config.tonePlacement
     )
   }
 
@@ -79,7 +90,7 @@ struct TiengVietState {
   /// Kiểm tra âm tiết có cần recovery không (không hợp lệ tiếng Việt)
   /// Khi true, nên dùng chuỗi gốc thay vì chuỗi đã biến đổi
   var needsRecovery: Bool {
-    TiengVietValidator.needsRecovery(thanhPhanTieng, dauMu: dauMu)
+    config.spellingCheck && TiengVietValidator.needsRecovery(thanhPhanTieng, dauMu: dauMu)
   }
 
   /// Chuỗi gốc (dùng khi cần recovery)
@@ -100,7 +111,8 @@ extension TiengVietState {
       dauThanh: dauThanh,
       dauMu: dauMu,
       gachD: gachD,
-      cachedThanhPhan: TiengVietParser.parse(newChuKhongDau)
+      config: config,
+      cachedThanhPhan: TiengVietParser.parse(newChuKhongDau, config: config)
     )
   }
 
@@ -109,7 +121,7 @@ extension TiengVietState {
     guard !chuKhongDau.isEmpty else { return self }
 
     let newChuKhongDau = Array(chuKhongDau.dropLast())
-    let newThanhPhan = TiengVietParser.parse(newChuKhongDau)
+    let newThanhPhan = TiengVietParser.parse(newChuKhongDau, config: config)
 
     // Reset dấu nếu không còn nguyên âm
     var newDauMu = dauMu
@@ -125,6 +137,7 @@ extension TiengVietState {
       dauThanh: newDauThanh,
       dauMu: newDauMu,
       gachD: gachD,
+      config: config,
       cachedThanhPhan: newThanhPhan
     )
   }
@@ -136,6 +149,7 @@ extension TiengVietState {
       dauThanh: dauThanh == tone ? .bang : tone,
       dauMu: dauMu,
       gachD: gachD,
+      config: config,
       cachedThanhPhan: _cachedThanhPhan
     )
   }
@@ -147,6 +161,7 @@ extension TiengVietState {
       dauThanh: dauThanh,
       dauMu: dauMu == mu ? .khongMu : mu,
       gachD: gachD,
+      config: config,
       cachedThanhPhan: _cachedThanhPhan
     )
   }
@@ -158,6 +173,7 @@ extension TiengVietState {
       dauThanh: dauThanh,
       dauMu: dauMu,
       gachD: !gachD,
+      config: config,
       cachedThanhPhan: _cachedThanhPhan
     )
   }

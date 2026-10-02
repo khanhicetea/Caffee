@@ -31,6 +31,11 @@ struct WordBuffer {
   var previousWordState: TiengVietState?
   var wordState = TiengVietState.empty
 
+  /// Engine options applied to every word started from this buffer.
+  var config = EngineConfig() {
+    didSet { wordState = .empty(config: config) }
+  }
+
   /// Last valid snapshot for single-step rollback out of recovery mode.
   var lastValidSnapshot: Snapshot?
 
@@ -38,12 +43,10 @@ struct WordBuffer {
 
   mutating func newWord(storePrevious: Bool = false) {
     previousWordState = nil
-    if !wordState.isBlank {
-      if storePrevious {
-        previousWordState = wordState
-      }
-      wordState = .empty
+    if !wordState.isBlank && storePrevious {
+      previousWordState = wordState
     }
+    wordState = .empty(config: config)
 
     keys = []
     lastValidSnapshot = nil
@@ -54,7 +57,7 @@ struct WordBuffer {
 
   // MARK: - Pop (Backspace)
 
-  mutating func pop(engine: TypingMethod) -> (Int, [Character]) {
+  mutating func pop(engine: TypingMethod) -> Replacement {
     lastTransformed = transformed
 
     // Single-step rollback: if we are in recovery and it was caused by the LATEST keystroke
@@ -65,14 +68,8 @@ struct WordBuffer {
       stopProcessing = valid.stopProcessing
       lastValidSnapshot = nil
 
-      let (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
-        from: lastTransformed, to: transformed)
-
-      if numBackspaces == 1 && diffChars.isEmpty {
-        return (0, [])
-      }
-
-      return (numBackspaces, diffChars)
+      return Self.letSystemDeleteOneCharacter(
+        Replacement.diff(from: lastTransformed, to: transformed))
     }
 
     // Normal pop: restore previous word on empty buffer
@@ -84,7 +81,7 @@ struct WordBuffer {
       lastTransformed = transformed
       stopProcessing = false
       lastValidSnapshot = nil
-      return (0, [])  // Let OS handle the backspace that brought us here
+      return .none  // Let OS handle the backspace that brought us here
     }
 
     // Normal pop: remove last character
@@ -100,15 +97,13 @@ struct WordBuffer {
 
     lastValidSnapshot = nil
 
-    let (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
-      from: lastTransformed, to: transformed)
+    return Self.letSystemDeleteOneCharacter(
+      Replacement.diff(from: lastTransformed, to: transformed))
+  }
 
-    // If it's a simple 1-char deletion, let the OS handle it
-    if numBackspaces == 1 && diffChars.isEmpty {
-      return (0, [])
-    }
-
-    return (numBackspaces, diffChars)
+  /// A plain one-character deletion is already what the Backspace key does: let it through.
+  private static func letSystemDeleteOneCharacter(_ replacement: Replacement) -> Replacement {
+    replacement.deleteCount == 1 && replacement.insert.isEmpty ? .none : replacement
   }
 
   // MARK: - Push (New Character)
@@ -169,9 +164,8 @@ struct WordBuffer {
 // MARK: - InputProcessor
 
 class InputProcessor {
-  static let NewWordKeys = "`!@#$%^&*()-=[]\\;',./~_+{}|:\"<>?"
-  static let NewWordTaskKeys: [TaskKey] = [.Enter, .Space, .Tab]
-  static let JumpTaskKeys: [TaskKey] = [.Home, .End, .ArrowUp, .ArrowDown, .ArrowLeft, .ArrowRight]
+  static let newWordKeys: Set<Character> = Set("`!@#$%^&*()-=[]\\;',./~_+{}|:\"<>?")
+  static let newWordTaskKeys: [TaskKey] = [.enter, .space, .tab]
 
   public var engine: TypingMethod
   public var typingMethod: TypingMethods
@@ -184,55 +178,22 @@ class InputProcessor {
   /// Word buffer manages the current word state
   var wordBuffer = WordBuffer()
 
-  /// Transformation tracker manages per-app strategy and failure detection
-  var strategyTracker = TransformationTracker()
-
-  /// Track pasteboard change count to detect external paste operations
-  private var lastPasteboardChangeCount: Int = NSPasteboard.general.changeCount
-
-  // MARK: - Convenience accessors (preserve existing API for tests)
-
-  public var keys: [Character] {
-    get { wordBuffer.keys }
-    set { wordBuffer.keys = newValue }
-  }
-
-  public var stopProcessing: Bool {
-    get { wordBuffer.stopProcessing }
-    set { wordBuffer.stopProcessing = newValue }
-  }
-
-  public var lastTransformed: String {
-    get { wordBuffer.lastTransformed }
-    set { wordBuffer.lastTransformed = newValue }
-  }
-
-  public var transformed: String {
-    get { wordBuffer.transformed }
-    set { wordBuffer.transformed = newValue }
-  }
-
-  public var previousWordState: TiengVietState? {
-    get { wordBuffer.previousWordState }
-    set { wordBuffer.previousWordState = newValue }
-  }
-
-  public var wordState: TiengVietState {
-    get { wordBuffer.wordState }
-    set { wordBuffer.wordState = newValue }
-  }
+  /// How replacements are delivered to the active app.
+  private(set) var sendingStrategy: SendingStrategy = .batch
 
   // MARK: - Init & Configuration
 
   init(
     method: TypingMethods,
     keyboardLayout: KeyboardLayout = KeyboardUS(),
-    replacementSender: ReplacementSender = EventSimulatorReplacementSender(),
+    replacementSender: ReplacementSender = KeyEventPoster(),
     selectionDetector: SelectionDetector = AccessibilitySelectionDetector(),
-    compatibilityPolicy: AppCompatibilityPolicy = DefaultAppCompatibilityPolicy()
+    compatibilityPolicy: AppCompatibilityPolicy = DefaultAppCompatibilityPolicy(),
+    config: EngineConfig = EngineConfig()
   ) {
     typingMethod = method
-    engine = typingMethod == .Telex ? Telex() : VNI()
+    engine = typingMethod == .telex ? Telex() : VNI()
+    wordBuffer.config = config
     self.keyboardLayout = keyboardLayout
     self.replacementSender = replacementSender
     self.selectionDetector = selectionDetector
@@ -241,13 +202,20 @@ class InputProcessor {
 
   public func changeTypingMethod(newMethod: TypingMethods) {
     typingMethod = newMethod
-    engine = typingMethod == .Telex ? Telex() : VNI()
+    engine = typingMethod == .telex ? Telex() : VNI()
+    newWord()
+  }
+
+  /// Applies new engine options (foreign consonants, tone placement, spelling check).
+  public func changeEngineConfig(_ config: EngineConfig) {
+    guard config != wordBuffer.config else { return }
+    wordBuffer.config = config
     newWord()
   }
 
   public func changeActiveApp(_ app: String) {
     activeApp = app
-    strategyTracker.resetForApp(app, policy: compatibilityPolicy)
+    sendingStrategy = compatibilityPolicy.replacementStrategy(for: app)
     selectionDetector.invalidateCache()
   }
 
@@ -258,7 +226,7 @@ class InputProcessor {
     selectionDetector.invalidateCache()
   }
 
-  public func pop() -> (Int, [Character]) {
+  public func pop() -> Replacement {
     return wordBuffer.pop(engine: engine)
   }
 
@@ -270,15 +238,7 @@ class InputProcessor {
 
   public func handleEvent(event: CGEvent) -> Unmanaged<CGEvent>? {
     let inputEvent = KeyboardInputEvent(event: event, keyboardLayout: keyboardLayout)
-
-    // Detect if a paste operation occurred (pasteboard changed externally)
-    let currentPasteboardCount = NSPasteboard.general.changeCount
-    if currentPasteboardCount != lastPasteboardChangeCount {
-      lastPasteboardChangeCount = currentPasteboardCount
-      newWord()
-    }
-
-    return handleInputEvent(inputEvent) == .handled ? nil : Unmanaged.passRetained(event)
+    return handleInputEvent(inputEvent) == .handled ? nil : Unmanaged.passUnretained(event)
   }
 
   func handleInputEvent(_ event: KeyboardInputEvent) -> InputEventResult {
@@ -291,29 +251,37 @@ class InputProcessor {
     // Dispatch based on key type
     if let taskKey = keyboardLayout.mapTask(keyCode: event.keyCode) {
       return handleTaskKey(taskKey)
-    } else if let newChar = keyboardLayout.mapText(keyCode: event.keyCode, withShift: event.shifted) {
+    }
+
+    // Prefer what the active layout really types; fall back to the US key map only when the
+    // event carries no system information (synthetic input, tests).
+    let newChar =
+      event.resolvedFromSystem
+      ? event.character
+      : keyboardLayout.mapText(keyCode: event.keyCode, withShift: event.shifted)
+    if let newChar {
       return handleTextChar(newChar)
     }
 
+    // Anything else (Page Up/Down, Forward Delete, Insert, non-Latin input, ...) may move the
+    // caret or change the text, so the current word can no longer be trusted.
+    newWord()
     return .passThrough
   }
 
   // MARK: - Private Event Handlers
 
   private func handleTaskKey(_ taskKey: TaskKey) -> InputEventResult {
-    if InputProcessor.NewWordTaskKeys.contains(taskKey) {
+    if InputProcessor.newWordTaskKeys.contains(taskKey) {
       newWord(storePrevious: true)
-    } else if taskKey == .Delete {
-      let (numBackspaces, diffChars) = pop()
-      if numBackspaces > 0 || !diffChars.isEmpty {
-        replacementSender.sendReplacement(
-          backspaceCount: numBackspaces,
-          diffChars: diffChars,
-          strategy: strategyTracker.currentStrategy
-        )
+    } else if taskKey == .delete {
+      let replacement = pop()
+      if !replacement.isEmpty {
+        replacementSender.sendReplacement(replacement, strategy: sendingStrategy)
         return .handled
       }
-    } else if InputProcessor.JumpTaskKeys.contains(taskKey) {
+    } else {
+      // Arrows, Home/End, Escape and F-keys: the caret or focus may have moved.
       newWord()
     }
     return .passThrough
@@ -321,25 +289,18 @@ class InputProcessor {
 
   private func handleTextChar(_ newChar: Character) -> InputEventResult {
     // Check if this is a word-ending character (punctuation, etc.) BEFORE processing
-    if let _ = InputProcessor.NewWordKeys.firstIndex(of: newChar) {
+    if InputProcessor.newWordKeys.contains(newChar) {
       newWord(storePrevious: true)
       return .passThrough
     }
 
     push(char: newChar)
-    let (numBackspaces, diffChars) = EventSimulator.calcKeyStrokes(
-      from: lastTransformed, to: transformed)
+    let replacement = Replacement.diff(
+      from: wordBuffer.lastTransformed, to: wordBuffer.transformed)
 
     // If the only change is the new character itself, let it pass through
-    if let firstDiffChar = diffChars.first,
-      diffChars.count == 1 && firstDiffChar == newChar && numBackspaces == 0
-    {
+    if replacement.deleteCount == 0 && replacement.insert == [newChar] {
       return .passThrough
-    }
-
-    // Check for transformation failures and auto-switch if needed
-    if strategyTracker.detectFailure(input: newChar) {
-      strategyTracker.autoSwitchIfNeeded(activeApp: activeApp, policy: compatibilityPolicy)
     }
 
     if compatibilityPolicy.shouldFixAutocomplete(for: activeApp)
@@ -355,18 +316,10 @@ class InputProcessor {
       // fall through to the backspace path below. Canvas-based web editors
       // ignore synthetic Shift+Left, so select-and-replace would leave the old
       // characters behind.
-      replacementSender.sendSelectAndReplace(
-        selectLeftCount: numBackspaces,
-        diffChars: diffChars,
-        strategy: strategyTracker.currentStrategy
-      )
+      replacementSender.sendSelectAndReplace(replacement, strategy: sendingStrategy)
       selectionDetector.invalidateCache()
     } else {
-      replacementSender.sendReplacement(
-        backspaceCount: numBackspaces,
-        diffChars: diffChars,
-        strategy: strategyTracker.currentStrategy
-      )
+      replacementSender.sendReplacement(replacement, strategy: sendingStrategy)
     }
     return .handled
   }

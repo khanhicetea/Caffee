@@ -66,33 +66,34 @@ class KeyboardUS: KeyboardLayout {
     ]
 
     taskMap = [
-      36: .Enter,
-      52: .Enter,
-      48: .Tab,
-      49: .Space,
-      51: .Delete,
-      53: .Escape,
+      36: .enter,
+      52: .enter,
+      76: .enter,  // Keypad Enter
+      48: .tab,
+      49: .space,
+      51: .delete,
+      53: .escape,
       // Move
-      115: .Home,
-      119: .End,
+      115: .home,
+      119: .end,
       // Arrow keys
-      123: .ArrowLeft,
-      124: .ArrowRight,
-      125: .ArrowDown,
-      126: .ArrowUp,
+      123: .arrowLeft,
+      124: .arrowRight,
+      125: .arrowDown,
+      126: .arrowUp,
       // Function keys
-      122: .F1,
-      120: .F2,
-      99: .F3,
-      118: .F4,
-      96: .F5,
-      97: .F6,
-      98: .F7,
-      100: .F8,
-      101: .F9,
-      109: .F10,
-      103: .F11,
-      111: .F12,
+      122: .f1,
+      120: .f2,
+      99: .f3,
+      118: .f4,
+      96: .f5,
+      97: .f6,
+      98: .f7,
+      100: .f8,
+      101: .f9,
+      109: .f10,
+      103: .f11,
+      111: .f12,
     ]
   }
 

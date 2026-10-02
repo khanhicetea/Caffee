@@ -7,14 +7,15 @@
 
 import Foundation
 
-class TrieNode {
+/// Nodes are only mutated while a trie is being built; afterwards the trie is read-only.
+final class TrieNode: @unchecked Sendable {
   var children: [Character: TrieNode] = [:]
   var isEndOfWord: Bool = false
   // Store the actual matched string for convenience
   var value: String?
 }
 
-class Trie {
+final class Trie: @unchecked Sendable {
   private let root = TrieNode()
 
   /// Insert a string into the Trie
@@ -36,7 +37,7 @@ class Trie {
   func findLongestPrefix(in text: String) -> String? {
     var current = root
     var longestMatch: String?
-    
+
     for char in text {
       if let nextNode = current.children[char] {
         current = nextNode
@@ -47,7 +48,7 @@ class Trie {
         break
       }
     }
-    
+
     return longestMatch
   }
 }

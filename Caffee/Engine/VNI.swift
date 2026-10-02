@@ -36,7 +36,7 @@
 
 import Foundation
 
-class VNI: TypingMethod {
+struct VNI: TypingMethod {
 
   // MARK: - TypingMethod Protocol
 
@@ -103,38 +103,10 @@ class VNI: TypingMethod {
     return state.pop()
   }
 
-  // MARK: - Private Helpers
-
-  private func rawResult(_ newState: TiengVietState, keyStr: String) -> TypingMethodResult {
-    if newState.needsRecovery {
-      return .recover(newState)
-    }
-
-    if shouldToggleToRaw(keyStr: keyStr) {
-      return .toggleToRaw(newState)
-    }
-
-    return .insertRaw(newState)
-  }
-
-  private func markResult(
-    _ newState: TiengVietState,
-    char: Character,
-    keyStr: String
-  ) -> TypingMethodResult {
-    if shouldToggleToRaw(keyStr: keyStr) {
-      return .toggleToRaw(newState.push(char))
-    }
-
-    if newState.needsRecovery {
-      return .recover(newState)
-    }
-
-    return .applyMark(newState)
-  }
+  // MARK: - Toggle rules
 
   /// Kiểm tra có nên chuyển sang chuỗi thô VNI không.
-  private func shouldToggleToRaw(keyStr: String) -> Bool {
+  func shouldToggleToRaw(keyStr: String) -> Bool {
     let lowerKeyStr = keyStr.lowercased()
 
     // 1. Check simple suffixes (double tap tone marks)

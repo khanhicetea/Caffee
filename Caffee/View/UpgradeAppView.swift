@@ -13,7 +13,6 @@ struct UpgradeAppView: View {
 
   @State private var hasRequestedPermission = false
   @State private var permissionGranted = false
-  private let permissionTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
   var body: some View {
     VStack(spacing: 16) {
@@ -73,7 +72,7 @@ struct UpgradeAppView: View {
           }
           .font(.system(size: 16, weight: .medium))
 
-          Button(action: relaunchApp) {
+          Button(action: SystemActions.relaunchApp) {
             HStack {
               Text("Khởi động lại")
               Image(systemName: "arrow.clockwise")
@@ -86,7 +85,7 @@ struct UpgradeAppView: View {
       } else {
         VStack(spacing: 10) {
           Button(action: {
-            openAccessibilitySettings()
+            SystemActions.openAccessibilitySettings()
             hasRequestedPermission = true
           }) {
             HStack {
@@ -113,30 +112,8 @@ struct UpgradeAppView: View {
       Spacer().frame(height: 16)
     }
     .frame(width: 520, height: 480)
-    .onReceive(permissionTimer) { _ in
-      if hasRequestedPermission && !permissionGranted {
-        permissionGranted = appState.eventHook.isTrusted(prompt: false)
-      }
-    }
-  }
-
-  private func openAccessibilitySettings() {
-    if let url = URL(
-      string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
-    {
-      NSWorkspace.shared.open(url)
-    }
-  }
-
-  private func relaunchApp() {
-    let url = Bundle.main.bundleURL
-    let configuration = NSWorkspace.OpenConfiguration()
-    configuration.createsNewApplicationInstance = true
-
-    NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, _ in
-      DispatchQueue.main.async {
-        NSApp.terminate(nil)
-      }
+    .onChange(of: appState.permission.isTrusted) { _, trusted in
+      permissionGranted = trusted
     }
   }
 }

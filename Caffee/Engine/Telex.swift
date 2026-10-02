@@ -36,7 +36,7 @@
 
 import Foundation
 
-class Telex: TypingMethod {
+struct Telex: TypingMethod {
 
   // MARK: - TypingMethod Protocol
 
@@ -78,8 +78,11 @@ class Telex: TypingMethod {
 
       // Phím dấu mũ: aa=â, ee=ê, oo=ô (gõ đúp nguyên âm)
       case "a", "o", "e", "A", "O", "E":
-        if thanhPhan.nguyenAmChua(char: char)
-          || thanhPhan.nguyenAmChua(char: char.uppercased().first!)
+        // "oe" + "o" spells the triphthong "oeo" (ngoèo, khoèo), not a circumflex.
+        let isOeo = String(thanhPhan.nguyenAm).lowercased() == "oe" && (char == "o" || char == "O")
+        if !isOeo
+          && (thanhPhan.nguyenAmChua(char: char)
+            || thanhPhan.nguyenAmChua(char: char.uppercased().first!))
         {
           return markResult(state.withMu(.muUp), char: char, keyStr: keyStr)
         }
@@ -111,44 +114,15 @@ class Telex: TypingMethod {
     state.pop()
   }
 
-  // MARK: - Private Helpers
-
-  private func rawResult(_ newState: TiengVietState, keyStr: String) -> TypingMethodResult {
-    if newState.needsRecovery {
-      return .recover(newState)
-    }
-
-    if shouldToggleToRaw(keyStr: keyStr) {
-      return .toggleToRaw(newState)
-    }
-
-    return .insertRaw(newState)
-  }
-
-  private func markResult(
-    _ newState: TiengVietState,
-    char: Character,
-    keyStr: String
-  ) -> TypingMethodResult {
-    if shouldToggleToRaw(keyStr: keyStr) {
-      return .toggleToRaw(newState.push(char))
-    }
-
-    if newState.needsRecovery {
-      return .recover(newState)
-    }
-
-    return .applyMark(newState)
-  }
+  // MARK: - Toggle rules
 
   /// Kiểm tra có nên chuyển sang chuỗi thô Telex không.
-  private func shouldToggleToRaw(keyStr: String) -> Bool {
+  func shouldToggleToRaw(keyStr: String) -> Bool {
     let lowerKeyStr = keyStr.lowercased()
 
     // 1. Check simple suffixes (double tap tone marks or w)
-    if lowerKeyStr.hasSuffix("ss") || lowerKeyStr.hasSuffix("ff") ||
-      lowerKeyStr.hasSuffix("rr") || lowerKeyStr.hasSuffix("xx") ||
-      lowerKeyStr.hasSuffix("jj") || lowerKeyStr.hasSuffix("ww")
+    if lowerKeyStr.hasSuffix("ss") || lowerKeyStr.hasSuffix("ff") || lowerKeyStr.hasSuffix("rr")
+      || lowerKeyStr.hasSuffix("xx") || lowerKeyStr.hasSuffix("jj") || lowerKeyStr.hasSuffix("ww")
     {
       return true
     }

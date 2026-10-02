@@ -39,11 +39,9 @@ public struct Focused {
     {
       var range = CFRange(location: 0, length: 0)
       if AXValueGetValue(rangeValue, .cfRange, &range), range.length > 0 {
-        #if DEBUG
-          print(
-            "[Caffee] hasHighlightedText: detected via selectedTextRange (location=\(range.location), length=\(range.length))"
-          )
-        #endif
+        Log.accessibility.debug(
+          "hasHighlightedText via selectedTextRange (location=\(range.location), length=\(range.length))"
+        )
         return true
       }
     }
@@ -53,8 +51,9 @@ public struct Focused {
 
   public static func highlightedText() -> String? {
     guard let focusedElement = Focused.element() else { return nil }
-    guard let highlightedText: AXValue = focusedElement.getAttribute(
-      property: kAXSelectedTextAttribute)
+    guard
+      let highlightedText: AXValue = focusedElement.getAttribute(
+        property: kAXSelectedTextAttribute)
     else { return nil }
     guard !"\(highlightedText)".isEmpty else { return nil }
     return "\(highlightedText)"

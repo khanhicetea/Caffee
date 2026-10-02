@@ -21,12 +21,14 @@ enum TiengVietTransformer {
   ///   - dauThanh: Dấu thanh cần đặt (sắc, huyền, hỏi, ngã, nặng)
   ///   - dauMu: Dấu mũ cần đặt (mũ, móc, trăng)
   ///   - gachD: Có gạch ngang chữ D không (d → đ)
+  ///   - tonePlacement: Vị trí dấu thanh trên oa/oe/uy (hòa hay hoà)
   /// - Returns: Chuỗi tiếng Việt đã biến đổi với dấu
   static func transform(
     thanhPhanTieng: ThanhPhanTieng,
     dauThanh: DauThanh,
     dauMu: DauMu,
-    gachD: Bool
+    gachD: Bool,
+    tonePlacement: TonePlacement = .firstVowel
   ) -> String {
     // Clone để không thay đổi bản gốc
     var tieng = thanhPhanTieng
@@ -46,7 +48,8 @@ enum TiengVietTransformer {
     apDungDauMu(vaoTieng: &tieng, dauMu: dauMu, soNguyenAm: countNguyenAm)
 
     // Bước 3: Áp dụng dấu thanh
-    apDungDauThanh(vaoTieng: &tieng, dauThanh: dauThanh, soNguyenAm: countNguyenAm)
+    apDungDauThanh(
+      vaoTieng: &tieng, dauThanh: dauThanh, soNguyenAm: countNguyenAm, tonePlacement: tonePlacement)
 
     // Ghép các thành phần thành chuỗi kết quả
     return String(tieng.phuAmDau + tieng.nguyenAm + tieng.phuAmCuoi + tieng.conLai)
@@ -122,7 +125,8 @@ enum TiengVietTransformer {
   private static func apDungDauThanh(
     vaoTieng tieng: inout ThanhPhanTieng,
     dauThanh: DauThanh,
-    soNguyenAm: Int
+    soNguyenAm: Int,
+    tonePlacement: TonePlacement
   ) {
     guard let quyTac = TiengViet.QuyTacDatDau[dauThanh], !quyTac.isEmpty else { return }
 
@@ -148,11 +152,22 @@ enum TiengVietTransformer {
       return
     }
 
+    // Kiểu "hoà, thuỷ, khoẻ": cặp oa/oe/uy không có phụ âm cuối đặt dấu ở nguyên âm sau
+    if tonePlacement == .secondVowel, soNguyenAm == 2, tieng.phuAmCuoi.isEmpty,
+      cacCapNguyenAmDauSau.contains(String(tieng.nguyenAm).lowercased()),
+      thuDatDauThanh(1)
+    {
+      return
+    }
+
     // Tìm nguyên âm đầu tiên có thể nhận dấu
     for i in 0..<soNguyenAm {
       if thuDatDauThanh(i) { break }
     }
   }
+
+  /// Cặp nguyên âm mà hai kiểu đặt dấu khác nhau (hòa/hoà, khỏe/khoẻ, thủy/thuỷ)
+  private static let cacCapNguyenAmDauSau: Set<String> = ["oa", "oe", "uy"]
 
   // MARK: - Tiện ích
 
@@ -161,12 +176,7 @@ enum TiengVietTransformer {
   ///   - kytu: Ký tự cần chuyển đổi
   ///   - quyTac: Bảng ánh xạ (ký tự gốc, ký tự mới)
   /// - Returns: Ký tự mới nếu tìm thấy, nil nếu không
-  private static func chuyenKyTu(kytu: Character, quyTac: [(Character, Character)]) -> Character? {
-    for (match, to) in quyTac {
-      if match == kytu {
-        return to
-      }
-    }
-    return nil
+  private static func chuyenKyTu(kytu: Character, quyTac: [Character: Character]) -> Character? {
+    quyTac[kytu]
   }
 }
