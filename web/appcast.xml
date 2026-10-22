@@ -6,6 +6,29 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.31.1</title>
+      <sparkle:version>13101</sparkle:version>
+      <sparkle:shortVersionString>1.31.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Fri, 02 Oct 2026 22:32:30 +0700</pubDate>
+      <enclosure
+        url="https://github.com/khanhicetea/Caffee/releases/download/v1.31.1/Caffee-v1.31.1.dmg"
+        sparkle:edSignature="Vjim3MqU3URquMWGhHzIzGfhwiDkXI0H6P8nWLEP0NUYrywEPTdjtXC14cl8EO1yJs55fDAqgfRh0sUuzgRpBQ=="
+        length="4782430"
+        type="application/octet-stream"
+      />
+      <description><![CDATA[
+    <h2>Có gì mới</h2>
+    <ul>
+      <li>Gõ ươ bằng hai phím riêng (uwow, u7o7) không còn bị mất dấu móc; tuwo → tươ</li>
+      <li>Xoá lùi (Backspace) trong từ không phải tiếng Việt chỉ xoá một ký tự (texting⌫ → textin)</li>
+      <li>Huỷ một dấu bằng cách gõ đôi không làm mất các dấu còn lại (tieenss → tiêns)</li>
+      <li>Âm tiết kết thúc bằng c/ch/p/t không nhận dấu huyền/hỏi/ngã nên các từ như text, next được giữ nguyên</li>
+      <li>Kiểm tra chính tả chặt hơn: q không có u, gh/ngh trước nguyên âm sau; gõ aA ra â</li>
+    </ul>
+      ]]></description>
+    </item>
+    <item>
       <title>Version 1.31.0</title>
       <sparkle:version>13100</sparkle:version>
       <sparkle:shortVersionString>1.31.0</sparkle:shortVersionString>
