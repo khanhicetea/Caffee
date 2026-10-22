@@ -193,6 +193,9 @@ class InputProcessor {
   /// How replacements are delivered to the active app.
   private(set) var sendingStrategy: SendingStrategy = .batch
 
+  /// Whether the active app may show inline autocomplete (resolved once per app switch).
+  private(set) var fixesAutocomplete = false
+
   // MARK: - Init & Configuration
 
   init(
@@ -228,6 +231,7 @@ class InputProcessor {
   public func changeActiveApp(_ app: String) {
     activeApp = app
     sendingStrategy = compatibilityPolicy.replacementStrategy(for: app)
+    fixesAutocomplete = compatibilityPolicy.shouldFixAutocomplete(for: app)
     selectionDetector.invalidateCache()
   }
 
@@ -315,9 +319,7 @@ class InputProcessor {
       return .passThrough
     }
 
-    if compatibilityPolicy.shouldFixAutocomplete(for: activeApp)
-      && selectionDetector.hasHighlightedText()
-    {
+    if fixesAutocomplete && selectionDetector.hasHighlightedText() {
       // For autocomplete-capable apps (browsers, etc.), use select-and-replace
       // only when there is highlighted text (checked through a short throttle)
       // typically inline autocomplete ghost text that backspace cannot reach.

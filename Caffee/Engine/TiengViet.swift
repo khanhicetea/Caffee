@@ -75,13 +75,13 @@ import Foundation
 /// │ nang     │   .    │ mạ      │ Thanh nặng           │
 /// └──────────┴────────┴─────────┴──────────────────────┘
 /// ```
-enum DauThanh: UInt8 {
-  case bang = 0  // Thanh ngang (không dấu)
-  case sac = 2  // Thanh sắc (´)
-  case huyen = 4  // Thanh huyền (`)
-  case hoi = 8  // Thanh hỏi (ˀ)
-  case nga = 16  // Thanh ngã (~)
-  case nang = 32  // Thanh nặng (.)
+enum DauThanh {
+  case bang  // Thanh ngang (không dấu)
+  case sac  // Thanh sắc (´)
+  case huyen  // Thanh huyền (`)
+  case hoi  // Thanh hỏi (ˀ)
+  case nga  // Thanh ngã (~)
+  case nang  // Thanh nặng (.)
 }
 
 /// DauMu - Dấu phụ trên nguyên âm
@@ -97,11 +97,11 @@ enum DauThanh: UInt8 {
 /// │ muNgua   │   ˘    │ a→ă (trăng/ngựa)                │
 /// └──────────┴────────┴─────────────────────────────────┘
 /// ```
-enum DauMu: UInt8 {
-  case khongMu = 0  // Không có dấu phụ
-  case muUp = 2  // Mũ (^): â, ê, ô
-  case muMoc = 4  // Móc (˘): ư, ơ
-  case muNgua = 8  // Trăng (˘): ă
+enum DauMu {
+  case khongMu  // Không có dấu phụ
+  case muUp  // Mũ (^): â, ê, ô
+  case muMoc  // Móc (˘): ư, ơ
+  case muNgua  // Trăng (˘): ă
 }
 
 // MARK: - ThanhPhanTieng (Các thành phần âm tiết)
