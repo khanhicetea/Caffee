@@ -6,6 +6,29 @@
   <channel>
     <title>Caffee Updates</title>
     <item>
+      <title>Version 1.32.0</title>
+      <sparkle:version>13200</sparkle:version>
+      <sparkle:shortVersionString>1.32.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Fri, 27 Nov 2026 11:40:44 +0700</pubDate>
+      <enclosure
+        url="https://github.com/khanhicetea/Caffee/releases/download/v1.32.0/Caffee-v1.32.0.dmg"
+        sparkle:edSignature="GXOh+CJmKvCsTnNilpOjjH4b7QU11VqiGQlHO5ZXsQijRknnKO0At7OuxGvCsex6C0f3WaGQRtSE4NSLK4IrDg=="
+        length="4740765"
+        type="application/octet-stream"
+      />
+      <description><![CDATA[
+    <h2>Có gì mới</h2>
+    <ul>
+      <li>Sửa lỗi mất hoặc sai ký tự khi bấm Space rồi Backspace quay lại từ trước; hỗ trợ vần oao ở Telex và sửa lỗi kẹt dấu đ/mũ/móc khi xoá lùi</li>
+      <li>Tự động khôi phục bộ gõ ngay khi cấp lại quyền Trợ năng (Accessibility) và sửa lỗi không đóng được cửa sổ hướng dẫn</li>
+      <li>Giữ đúng chế độ Việt/Anh khi chuyển ứng dụng hoặc với ứng dụng đã ghim, tránh dính bộ đệm từ giữa các cửa sổ</li>
+      <li>Cải thiện độ ổn định sự kiện bàn phím/chuột, xử lý đúng phím chết (dead key) và báo rõ tiến trình đang bật Secure Input</li>
+      <li>Sửa lỗi chớp tắt thông báo chuyển chế độ, tối ưu chuyển ứng dụng và cải thiện hỗ trợ VoiceOver trong Cài đặt</li>
+    </ul>
+      ]]></description>
+    </item>
+    <item>
       <title>Version 1.31.1</title>
       <sparkle:version>13101</sparkle:version>
       <sparkle:shortVersionString>1.31.1</sparkle:shortVersionString>
