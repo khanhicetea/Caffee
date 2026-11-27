@@ -28,7 +28,7 @@ struct WordBuffer {
   var lastTransformed = ""
   var transformed = ""
 
-  var previousWordState: TiengVietState?
+  var previousWord: Snapshot?
   var wordState = TiengVietState.empty
 
   /// Engine options applied to every word started from this buffer.
@@ -42,9 +42,14 @@ struct WordBuffer {
   // MARK: - Word Lifecycle
 
   mutating func newWord(storePrevious: Bool = false) {
-    previousWordState = nil
-    if !wordState.isBlank && storePrevious {
-      previousWordState = wordState
+    previousWord = nil
+    if storePrevious && (!transformed.isEmpty || !keys.isEmpty) {
+      previousWord = Snapshot(
+        wordState: wordState,
+        keys: keys,
+        transformed: transformed,
+        stopProcessing: stopProcessing
+      )
     }
     wordState = .empty(config: config)
 
@@ -89,13 +94,13 @@ struct WordBuffer {
     }
 
     // Normal pop: restore previous word on empty buffer
-    if wordState.isBlank, let prev = previousWordState {
-      wordState = prev
-      previousWordState = nil
-      keys = Array(wordState.chuKhongDau)
-      transformed = wordState.transformed
+    if wordState.isBlank, let prev = previousWord {
+      wordState = prev.wordState
+      previousWord = nil
+      keys = prev.keys
+      transformed = prev.transformed
       lastTransformed = transformed
-      stopProcessing = false
+      stopProcessing = prev.stopProcessing
       lastValidSnapshot = nil
       return .none  // Let OS handle the backspace that brought us here
     }
@@ -232,7 +237,7 @@ class InputProcessor {
     activeApp = app
     sendingStrategy = compatibilityPolicy.replacementStrategy(for: app)
     fixesAutocomplete = compatibilityPolicy.shouldFixAutocomplete(for: app)
-    selectionDetector.invalidateCache()
+    newWord()
   }
 
   // MARK: - Word Operations (delegate to WordBuffer)
@@ -313,6 +318,11 @@ class InputProcessor {
     push(char: newChar)
     let replacement = Replacement.diff(
       from: wordBuffer.lastTransformed, to: wordBuffer.transformed)
+
+    // Nothing changed on screen (e.g. redundant horn key in "tuwow"): swallow without AX/poster work.
+    if replacement.isEmpty {
+      return .handled
+    }
 
     // If the only change is the new character itself, let it pass through
     if replacement.deleteCount == 0 && replacement.insert == [newChar] {

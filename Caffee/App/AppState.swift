@@ -27,12 +27,16 @@ final class AppState: ModeControlling {
 
   public var enabled = false {
     didSet {
-      // "Unknown" is only the placeholder used before the first app activation.
-      if activeAppName != AppState.unknownApp {
+      guard enabled != oldValue else { return }
+      eventHook.setEnabled(enabled)
+      // Only persist user/automation-driven changes for apps that use "remember", never
+      // during app switching or for pinned apps.
+      if !isApplyingPerAppSettings, activeAppName != AppState.unknownApp,
+        store.preference(for: activeAppName) == .remember
+      {
         store.remember(enabled, in: activeAppName)
         store.save()
       }
-      eventHook.setEnabled(enabled)
     }
   }
   public var typingMethod: TypingMethods {
@@ -81,6 +85,7 @@ final class AppState: ModeControlling {
   static let unknownApp = "Unknown"
 
   @ObservationIgnored private var activationObserver: NSObjectProtocol?
+  @ObservationIgnored private var isApplyingPerAppSettings = false
 
   init() {
     bundleId = Bundle.main.bundleIdentifier ?? "com.khanhicetea.Caffee"
@@ -170,7 +175,10 @@ final class AppState: ModeControlling {
     guard let activeApp = NSWorkspace.shared.frontmostApplication,
       let appName = activeApp.bundleIdentifier,
       appName != bundleId
-    else { return }
+    else {
+      inputProcessor.newWord()
+      return
+    }
 
     activeAppName = appName
     activeAppDisplayName = activeApp.localizedName ?? appName
@@ -178,9 +186,11 @@ final class AppState: ModeControlling {
   }
 
   /// Re-applies the stored settings of the frontmost app (after a switch or a settings edit).
-  private func applyPerAppSettings() {
+  func applyPerAppSettings() {
     activeStrategyOverride = store.strategy(for: activeAppName)
     inputProcessor.changeActiveApp(activeAppName)
+    isApplyingPerAppSettings = true
+    defer { isApplyingPerAppSettings = false }
     setEnabled(set: store.mode(for: activeAppName) ?? enabled, reason: .appSwitch)
   }
 

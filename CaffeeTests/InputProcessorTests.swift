@@ -119,4 +119,106 @@ final class InputProcessorTests: XCTestCase {
     XCTAssertEqual(inputProcessor.wordBuffer.transformed, "hồ", "transformed should be hồ")
     XCTAssertFalse(inputProcessor.wordBuffer.stopProcessing, "stopProcessing should be false")
   }
+
+  func testMouseDownAndFlagsChangedQueueBehindPendingOutput() throws {
+    var busy = true
+    var repostedTypes: [CGEventType] = []
+    let processor = InputProcessor(
+      method: .telex,
+      replacementSender: MockReplacementSender(),
+      selectionDetector: MockSelectionDetector(hasSelection: false)
+    )
+    let hook = EventHook(
+      inputProcessor: processor,
+      secureInputChecker: { false },
+      isOutputBusy: { busy },
+      repostEvent: { repostedTypes.append($0.type) }
+    )
+    hook.setEnabled(true)
+    processor.push(char: "a")
+
+    let mouseDown = try XCTUnwrap(
+      CGEvent(
+        mouseEventSource: nil, mouseType: .leftMouseDown, mouseCursorPosition: .zero,
+        mouseButton: .left))
+    let flagsChanged = try XCTUnwrap(CGEvent(source: nil))
+    flagsChanged.type = .flagsChanged
+
+    XCTAssertNil(hook.handleEvent(type: .leftMouseDown, event: mouseDown))
+    XCTAssertTrue(processor.wordBuffer.keys.isEmpty)
+    XCTAssertNil(hook.handleEvent(type: .flagsChanged, event: flagsChanged))
+    XCTAssertEqual(repostedTypes, [.leftMouseDown, .flagsChanged])
+
+    busy = false
+    XCTAssertNotNil(hook.handleEvent(type: .leftMouseDown, event: mouseDown))
+    XCTAssertNotNil(hook.handleEvent(type: .flagsChanged, event: flagsChanged))
+    withExtendedLifetime((mouseDown, flagsChanged)) {}
+  }
+
+  func testEmptyReplacementShortCircuitsWithoutSelectionCheckOrSend() {
+    final class CountingSelectionDetector: SelectionDetector {
+      var calls = 0
+      func hasHighlightedText() -> Bool {
+        calls += 1
+        return true
+      }
+      func invalidateCache() {}
+    }
+
+    let sender = MockReplacementSender()
+    let detector = CountingSelectionDetector()
+    let processor = InputProcessor(
+      method: .telex,
+      replacementSender: sender,
+      selectionDetector: detector
+    )
+    // Chrome enables fixesAutocomplete; typing "tuwow" produces an empty replacement on the 2nd "w".
+    processor.changeActiveApp("com.google.Chrome")
+    for ch in Array("tuwo") {
+      var ev = KeyboardInputEvent.keyCode(0)
+      ev.resolvedFromSystem = true
+      ev.character = ch
+      _ = processor.handleInputEvent(ev)
+    }
+    let callsBefore = detector.calls
+    let sendsBefore = sender.replacementCalls.count + sender.selectAndReplaceCalls.count
+
+    var secondW = KeyboardInputEvent.keyCode(13)
+    secondW.resolvedFromSystem = true
+    secondW.character = "w"
+    XCTAssertEqual(processor.handleInputEvent(secondW), .handled)
+    XCTAssertEqual(processor.wordBuffer.transformed, "tươ")
+    XCTAssertEqual(detector.calls, callsBefore)
+    XCTAssertEqual(sender.replacementCalls.count + sender.selectAndReplaceCalls.count, sendsBefore)
+  }
+
+  func testDeadKeyCGEventDoesNotFallBackToUSMap() throws {
+    let processor = InputProcessor(
+      method: .telex,
+      replacementSender: MockReplacementSender(),
+      selectionDetector: MockSelectionDetector(hasSelection: false)
+    )
+    processor.push(char: "a")
+
+    // Simulate a dead key: keyCode 0 ("a" on US layout) with 0-length Unicode string from the system.
+    let deadKey = try XCTUnwrap(CGEvent(source: nil))
+    deadKey.type = .keyDown
+    deadKey.setIntegerValueField(.keyboardEventKeycode, value: 0)
+
+    let inputEvent = KeyboardInputEvent(event: deadKey, keyboardLayout: KeyboardUS())
+    XCTAssertTrue(inputEvent.resolvedFromSystem)
+    XCTAssertNil(inputEvent.character)
+
+    XCTAssertEqual(processor.handleInputEvent(inputEvent), .passThrough)
+    XCTAssertTrue(processor.wordBuffer.keys.isEmpty)
+    withExtendedLifetime(deadKey) {}
+  }
+
+  func testChangeActiveAppResetsWordBuffer() {
+    let processor = InputProcessor(method: .telex)
+    processor.push(char: "v")
+    processor.push(char: "i")
+    processor.changeActiveApp("com.apple.Notes")
+    XCTAssertTrue(processor.wordBuffer.keys.isEmpty)
+  }
 }

@@ -9,32 +9,29 @@ import Foundation
 public struct Focused {
   public static func element() -> AXUIElement? {
     let systemWideElement = AXUIElementCreateSystemWide()
-    return systemWideElement.getAttribute(property: kAXFocusedUIElementAttribute)
+    return systemWideElement.getAXUIElementAttribute(property: kAXFocusedUIElementAttribute)
   }
 
   public static func elementText() -> String? {
     guard let focusedElement = Focused.element() else { return nil }
-    guard let selectedText: AXValue = focusedElement.getAttribute(property: kAXValueAttribute)
-    else { return nil }
-    return "\(selectedText)"
+    return focusedElement.getStringAttribute(property: kAXValueAttribute)
   }
 
   public static func hasHighlightedText() -> Bool {
     guard let focusedElement = Focused.element() else { return false }
 
     // Method 1: Check selected text content directly
-    if let highlightedText: AXValue = focusedElement.getAttribute(
-      property: kAXSelectedTextAttribute)
+    if let highlightedText = focusedElement.getStringAttribute(
+      property: kAXSelectedTextAttribute),
+      !highlightedText.isEmpty
     {
-      if !"\(highlightedText)".isEmpty {
-        return true
-      }
+      return true
     }
 
     // Method 2: Check selected text range length (fallback)
     // Some apps (e.g., Chrome's address bar) don't expose kAXSelectedTextAttribute
     // but do expose kAXSelectedTextRangeAttribute with a valid CFRange.
-    if let rangeValue: AXValue = focusedElement.getAttribute(
+    if let rangeValue = focusedElement.getAXValueAttribute(
       property: kAXSelectedTextRangeAttribute)
     {
       var range = CFRange(location: 0, length: 0)
@@ -52,20 +49,38 @@ public struct Focused {
   public static func highlightedText() -> String? {
     guard let focusedElement = Focused.element() else { return nil }
     guard
-      let highlightedText: AXValue = focusedElement.getAttribute(
-        property: kAXSelectedTextAttribute)
+      let highlightedText = focusedElement.getStringAttribute(
+        property: kAXSelectedTextAttribute),
+      !highlightedText.isEmpty
     else { return nil }
-    guard !"\(highlightedText)".isEmpty else { return nil }
-    return "\(highlightedText)"
+    return highlightedText
   }
 }
 
 extension AXUIElement {
-  public func getAttribute<T>(property: String) -> T? {
-    var ptr: AnyObject?
-    if AXUIElementCopyAttributeValue(self, property as CFString, &ptr) != AXError.success {
+  private func copyRawAttribute(property: String) -> CFTypeRef? {
+    var ptr: CFTypeRef?
+    guard AXUIElementCopyAttributeValue(self, property as CFString, &ptr) == .success else {
       return nil
     }
-    return ptr.flatMap { $0 as? T }
+    return ptr
+  }
+
+  public func getStringAttribute(property: String) -> String? {
+    copyRawAttribute(property: property) as? String
+  }
+
+  public func getAXValueAttribute(property: String) -> AXValue? {
+    guard let ptr = copyRawAttribute(property: property),
+      CFGetTypeID(ptr) == AXValueGetTypeID()
+    else { return nil }
+    return (ptr as! AXValue)
+  }
+
+  public func getAXUIElementAttribute(property: String) -> AXUIElement? {
+    guard let ptr = copyRawAttribute(property: property),
+      CFGetTypeID(ptr) == AXUIElementGetTypeID()
+    else { return nil }
+    return (ptr as! AXUIElement)
   }
 }

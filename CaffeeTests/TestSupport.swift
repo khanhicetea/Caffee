@@ -69,6 +69,9 @@ func typeOnScreen(_ keys: String, method: TypingMethods, config: EngineConfig = 
       let replacement = processor.pop()
       // An empty replacement lets the system's own Backspace delete one character.
       if replacement.isEmpty { _ = screen.popLast() } else { apply(replacement) }
+    } else if key == " " {
+      processor.newWord(storePrevious: true)
+      screen.append(" ")
     } else {
       processor.push(char: key)
       apply(

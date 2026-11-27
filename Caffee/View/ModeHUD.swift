@@ -15,25 +15,43 @@ final class ModeHUD {
   private static let visibleDuration: TimeInterval = 0.7
 
   private var panel: NSPanel?
+  private var hostingView: NSHostingView<ModeHUDView>?
   private var hideWork: DispatchWorkItem?
+  private var showGeneration: UInt64 = 0
 
   func show(vietnamese: Bool) {
     let panel = self.panel ?? makePanel()
     self.panel = panel
-    panel.contentView = NSHostingView(rootView: ModeHUDView(vietnamese: vietnamese))
+    if let hostingView {
+      hostingView.rootView = ModeHUDView(vietnamese: vietnamese)
+    } else {
+      let hosting = NSHostingView(rootView: ModeHUDView(vietnamese: vietnamese))
+      panel.contentView = hosting
+      hostingView = hosting
+    }
     panel.setFrame(frame(on: screenUnderMouse()), display: false)
 
+    showGeneration &+= 1
+    let generation = showGeneration
+
     hideWork?.cancel()
+    NSAnimationContext.runAnimationGroup { context in
+      context.duration = 0
+      panel.animator().alphaValue = 1
+    }
     panel.alphaValue = 1
     panel.orderFrontRegardless()
 
     let work = DispatchWorkItem { [weak self] in
-      guard let panel = self?.panel else { return }
+      guard let self, self.showGeneration == generation, let panel = self.panel else { return }
       NSAnimationContext.runAnimationGroup { context in
         context.duration = 0.2
         panel.animator().alphaValue = 0
-      } completionHandler: {
-        MainActor.assumeIsolated { panel.orderOut(nil) }
+      } completionHandler: { [weak self] in
+        MainActor.assumeIsolated {
+          guard let self, self.showGeneration == generation else { return }
+          self.panel?.orderOut(nil)
+        }
       }
     }
     hideWork = work

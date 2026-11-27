@@ -54,6 +54,7 @@ final class FileMonitor: @unchecked Sendable {
   func process(event: DispatchSource.FileSystemEvent) {
     if event.contains(.delete) || event.contains(.rename) {
       restartAfterReplacement()
+      return
     }
     deliverContents()
   }

@@ -149,4 +149,52 @@ final class RegressionTests: EngineTestCase {
     XCTAssertEqual(typeOnScreen("nghix", method: .telex), "nghĩ")
     XCTAssertEqual(typeOnScreen("gio6ng1", method: .vni), "giống")
   }
+
+  // MARK: - bug-audit-and-plan.md
+
+  /// Backspace must clear gachD and any diacritic that no longer applies to the remaining vowels.
+  func testPopResetsStaleDiacriticsAndGachD() {
+    for (keys, expected) in [
+      ("dd<di", "di"),
+      ("dd<a<di", "di"),
+      ("toaw<a", "toa"),
+      ("tiee<as", "tía"),
+      ("huow<", "hu"),
+      ("tuwo<", "tư"),
+    ] {
+      XCTAssertEqual(typeOnScreen(keys, method: .telex), expected, keys)
+    }
+    XCTAssertEqual(typeOnScreen("d9<di", method: .vni), "di")
+  }
+
+  /// Space then Backspace back into a recovered/raw word must preserve raw mode and screen text.
+  func testSpaceBackspaceOnRecoveredWordPreservesRawState() {
+    for (keys, expected) in [
+      ("text <s", "texts"),
+      ("based <s", "baseds"),
+      ("tieenss <s", "tiênss"),
+      ("text <<", "tex"),
+    ] {
+      XCTAssertEqual(typeOnScreen(keys, method: .telex), expected, keys)
+    }
+  }
+
+  /// Telex must allow the "oao" triphthong without turning the second "o" into a circumflex.
+  func testTelexTriphthongOao() {
+    for (keys, expected) in [
+      ("ngoao", "ngoao"),
+      ("ngoaof", "ngoào"),
+      ("ngoaos", "ngoáo"),
+      ("oaof", "oào"),
+    ] {
+      XCTAssertEqual(typeOnScreen(keys, method: .telex), expected, keys)
+    }
+  }
+
+  /// With spelling check disabled, VNI (like Telex) ignores mark keys once conLai is non-empty.
+  func testVNIUncheckedIgnoresMarksAfterConLai() {
+    let unchecked = EngineConfig(spellingCheck: false)
+    XCTAssertEqual(typeOnScreen("ab1", method: .vni, config: unchecked), "ab1")
+    XCTAssertEqual(typeOnScreen("abs", method: .telex, config: unchecked), "abs")
+  }
 }

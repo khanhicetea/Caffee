@@ -49,6 +49,11 @@ struct VNI: TypingMethod {
   public func push(char: Character, keyStr: String, state: TiengVietState) -> TypingMethodResult {
     let thanhPhan = state.thanhPhanTieng
 
+    // Bỏ qua nếu từ có phần không hợp lệ (conLai)
+    if !thanhPhan.conLai.isEmpty {
+      return rawResult(state.push(char), keyStr: keyStr)
+    }
+
     // Xử lý d9 → đ (phím 9 sau chữ d)
     if let chuCaiDau = state.chuKhongDau.first,
       (char == "9") && (chuCaiDau == "d" || chuCaiDau == "D")

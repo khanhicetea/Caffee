@@ -66,4 +66,46 @@ final class AppStateTests: XCTestCase {
       EngineConfig(
         allowForeignConsonants: true, tonePlacement: .secondVowel, spellingCheck: false))
   }
+
+  func testAppSwitchDoesNotPolluteKnownAppsOrOverwritePinnedRememberedMode() {
+    let originalModes = Defaults[.appModes]
+    let originalPrefs = Defaults[.appModePreferences]
+    let originalStrategies = Defaults[.appStrategyOverrides]
+    defer {
+      Defaults[.appModes] = originalModes
+      Defaults[.appModePreferences] = originalPrefs
+      Defaults[.appStrategyOverrides] = originalStrategies
+    }
+
+    Defaults[.appModes] = [:]
+    Defaults[.appModePreferences] = [:]
+    Defaults[.appStrategyOverrides] = [:]
+
+    let state = AppState()
+    state.setEnabled(set: true, reason: .menu)
+
+    // Switching to an unseen app must not add it to knownApps.
+    state.activeAppName = "com.example.unseen"
+    state.applyPerAppSettings()
+    XCTAssertFalse(state.store.knownApps.contains("com.example.unseen"))
+    XCTAssertTrue(state.enabled)
+
+    // Explicitly toggling in a .remember app persists the choice.
+    state.setEnabled(set: false, reason: .hotkey)
+    XCTAssertEqual(state.store.remembered["com.example.unseen"], false)
+
+    // Pinning an app that already has a remembered mode must not erase its remembered value on switch.
+    state.activeAppName = "com.example.pinned"
+    state.applyPerAppSettings()
+    state.setEnabled(set: true, reason: .hotkey)
+    XCTAssertEqual(state.store.remembered["com.example.pinned"], true)
+
+    state.setPreference(.alwaysEnglish, for: "com.example.pinned")
+    XCTAssertFalse(state.enabled)
+    XCTAssertEqual(state.store.remembered["com.example.pinned"], true)
+
+    // Switching back to .remember restores the preserved remembered mode.
+    state.setPreference(.remember, for: "com.example.pinned")
+    XCTAssertTrue(state.enabled)
+  }
 }

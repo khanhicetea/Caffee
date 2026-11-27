@@ -51,14 +51,16 @@ struct AppsSettingsView: View {
 
   private var runningApps: [String] {
     let known = Set(apps)
-    return NSWorkspace.shared.runningApplications
-      .filter { $0.activationPolicy == .regular }
-      .compactMap(\.bundleIdentifier)
-      .filter { !known.contains($0) && $0 != appState.bundleId }
-      .sorted {
-        AppInfo.name(for: $0).localizedCaseInsensitiveCompare(AppInfo.name(for: $1))
-          == .orderedAscending
-      }
+    let uniqueIds = Set(
+      NSWorkspace.shared.runningApplications
+        .filter { $0.activationPolicy == .regular }
+        .compactMap(\.bundleIdentifier)
+        .filter { !known.contains($0) && $0 != appState.bundleId }
+    )
+    return uniqueIds.sorted {
+      AppInfo.name(for: $0).localizedCaseInsensitiveCompare(AppInfo.name(for: $1))
+        == .orderedAscending
+    }
   }
 }
 
@@ -82,7 +84,8 @@ private struct AppSettingsRow: View {
           appState.forget(app: bundleId)
           onForget()
         } label: {
-          Image(systemName: "trash")
+          Label("Xóa thiết lập", systemImage: "trash")
+            .labelStyle(.iconOnly)
         }
         .buttonStyle(.borderless)
         .help("Xóa mọi thiết lập của ứng dụng này")
@@ -110,20 +113,34 @@ private struct AppSettingsRow: View {
   }
 }
 
-/// Name and icon of an app from its bundle identifier.
+/// Name and icon of an app from its bundle identifier (cached on main actor).
+@MainActor
 enum AppInfo {
+  private static var nameCache: [String: String] = [:]
+  private static var iconCache: [String: NSImage] = [:]
+
   static func name(for bundleId: String) -> String {
-    guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) else {
-      return bundleId
+    if let cached = nameCache[bundleId] { return cached }
+    let resolved: String
+    if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
+      let displayName = FileManager.default.displayName(atPath: url.path)
+      resolved = displayName.hasSuffix(".app") ? String(displayName.dropLast(4)) : displayName
+    } else {
+      resolved = bundleId
     }
-    return FileManager.default.displayName(atPath: url.path)
-      .replacingOccurrences(of: ".app", with: "")
+    nameCache[bundleId] = resolved
+    return resolved
   }
 
   static func icon(for bundleId: String) -> NSImage {
-    guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) else {
-      return NSWorkspace.shared.icon(for: .applicationBundle)
+    if let cached = iconCache[bundleId] { return cached }
+    let resolved: NSImage
+    if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
+      resolved = NSWorkspace.shared.icon(forFile: url.path)
+    } else {
+      resolved = NSWorkspace.shared.icon(for: .applicationBundle)
     }
-    return NSWorkspace.shared.icon(forFile: url.path)
+    iconCache[bundleId] = resolved
+    return resolved
   }
 }

@@ -10,9 +10,14 @@ import SwiftUI
 
 struct UpgradeAppView: View {
   @Environment(AppState.self) var appState
+  var onDismiss: () -> Void = {}
 
   @State private var hasRequestedPermission = false
   @State private var permissionGranted = false
+
+  private var hasActiveTap: Bool {
+    appState.tapStatus == .active || appState.eventHook.eventTap != nil
+  }
 
   var body: some View {
     VStack(spacing: 16) {
@@ -22,14 +27,14 @@ struct UpgradeAppView: View {
           .resizable()
           .aspectRatio(contentMode: .fit)
           .frame(width: 40, height: 40)
-          .clipShape(RoundedRectangle(cornerRadius: 8))
+          .clipShape(.rect(cornerRadius: 8))
 
         VStack(alignment: .leading, spacing: 2) {
           Text("Cập nhật Caffee thành công!")
             .font(.system(size: 18, weight: .bold))
           Text("Cần cấp lại quyền Accessibility")
             .font(.system(size: 13))
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
         }
         Spacer()
       }
@@ -41,7 +46,7 @@ struct UpgradeAppView: View {
         .resizable()
         .aspectRatio(contentMode: .fit)
         .frame(maxHeight: 200)
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
         .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 20)
 
@@ -66,21 +71,33 @@ struct UpgradeAppView: View {
         VStack(spacing: 12) {
           HStack(spacing: 8) {
             Image(systemName: "checkmark.circle.fill")
-              .foregroundColor(.green)
+              .foregroundStyle(.green)
             Text("Đã cấp quyền thành công!")
-              .foregroundColor(.green)
+              .foregroundStyle(.green)
           }
           .font(.system(size: 16, weight: .medium))
 
-          Button(action: SystemActions.relaunchApp) {
-            HStack {
-              Text("Khởi động lại")
-              Image(systemName: "arrow.clockwise")
+          if hasActiveTap {
+            Button(action: onDismiss) {
+              HStack {
+                Text("Hoàn tất")
+                Image(systemName: "checkmark")
+              }
+              .frame(width: 200)
             }
-            .frame(width: 200)
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+          } else {
+            Button(action: SystemActions.relaunchApp) {
+              HStack {
+                Text("Khởi động lại")
+                Image(systemName: "arrow.clockwise")
+              }
+              .frame(width: 200)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
           }
-          .buttonStyle(.borderedProminent)
-          .controlSize(.large)
         }
       } else {
         VStack(spacing: 10) {
@@ -103,7 +120,7 @@ struct UpgradeAppView: View {
                 .scaleEffect(0.7)
               Text("Đang chờ cấp quyền...")
                 .font(.system(size: 13))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             }
           }
         }
@@ -112,7 +129,7 @@ struct UpgradeAppView: View {
       Spacer().frame(height: 16)
     }
     .frame(width: 520, height: 480)
-    .onChange(of: appState.permission.isTrusted) { _, trusted in
+    .onChange(of: appState.permission.isTrusted, initial: true) { _, trusted in
       permissionGranted = trusted
     }
   }
@@ -132,28 +149,24 @@ struct UpgradeInstructionStep: View {
 
         if isCompleted {
           Image(systemName: "checkmark")
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .font(.system(size: 11, weight: .bold))
         } else {
           Text("\(number)")
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .font(.system(size: 13, weight: .bold))
         }
       }
 
       Text(text)
         .font(.system(size: 13))
-        .foregroundColor(isCompleted ? .secondary : .primary)
+        .foregroundStyle(isCompleted ? .secondary : .primary)
     }
   }
 }
 
-struct UpgradeAppView_Previews: PreviewProvider {
-  static var previews: some View {
-    UpgradeAppView()
-      .environment(AppState())
-      .previewLayout(PreviewLayout.sizeThatFits)
-      .padding()
-      .previewDisplayName("UpgradeAppView preview")
-  }
+#Preview("UpgradeAppView") {
+  UpgradeAppView()
+    .environment(AppState())
+    .padding()
 }

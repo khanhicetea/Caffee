@@ -64,7 +64,7 @@ final class SecureInputTests: XCTestCase {
     secureInput = true
     hook.refreshSecureInputState()
     XCTAssertTrue(processor.wordBuffer.keys.isEmpty)
-    XCTAssertNil(processor.wordBuffer.previousWordState)
+    XCTAssertNil(processor.wordBuffer.previousWord)
 
     processor.push(char: "c")
     secureInput = false

@@ -41,13 +41,15 @@ extension KeyboardInputEvent {
     )
 
     // Ask the system what this key types so Dvorak/Colemak/AZERTY/numpad all work.
+    // Mark as system-resolved even when length == 0 (e.g. dead keys on international layouts)
+    // so we never misinterpret a dead key via the US fallback map.
+    result.resolvedFromSystem = true
     var length = 0
     var units = [UniChar](repeating: 0, count: 4)
     event.keyboardGetUnicodeString(
       maxStringLength: units.count, actualStringLength: &length, unicodeString: &units)
     if length > 0 {
       let typed = String(utf16CodeUnits: units, count: length)
-      result.resolvedFromSystem = true
       if typed.count == 1, let scalar = typed.unicodeScalars.first,
         (0x21...0x7E).contains(scalar.value)
       {

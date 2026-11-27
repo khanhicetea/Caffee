@@ -123,15 +123,31 @@ extension TiengVietState {
     let newChuKhongDau = Array(chuKhongDau.dropLast())
     let newThanhPhan = TiengVietParser.parse(newChuKhongDau, config: config)
 
-    // Reset dấu nếu không còn nguyên âm
+    // Reset dấu nếu không còn nguyên âm hoặc nguyên âm còn lại không còn mang dấu mũ cũ
     let conNguyenAm = !newThanhPhan.nguyenAm.isEmpty
+    let poppedOnlyHornedO =
+      dauMu == .muMoc && thanhPhanTieng.chuaNguyenAmUO && newThanhPhan.nguyenAm.count == 1
+      && !mocCaHai && thanhPhanTieng.phuAmCuoi.isEmpty && thanhPhanTieng.nguyenAm.count == 2
+    let newDauMu: DauMu
+    if conNguyenAm, !poppedOnlyHornedO, let quyTac = TiengViet.QuyTacDatMu[dauMu],
+      newThanhPhan.nguyenAm.contains(where: { quyTac[$0] != nil })
+    {
+      newDauMu = dauMu
+    } else {
+      newDauMu = .khongMu
+    }
+    let newMocCaHai =
+      newDauMu == .muMoc && mocCaHai
+      && newThanhPhan.nguyenAmChua1KyTu(mangKyTu: ["u", "U"])
+    let newGachD =
+      gachD && newThanhPhan.phuAmDau.first.map { $0 == "d" || $0 == "D" } == true
 
     return TiengVietState(
       chuKhongDau: newChuKhongDau,
       dauThanh: conNguyenAm ? dauThanh : .bang,
-      dauMu: conNguyenAm ? dauMu : .khongMu,
-      mocCaHai: conNguyenAm && mocCaHai,
-      gachD: gachD,
+      dauMu: newDauMu,
+      mocCaHai: newMocCaHai,
+      gachD: newGachD,
       config: config,
       thanhPhanTieng: newThanhPhan
     )

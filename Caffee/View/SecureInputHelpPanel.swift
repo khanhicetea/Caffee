@@ -12,7 +12,7 @@ import SwiftUI
 final class SecureInputHelpPanel {
   private var panel: NSPanel?
 
-  func show(holder: String?) {
+  func show(holder: SecureInputInfo.Holder?) {
     let panel =
       self.panel
       ?? {
@@ -38,7 +38,7 @@ final class SecureInputHelpPanel {
 }
 
 private struct SecureInputHelpView: View {
-  let holder: String?
+  let holder: SecureInputInfo.Holder?
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -46,17 +46,28 @@ private struct SecureInputHelpView: View {
         .font(.headline)
 
       if let holder {
-        Text("Ứng dụng đang giữ khóa: **\(holder)**")
+        Text("Ứng dụng đang giữ khóa: **\(holder.name)**")
       }
 
-      Text(
-        "macOS đang chặn bộ gõ nhận bàn phím để bảo vệ dữ liệu nhạy cảm. Hãy đóng ô hoặc hộp thoại nhập mật khẩu\(holder.map { " trong \($0)" } ?? "")."
-      )
+      if holder?.isLoginWindow == true {
+        Text(
+          "Đây là lỗi của macOS: loginwindow vẫn giữ khóa sau khi khóa/mở màn hình hoặc nhập mật khẩu hệ thống, nên mọi ứng dụng đều bị chặn."
+        )
 
-      Text(
-        "Nếu đã chuyển sang ô văn bản thường mà vẫn bị khóa, hãy thoát và mở lại ứng dụng đã bật Secure Input. Caffee không thể tắt Secure Input của ứng dụng khác, và thoát/mở lại Caffee cũng không gỡ được khóa này. Bộ gõ sẽ tự hoạt động lại khi ứng dụng đó nhả khóa."
-      )
-      .foregroundStyle(.secondary)
+        Text(
+          "Hãy khóa màn hình (⌃⌘Q) rồi mở lại bằng mật khẩu. Nếu vẫn bị, hãy đăng xuất rồi đăng nhập lại hoặc khởi động lại máy. Bộ gõ sẽ tự hoạt động lại khi loginwindow nhả khóa."
+        )
+        .foregroundStyle(.secondary)
+      } else {
+        Text(
+          "macOS đang chặn bộ gõ nhận bàn phím để bảo vệ dữ liệu nhạy cảm. Hãy đóng ô hoặc hộp thoại nhập mật khẩu\(holder.map { " trong \($0.name)" } ?? "")."
+        )
+
+        Text(
+          "Nếu đã chuyển sang ô văn bản thường mà vẫn bị khóa, hãy thoát và mở lại ứng dụng đã bật Secure Input. Caffee không thể tắt Secure Input của ứng dụng khác, và thoát/mở lại Caffee cũng không gỡ được khóa này. Bộ gõ sẽ tự hoạt động lại khi ứng dụng đó nhả khóa."
+        )
+        .foregroundStyle(.secondary)
+      }
     }
     .fixedSize(horizontal: false, vertical: true)
     .frame(width: 420, alignment: .leading)

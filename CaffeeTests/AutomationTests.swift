@@ -35,6 +35,29 @@ final class AutomationTests: XCTestCase {
     XCTAssertFalse(recorder.received.contains(""))
     withExtendedLifetime(monitor) {}
   }
+
+  func testFileMonitorAtomicWriteDeliversToggleOnce() throws {
+    let url = FileManager.default.temporaryDirectory
+      .appendingPathComponent("caffee-atomic-\(UUID().uuidString)")
+    FileManager.default.createFile(atPath: url.path, contents: nil)
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    final class Recorder: FileMonitorDelegate {
+      var received: [String] = []
+      func didReceive(changes: String) { received.append(changes) }
+    }
+    let recorder = Recorder()
+    let monitor = try FileMonitor(url: url)
+    monitor.delegate = recorder
+
+    try "toggle".write(to: url, atomically: true, encoding: .utf8)
+    let settled = expectation(description: "atomic toggle delivered once")
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { settled.fulfill() }
+    wait(for: [settled], timeout: 2)
+
+    XCTAssertEqual(recorder.received, ["toggle"])
+    withExtendedLifetime(monitor) {}
+  }
 }
 
 // MARK: - Commands, per-app rules, permission

@@ -157,11 +157,13 @@ final class EventHook {
         let isSecureInput = self.refreshSecureInputState()
         guard let eventTap = self.eventTap else { return }
         if !self.trustChecker() {
-          self.publish(tapStatus: .permissionRevoked)
+          self.handlePermissionRevoked()
         } else if !isSecureInput && !CGEvent.tapIsEnabled(tap: eventTap) {
           self.recoverEventTap()
         } else if self.tapStatus == .permissionRevoked {
-          self.publish(tapStatus: .active)
+          if let appState = self.appState {
+            self.setupEventTap(give: appState)
+          }
         }
       }
     }
@@ -185,6 +187,15 @@ final class EventHook {
       appState.secureInputActive = isSecureInput
     }
     return isSecureInput
+  }
+
+  private func handlePermissionRevoked() {
+    let state = appState
+    destroy()
+    appState = state
+    publish(tapStatus: .permissionRevoked)
+    state?.permission.refresh()
+    state?.permission.start()
   }
 
   private func recoverEventTap() {
@@ -230,11 +241,11 @@ final class EventHook {
       let result =
         processing && !isSecureInput ? inputProcessor.handleEvent(event: event) : passThrough
       return ordered(result, for: event)
-    case .keyUp:
+    case .keyUp, .flagsChanged:
       return ordered(passThrough, for: event)
     case .leftMouseDown, .rightMouseDown, .otherMouseDown:
       inputProcessor.newWord()
-      return passThrough
+      return ordered(passThrough, for: event)
     default:
       return passThrough
     }

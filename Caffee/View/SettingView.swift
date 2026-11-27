@@ -93,7 +93,7 @@ struct AboutSettingsView: View {
         .resizable()
         .aspectRatio(contentMode: .fit)
         .frame(width: 64, height: 64)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(.rect(cornerRadius: 12))
       Text("Caffee \(appVersion)")
         .font(.headline)
       Text(
@@ -107,10 +107,7 @@ struct AboutSettingsView: View {
   }
 }
 
-struct GeneralView_Previews: PreviewProvider {
-  static var previews: some View {
-    SettingsRootView()
-      .environment(AppState())
-      .previewDisplayName("Settings preview")
-  }
+#Preview("Settings") {
+  SettingsRootView()
+    .environment(AppState())
 }

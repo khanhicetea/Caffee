@@ -71,7 +71,7 @@ class OnboardingViewModel {
     }
   }
 
-  func completeOnboarding(appState: AppState) {
+  func completeOnboarding(appState: AppState, onDismiss: () -> Void) {
     // Save settings
     Defaults[.typingMethod] = selectedMethod
     appState.typingMethod = selectedMethod
@@ -81,9 +81,7 @@ class OnboardingViewModel {
     // there is nothing left to do but dismiss the window. Relaunch only if the event tap
     // could not be created in this process.
     if appState.eventHook.eventTap != nil {
-      NSApp.windows
-        .first { $0.windowController is OnboardingWindowController }?
-        .orderOut(nil)
+      onDismiss()
     } else {
       SystemActions.relaunchApp()
     }
@@ -95,6 +93,7 @@ class OnboardingViewModel {
 struct OnboardingView: View {
   @Environment(AppState.self) var appState
   @State private var viewModel = OnboardingViewModel()
+  var onDismiss: () -> Void = {}
 
   var body: some View {
     VStack(spacing: 0) {
@@ -108,7 +107,7 @@ struct OnboardingView: View {
         case .configuration:
           ConfigurationStepView(viewModel: viewModel, appState: appState)
         case .removeIME:
-          RemoveIMEStepView(viewModel: viewModel, appState: appState)
+          RemoveIMEStepView(viewModel: viewModel, appState: appState, onDismiss: onDismiss)
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -157,7 +156,7 @@ struct WelcomeStepView: View {
         .resizable()
         .aspectRatio(contentMode: .fit)
         .frame(width: 120, height: 120)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .clipShape(.rect(cornerRadius: 20))
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
 
       // Title
@@ -166,7 +165,7 @@ struct WelcomeStepView: View {
 
       Text("Bộ gõ tiếng Việt cho macOS")
         .font(.system(size: 20))
-        .foregroundColor(.secondary)
+        .foregroundStyle(.secondary)
 
       // Description
       VStack(spacing: 16) {
@@ -216,7 +215,7 @@ struct FeatureRow: View {
     HStack(spacing: 12) {
       Image(systemName: icon)
         .frame(width: 32)
-        .foregroundColor(.accentColor)
+        .foregroundStyle(Color.accentColor)
       Text(text)
         .font(.system(size: 13))
       Spacer()
@@ -240,7 +239,7 @@ struct PermissionStepView: View {
         Spacer()
         Text("Bước 2/4")
           .font(.system(size: 18))
-          .foregroundColor(.secondary)
+          .foregroundStyle(.secondary)
       }
       .padding(.horizontal, 48)
       .padding(.top, 24)
@@ -250,7 +249,7 @@ struct PermissionStepView: View {
         .resizable()
         .aspectRatio(contentMode: .fit)
         .frame(maxHeight: 260)
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
         .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 20)
 
@@ -274,9 +273,9 @@ struct PermissionStepView: View {
       if viewModel.permissionGranted {
         HStack(spacing: 8) {
           Image(systemName: "checkmark.circle.fill")
-            .foregroundColor(.green)
+            .foregroundStyle(.green)
           Text("Đã cấp quyền thành công!")
-            .foregroundColor(.green)
+            .foregroundStyle(.green)
         }
         .font(.system(size: 16, weight: .medium))
       } else {
@@ -300,7 +299,7 @@ struct PermissionStepView: View {
                 .scaleEffect(0.7)
               Text("Đang chờ cấp quyền...")
                 .font(.system(size: 14))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             }
           }
         }
@@ -308,7 +307,7 @@ struct PermissionStepView: View {
 
       Spacer().frame(height: 16)
     }
-    .onChange(of: appState.permission.isTrusted) { _, trusted in
+    .onChange(of: appState.permission.isTrusted, initial: true) { _, trusted in
       viewModel.permissionChanged(to: trusted)
     }
   }
@@ -329,18 +328,18 @@ struct InstructionStep: View {
 
         if isCompleted {
           Image(systemName: "checkmark")
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .font(.system(size: 14, weight: .bold))
         } else {
           Text("\(number)")
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .font(.system(size: 16, weight: .bold))
         }
       }
 
       Text(text)
         .font(.system(size: 18))
-        .foregroundColor(isCompleted ? .secondary : .primary)
+        .foregroundStyle(isCompleted ? .secondary : .primary)
     }
   }
 }
@@ -361,7 +360,7 @@ struct ConfigurationStepView: View {
         Spacer()
         Text("Bước 3/4")
           .font(.system(size: 16))
-          .foregroundColor(.secondary)
+          .foregroundStyle(.secondary)
       }
       .padding(.horizontal, 48)
       .padding(.top, 24)
@@ -370,20 +369,20 @@ struct ConfigurationStepView: View {
       HStack(spacing: 14) {
         Image(systemName: "checkmark.circle.fill")
           .font(.system(size: 44))
-          .foregroundColor(.green)
+          .foregroundStyle(.green)
 
         VStack(alignment: .leading, spacing: 4) {
           Text("Đã cấp quyền thành công!")
             .font(.system(size: 17, weight: .semibold))
           Text("Hãy chọn kiểu gõ và tùy chọn khác.")
             .font(.system(size: 16))
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
         }
       }
       .padding(20)
       .frame(maxWidth: .infinity, alignment: .leading)
       .background(Color.green.opacity(0.1))
-      .cornerRadius(12)
+      .clipShape(.rect(cornerRadius: 12))
       .padding(.horizontal, 48)
 
       // Typing Method Selection
@@ -417,10 +416,11 @@ struct ConfigurationStepView: View {
             Image(systemName: "power")
               .frame(width: 24)
             Text("Khởi động cùng máy tính")
-              .font(.system(size: 26))
+              .font(.system(size: 16))
           }
         }
-        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+        .toggleStyle(.switch)
+        .tint(.accentColor)
       }
       .padding(.horizontal, 48)
 
@@ -428,20 +428,20 @@ struct ConfigurationStepView: View {
       HStack(spacing: 14) {
         Image(systemName: "command")
           .font(.system(size: 16))
-          .foregroundColor(.accentColor)
+          .foregroundStyle(Color.accentColor)
 
         VStack(alignment: .leading, spacing: 3) {
           Text("Phím tắt bật/tắt: Option + Z")
             .font(.system(size: 16, weight: .medium))
           Text("Bạn có thể đổi trong Cài đặt sau.")
             .font(.system(size: 14))
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
         }
         Spacer()
       }
       .padding(14)
       .background(Color.gray.opacity(0.1))
-      .cornerRadius(8)
+      .clipShape(.rect(cornerRadius: 8))
       .padding(.horizontal, 48)
 
       Spacer()
@@ -484,18 +484,18 @@ struct TypingMethodCard: View {
           Spacer()
           if isSelected {
             Image(systemName: "checkmark.circle.fill")
-              .foregroundColor(.accentColor)
+              .foregroundStyle(Color.accentColor)
           }
         }
 
         Text(method == .telex ? "aa->â, aw->ă, as->á" : "a6->â, a8->ă, a1->á")
           .font(.system(size: 18))
-          .foregroundColor(.secondary)
+          .foregroundStyle(.secondary)
       }
       .padding(12)
       .frame(maxWidth: .infinity, alignment: .leading)
       .background(isSelected ? Color.accentColor.opacity(0.1) : Color.gray.opacity(0.1))
-      .cornerRadius(8)
+      .clipShape(.rect(cornerRadius: 8))
       .overlay(
         RoundedRectangle(cornerRadius: 8)
           .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
@@ -510,8 +510,8 @@ struct TypingMethodCard: View {
 struct RemoveIMEStepView: View {
   var viewModel: OnboardingViewModel
   let appState: AppState
+  var onDismiss: () -> Void = {}
   @State private var currentPage = 0
-  @State private var carouselTimer: Timer? = nil
 
   let carouselImages = [
     ("RemoveIME1", "Bước 1: Chọn bộ gõ cần gỡ"),
@@ -527,7 +527,7 @@ struct RemoveIMEStepView: View {
         Spacer()
         Text("Bước 4/4")
           .font(.system(size: 16))
-          .foregroundColor(.secondary)
+          .foregroundStyle(.secondary)
       }
       .padding(.horizontal, 48)
       .padding(.top, 24)
@@ -536,7 +536,7 @@ struct RemoveIMEStepView: View {
       HStack(spacing: 12) {
         Image(systemName: "exclamationmark.triangle.fill")
           .font(.system(size: 34))
-          .foregroundColor(.orange)
+          .foregroundStyle(.orange)
 
         VStack(alignment: .leading, spacing: 4) {
           Text("Tránh xung đột bộ gõ")
@@ -545,13 +545,13 @@ struct RemoveIMEStepView: View {
             "Nên gỡ Telex, SimpleTelex hoặc các bộ gõ tiếng Việt khác để tránh xung đột."
           )
           .font(.system(size: 15))
-          .foregroundColor(.secondary)
+          .foregroundStyle(.secondary)
         }
       }
       .padding(14)
       .frame(maxWidth: .infinity, alignment: .leading)
       .background(Color.orange.opacity(0.1))
-      .cornerRadius(10)
+      .clipShape(.rect(cornerRadius: 10))
       .padding(.horizontal, 48)
 
       // Carousel with screenshots
@@ -562,13 +562,13 @@ struct RemoveIMEStepView: View {
               Image(carouselImages[index].0)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .cornerRadius(10)
+                .clipShape(.rect(cornerRadius: 10))
                 .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
                 .padding(.horizontal, 48)
 
               Text(carouselImages[index].1)
                 .font(.system(size: 16))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             }
             .opacity(currentPage == index ? 1 : 0)
             .animation(.easeInOut(duration: 0.5), value: currentPage)
@@ -589,30 +589,33 @@ struct RemoveIMEStepView: View {
         }
         .padding(.top, 4)
       }
-      .onAppear {
-        startCarouselTimer()
-      }
-      .onDisappear {
-        stopCarouselTimer()
+      .task {
+        while !Task.isCancelled {
+          try? await Task.sleep(for: .seconds(3))
+          guard !Task.isCancelled else { break }
+          withAnimation {
+            currentPage = (currentPage + 1) % carouselImages.count
+          }
+        }
       }
 
       // Instructions
       VStack(alignment: .leading, spacing: 10) {
         HStack(spacing: 8) {
           Image(systemName: "1.circle.fill")
-            .foregroundColor(.accentColor)
+            .foregroundStyle(Color.accentColor)
           Text("Mở System Settings → Keyboard → Input Sources")
             .font(.system(size: 14))
         }
         HStack(spacing: 8) {
           Image(systemName: "2.circle.fill")
-            .foregroundColor(.accentColor)
+            .foregroundStyle(Color.accentColor)
           Text("Chọn bộ gõ tiếng Việt (Telex, SimpleTelex...)")
             .font(.system(size: 14))
         }
         HStack(spacing: 8) {
           Image(systemName: "3.circle.fill")
-            .foregroundColor(.accentColor)
+            .foregroundStyle(Color.accentColor)
           Text("Bấm dấu trừ (-) để gỡ bỏ")
             .font(.system(size: 14))
         }
@@ -640,8 +643,7 @@ struct RemoveIMEStepView: View {
 
       // Complete Button
       Button(action: {
-        stopCarouselTimer()
-        viewModel.completeOnboarding(appState: appState)
+        viewModel.completeOnboarding(appState: appState, onDismiss: onDismiss)
       }) {
         HStack {
           Text("Hoàn tất cài đặt")
@@ -654,60 +656,49 @@ struct RemoveIMEStepView: View {
 
       Text("Caffee sẽ chạy trên thanh menu sau khi hoàn tất.")
         .font(.system(size: 12))
-        .foregroundColor(.secondary)
+        .foregroundStyle(.secondary)
 
       Spacer().frame(height: 12)
     }
-  }
-
-  private func startCarouselTimer() {
-    carouselTimer?.invalidate()
-    carouselTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
-      MainActor.assumeIsolated {
-        withAnimation {
-          currentPage = (currentPage + 1) % carouselImages.count
-        }
-      }
-    }
-  }
-
-  private func stopCarouselTimer() {
-    carouselTimer?.invalidate()
-    carouselTimer = nil
   }
 }
 
 // MARK: - Onboarding Window Controller
 
-class OnboardingWindowController: NSWindowController {
-  override init(window: NSWindow? = nil) {
+class OnboardingWindowController: NSWindowController, NSWindowDelegate {
+  var onClose: (() -> Void)?
+
+  init(
+    title: String = "Caffee - Cài Đặt",
+    frameAutosaveName: String = "Onboarding Window",
+    contentSize: NSSize = NSSize(width: 800, height: 700)
+  ) {
+    let window = NSWindow(
+      contentRect: NSRect(origin: .zero, size: contentSize),
+      styleMask: [.titled, .closable, .fullSizeContentView],
+      backing: .buffered, defer: false)
+    window.center()
+    window.setFrameAutosaveName(frameAutosaveName)
+    window.title = title
+    window.titlebarAppearsTransparent = true
+    window.titleVisibility = .hidden
+    window.isMovableByWindowBackground = true
     super.init(window: window)
-    if window == nil {
-      let window = NSWindow(
-        contentRect: NSRect(x: 0, y: 0, width: 800, height: 700),
-        styleMask: [.titled, .fullSizeContentView],
-        backing: .buffered, defer: false)
-      window.center()
-      window.setFrameAutosaveName("Onboarding Window")
-      window.title = "Caffee - Cài Đặt"
-      window.titlebarAppearsTransparent = true
-      window.titleVisibility = .hidden
-      window.isMovableByWindowBackground = true
-      self.window = window
-    }
+    window.delegate = self
   }
 
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
+
+  func windowWillClose(_ notification: Notification) {
+    onClose?()
+  }
 }
 
 // MARK: - Preview
 
-struct OnboardingView_Previews: PreviewProvider {
-  static var previews: some View {
-    OnboardingView()
-      .environment(AppState())
-      .previewDisplayName("Onboarding")
-  }
+#Preview("Onboarding") {
+  OnboardingView()
+    .environment(AppState())
 }

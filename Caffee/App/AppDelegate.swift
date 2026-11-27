@@ -22,6 +22,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
 
   @ObservationIgnored private lazy var automation = AutomationService(controller: appState)
   @ObservationIgnored private let secureInputHelp = SecureInputHelpPanel()
+  @ObservationIgnored private var onboardingWindowController: OnboardingWindowController?
+  @ObservationIgnored private var upgradeWindowController: OnboardingWindowController?
   @ObservationIgnored private var cancellables = Set<AnyCancellable>()
 
   override init() {
@@ -103,39 +105,70 @@ final class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
 
   // Opens onboarding guide
   @objc func openGuide() {
-    let contentView = OnboardingView().environment(appState)
+    if !appState.permission.refresh() {
+      appState.permission.start()
+    }
+    if let existing = onboardingWindowController, existing.window?.isVisible == true {
+      existing.showWindow(nil)
+      NSApp.activate(ignoringOtherApps: true)
+      return
+    }
     let windowController = OnboardingWindowController()
+    windowController.onClose = { [weak self] in
+      self?.onboardingWindowController = nil
+    }
+    let contentView = OnboardingView { [weak self] in
+      self?.closeOnboarding()
+    }.environment(appState)
     windowController.contentViewController = NSHostingController(rootView: contentView)
+    onboardingWindowController = windowController
     windowController.showWindow(nil)
     NSApp.activate(ignoringOtherApps: true)
+  }
+
+  private func closeOnboarding() {
+    let controller = onboardingWindowController
+    onboardingWindowController = nil
+    controller?.close()
   }
 
   // Opens upgrade guide
   @objc func openUpgradeNewVersion() {
-    let contentView = UpgradeAppView().environment(appState)
-    let windowController = OnboardingWindowController()
+    if !appState.permission.refresh() {
+      appState.permission.start()
+    }
+    if let existing = upgradeWindowController, existing.window?.isVisible == true {
+      existing.showWindow(nil)
+      NSApp.activate(ignoringOtherApps: true)
+      return
+    }
+    let windowController = OnboardingWindowController(
+      title: "Caffee - Cập Nhật",
+      frameAutosaveName: "Upgrade Window",
+      contentSize: NSSize(width: 520, height: 480)
+    )
+    windowController.onClose = { [weak self] in
+      self?.upgradeWindowController = nil
+    }
+    let contentView = UpgradeAppView { [weak self] in
+      self?.closeUpgradeWindow()
+    }.environment(appState)
     windowController.contentViewController = NSHostingController(rootView: contentView)
+    upgradeWindowController = windowController
     windowController.showWindow(nil)
     NSApp.activate(ignoringOtherApps: true)
   }
 
-  // Opens settings window
-  @objc func openSettings() {
-    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-      NSApp.activate(ignoringOtherApps: true)
-    }
+  private func closeUpgradeWindow() {
+    let controller = upgradeWindowController
+    upgradeWindowController = nil
+    controller?.close()
   }
 
   // Secure Input belongs to the app that enabled it, not to Caffee.
   func showSecureInputHelp() {
     guard appState.eventHook.refreshSecureInputState() else { return }
-    secureInputHelp.show(holder: SecureInputInfo.holderName())
-  }
-
-  // Quits the application
-  @objc func quitApp() {
-    NSApp.terminate(self)
+    secureInputHelp.show(holder: SecureInputInfo.holder())
   }
 
   // Returns true to opt-in to secure coding for state restoration
